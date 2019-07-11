@@ -1,0 +1,78 @@
+package com.xray.taoke.admin.vo;
+
+public class TbItemVo {
+    private String link;
+    private String title;
+    private double juanhou;
+    private String yongjin;
+    private String yingxiao;
+    private String itemid;
+    private String yuexiao;
+    private String juan;
+    private Double beforejuan;
+    
+    private int sales;
+    
+    
+	public int getSales() {
+		return sales;
+	}
+	public void setSales(int sales) {
+		this.sales = sales;
+	}
+	public Double getBeforejuan() {
+		return beforejuan;
+	}
+	public void setBeforejuan(Double beforejuan) {
+		this.beforejuan = beforejuan;
+	}
+	public String getYuexiao() {
+		return yuexiao;
+	}
+	public void setYuexiao(String yuexiao) {
+		this.yuexiao = yuexiao;
+	}
+	public String getJuan() {
+		return juan;
+	}
+	public void setJuan(String juan) {
+		this.juan = juan;
+	}
+	public String getLink() {
+		return link;
+	}
+	public void setLink(String link) {
+		this.link = link;
+	}
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	public double getJuanhou() {
+		return juanhou;
+	}
+	public void setJuanhou(double juanhou) {
+		this.juanhou = juanhou;
+	}
+	public String getYongjin() {
+		return yongjin;
+	}
+	public void setYongjin(String yongjin) {
+		this.yongjin = yongjin;
+	}
+	public String getItemid() {
+		return itemid;
+	}
+	public void setItemid(String itemid) {
+		this.itemid = itemid;
+	}
+	public String getYingxiao() {
+		return yingxiao;
+	}
+	public void setYingxiao(String yingxiao) {
+		this.yingxiao = yingxiao;
+	}
+    
+}

@@ -1,0 +1,35 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/uouser")
+public class UoUserController extends AbstractController {
+
+    public void goList() {
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<UoUser> dataList = UoUser.dao.queryList(cond, getPageVo("`seqid` desc"));
+        for (UoUser data : dataList) {
+            data.setMpname(map.get(data.getStr("bindappid")));
+        }
+        setAttr("dataList", dataList);
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        render("/template/pages/uouser/list.html");
+    }
+
+    public void doEditRate() {
+        UoUser.dao.updateRate(getParaToLong("seqid"), Double.parseDouble(getPara("rate")), getPara("ratereason"), getUser().getName());
+        renderRtn(RtnFactory.succ);
+    }
+
+}

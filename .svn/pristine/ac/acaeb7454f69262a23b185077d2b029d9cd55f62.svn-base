@@ -1,0 +1,41 @@
+package com.xray.taoke.admin.service;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+
+public class ItemService {
+	private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+	private static final Prop config = PropKit.use("config.properties");
+	private static final String prefix = config.get("redis.prefix") + ".item.detail.";
+
+	public static ItemService instance = new ItemService();
+
+	public void setJsonStr(String userid, String jsonStr) {
+		String key = prefix + userid + "haodanku";
+		cache.set(key, jsonStr);
+	}
+
+	public void delJsonStr(String userid) {
+		String key = prefix + userid + "haodanku";
+		cache.delete(key);
+	}
+
+	public String getJsonStr(String userid) {
+		String key = prefix + userid + "haodanku";
+		return cache.get(key);
+	}
+
+	public void setShop(String userid, String jsonStr) {
+		String key = prefix + userid + ".haodanku." + "shop.";
+		cache.set(key, jsonStr);
+	}
+
+	public String getShop(String userid) {
+		String key = prefix + userid + ".haodanku." + "shop.";
+		return cache.get(key);
+	}
+
+}

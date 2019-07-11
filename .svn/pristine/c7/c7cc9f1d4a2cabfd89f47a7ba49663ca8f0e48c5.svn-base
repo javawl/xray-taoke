@@ -1,0 +1,192 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.weixin.sdk.utils.HttpUtils;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.MD5Codec;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.TKKefuMsg;
+import com.xray.taoke.admin.model.TkTbGoods;
+import com.xray.taoke.admin.model.TkLink;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.model.TkTurnLink;
+import com.xray.taoke.admin.utils.ExtractHttpUtils;
+import com.xray.taoke.admin.utils.ParamUtils;
+import com.xray.taoke.admin.utils.ParamUtils.UrlEntity;
+
+@ControllerBind(controllerKey = "/tklink")
+public class TkLinkController extends AbstractController {
+    public void goList() {
+        
+        String opby = getPara("opby","");
+        String refDateStr = getPara("refDateStr","");
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+        setAttr("opby", opby);
+        Map<String, Object> cond = getCondAll();
+        
+        if(StringUtil.isNotEmpty(opby)) {
+            cond.put("opby", opby);
+        }
+        setAttr("refDateStr", refDateStr);
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if (StringUtil.isEmpty(refDateStr)) {
+            refDateStr = sdf.format(new Date().getTime());
+        } else {
+            refDateStr = refDateStr + " 00:00:00";
+        }
+        Date date_da = DateUtil.str2Date("yyyy-MM-dd HH:mm:ss", refDateStr);
+        Date date2_da = DateUtil.str2Date("yyyy-MM-dd HH:mm:ss", refDateStr);
+        long date = 0;
+        long date2 = 0;
+        try {
+            date = DateUtil.parseBegin(date_da);
+            date2 = DateUtil.parseEnd(date2_da);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        cond.put("date", date);
+        cond.put("date2", date2);
+        
+        
+
+        List<TkLink> dataList = TkLink.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+
+        logger.debug("dataList,size:{}", dataList.size());
+
+        render("/template/pages/tk_links/list.html");
+    }
+
+    public void doUpdateRemark() {
+        String seqid = getPara("seqid");
+        String remark = getPara("remark");
+        TkLink link = TkLink.dao.findById(seqid);
+        link.set("remark", remark);
+        link.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void goAdd() {
+        String type = getPara("type", "1");
+        String appid = getPara("appid");
+        if (StringUtil.isNotEmpty(appid)) {
+            setAttr("appid", appid);
+            setAttr("action", getPara("action"));
+
+            TkMaterial data = new TkMaterial();
+            data.set("name", getPara("name"));
+            setAttr("data", data);
+        }
+        setAttr("send_state", 1);
+        render("/template/pages/tk_links/form" + type + ".html");
+    }
+
+    public void goEdit() throws UnsupportedEncodingException {
+        String seqid = getPara("seqid");
+        String type = getPara("type");
+        int send_state = 1;
+        TKKefuMsg data = TKKefuMsg.dao.findById(seqid);
+        if (data == null) {
+            data = TKKefuMsg.dao.queryByMediaid(getPara("mediaid"));
+            type = data.getStr("type");
+            send_state = data.getInt("send_state");
+        }
+        setAttr("send_state", send_state);
+        setAttr("data", data);
+        setAttr("contentList", JSONObject.parseArray(new String(data.get("content"), "UTF-8")));
+        render("/template/pages/tk_links/form" + type + ".html");
+    }
+
+    public void doAdd() {
+        String id = MD5Codec.encode(MD5Codec.encode(Long.toString(System.currentTimeMillis())));
+        String goods = getPara("goods");
+        String[] goods_str = goods.split("\n");
+        int len = goods_str.length;
+
+        TkLink link = new TkLink();
+        link.set("link_id", id);
+        link.set("size", len);
+        link.set("inputtime", System.currentTimeMillis());
+        link.set("opby", getUser().getUserid());
+        link.save();
+        ExtractHttpUtils.common(goods, id);
+        renderRtn(RtnFactory.succ);
+    }
+    
+    
+    public void doGetItemIdByText() {
+        String text = getPara("change_url");
+        String url = ExtractHttpUtils.getHttpByText(text,1);
+        String html = HttpUtils.get(url);
+        String detail_url = ExtractHttpUtils.getHttpByText(html,2);
+        UrlEntity urlEntity = ParamUtils.parse(detail_url);
+        String id = "";
+        if(urlEntity.params!=null) 
+            id = urlEntity.params.get("id");
+        else 
+            id = ParamUtils.getParam(detail_url, "id");
+        
+        String title = "";
+        double price = 0.0;
+        String good_url ="";
+        String change_url = "";
+        TkTurnLink tkTurnLink = TkTurnLink.dao.queryByItemId(id);
+        String turn_link = "";
+        if(tkTurnLink!=null) {
+            turn_link = tkTurnLink.getStr("turn_link");
+            renderRtn(RtnFactory.newSucc(turn_link));
+            return;
+        }
+        TkTbGoods allGoods2 = TkTbGoods.dao.queryByItemId(id);
+        if(allGoods2!=null) {
+            int down_type =allGoods2.getInt("down_type");
+            if(down_type ==0) {
+                title = allGoods2.getStr("itemtitle");
+                price = allGoods2.getDouble("itemendprice");
+                good_url = allGoods2.getStr("couponurl");
+                //生成淘口令链接
+                change_url = title+"\n【在售价】"+price+"元\n【下单链接】"+good_url+"\n-----------------\n复制这条信息，￥myoibxkqYf6￥ ，打开【手机淘宝】即可下单";
+                saveTurnLink(id, change_url);
+                renderRtn(RtnFactory.newSucc(change_url));
+                return;
+            }else {
+                //去调商品详情链接，然后存库
+                change_url = getDetailByItemId(id);
+                renderRtn(RtnFactory.newSucc(change_url));
+                return;
+            }
+        }
+        
+        change_url = getDetailByItemId(id);
+        
+        renderRtn(RtnFactory.newSucc(change_url));
+    }
+    
+    private  String  getDetailByItemId(String itemid){
+        String change_url ="";
+        saveTurnLink(itemid, change_url);
+        return null;
+    }
+    private void saveTurnLink(String itemid,String change_url) {
+        TkTurnLink tkTurnLink2 =new TkTurnLink();
+        tkTurnLink2.set("inputtime", System.currentTimeMillis());
+        tkTurnLink2.set("itemid", itemid);
+        tkTurnLink2.set("turn_link", change_url);
+        tkTurnLink2.save();
+    }
+}

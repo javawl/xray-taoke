@@ -1,0 +1,136 @@
+package com.xray.taoke.admin.service;
+
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.web.controller.vo.LinkItemVo;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+
+public class LinkInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".linkinfo.";
+
+    public static LinkInfoService instance = new LinkInfoService();
+
+    public void addReport(String userid, String jsonStr) {
+        Jedis jedis = null;
+        try {
+            String key = prefix + userid + ".report";
+
+            jedis = cache.getJedisClient();
+            Pipeline pipe = jedis.pipelined();
+
+            String yuexiao = null;
+            LinkItemVo data = null;
+            JSONObject obj = null;
+            JSONArray arr = JSONArray.parseArray(jsonStr);
+            for (int i = 0; i < arr.size(); i++) {
+                obj = arr.getJSONObject(i);
+                data = obj.toJavaObject(LinkItemVo.class);
+                if (data.getItemsale() <= 0) {
+                    yuexiao = obj.getString("yuexiao").replaceAll("月销 ", "");
+                    if (yuexiao.contains("万"))
+                        data.setItemsale(Integer.parseInt(yuexiao.replaceAll("万", "0000").replaceAll("\\.", "")));
+                    else
+                        data.setItemsale(Integer.parseInt(yuexiao));
+                }
+                if (data.getTkrate() <= 0)
+                    data.setTkrate(Double.parseDouble(obj.getString("yingxiao").replaceAll("%", "")) / 100.0);
+                if (data.getCpmoney() <= 0)
+                    data.setCpmoney(Double.parseDouble(obj.getString("juan").replaceAll("￥", "")));
+                if (data.getItemprice() <= 0)
+                    data.setItemprice(data.getCpmoney() + data.getTkprice());
+                if (StringUtil.isNotEmpty(data.getItempic()))
+                    data.setItempic(data.getItempic().replaceAll("_310x310.jpg", "").replaceAll("_220x220_.webp", ""));
+
+                pipe.hset(key, data.getItemid(), data.toJson());
+            }
+            pipe.sync();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            cache.returnResource(jedis);
+        }
+    }
+
+    public void delReport(String userid) {
+        String key = prefix + userid + ".report";
+        cache.delete(key);
+    }
+
+    public Map<String, String> getReport(String userid) {
+        String key = prefix + userid + ".report";
+        return cache.hgetAll(key);
+    }
+
+    public String getReport(String userid, String itemid) {
+        String key = prefix + userid + ".report";
+        return cache.hget(key, itemid);
+    }
+    
+    public void setReport(String userid, String itemid,String data) {
+        String key = prefix + userid + ".report";
+        cache.hset(key, itemid, data);
+    }
+    
+    
+
+    public void addCart(String userid, String itemid) {
+        String key = prefix + userid + ".cart";
+        String key2 = prefix + userid + ".report";
+        if (cache.hexists(key, itemid)) {
+            cache.hdel(key, itemid);
+        } else {
+            cache.hset(key, itemid, getReport(userid, itemid));
+        }
+        cache.hdel(key2, itemid);
+    }
+
+    public long getCartSzie(String userid) {
+        return cache.hlen(prefix + userid + ".cart");
+    }
+
+    public Map<String, String> getCart(String userid) {
+        String key = prefix + userid + ".cart";
+        return cache.hgetAll(key);
+    }
+
+    public void delCart(String userid) {
+        String key = prefix + userid + ".cart";
+        cache.delete(key);
+    }
+
+    public String decodeUrl(String id) {
+        String key = prefix + "url." + id;
+        return cache.get(key);
+    }
+
+    public String encodeUrl(String url) {
+        String id = "g" + cache.incr(prefix + "url.uuid");
+        String key = prefix + "url." + id;
+        cache.set(key, url);
+        return id;
+    }
+
+    public void setPkey(String userid, String pkey) {
+        String key = prefix + "pkey";
+        cache.hset(key, userid, pkey);
+    }
+
+    public String getPkey(String userid) {
+        String key = prefix + "pkey";
+        String val = cache.hget(key, userid);
+        return StringUtil.isNotEmpty(val) ? val : "0";
+    }
+
+}

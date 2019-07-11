@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>省钱惠选,好券不错过,每天更新</title>
+</head>
+<body>
+</body>
+<script type="text/javascript">
+location.href="${url!}"
+</script>
+</html>

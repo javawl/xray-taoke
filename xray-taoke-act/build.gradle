@@ -1,0 +1,72 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+version = '1.0.0'
+
+jar {
+    manifest {
+        attributes 'Implementation-Version': version
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile fileTree(dir: 'src/main/webapp/WEB-INF/lib', includes: ['*.jar']),
+                'javax.servlet:javax.servlet-api:3.1.0'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+
+task callWebapp {
+    doLast {
+        delete 'dists'
+        copy {
+            from 'src/main/webapp'
+            into 'dists'
+        }
+        delete 'dists/WEB-INF/classes'
+        copy {
+            from 'src/main/resources'
+            into 'dists/WEB-INF/classes'
+        }
+        copy {
+            from 'build/libs'
+            into 'dists/WEB-INF/lib'
+        }
+    }
+}
+
+task callProject {
+    doLast {
+        delete 'dists'
+        copy {
+            from 'src'
+            into 'dists/src'
+        }
+        copy {
+            from 'build/libs'
+            into 'dists/src/main/webapp/WEB-INF/lib'
+        }
+        copy {
+            from '.classpath'
+            into 'dists'
+        }
+        copy {
+            from '.gitignore'
+            into 'dists'
+        }
+        copy {
+            from 'build.gradle'
+            into 'dists'
+        }
+        delete 'dists/src/main/java'
+        mkdir 'dists/src/main/java'
+        delete 'dists/src/main/webapp/WEB-INF/classes'
+    }
+}

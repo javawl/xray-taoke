@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>系统设置 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<#include "../../inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<#include "../../inc/header.html">
+			<div class="wrapper">
+				<div class="content-wrapper">
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>
+								<a href="javascript:history.back();"><i class="fa fa-chevron-left"></i>返回</a>
+							</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<section class="content">
+						<div class="box box-primary">
+							<div class="box-header">
+								<div class="sequence_list am-text-sm">
+									<div class="box-tools">
+									</div>
+								</div>
+							</div>
+							<div class="box-body">
+								<div class="row">
+									<div class="col-sm-12">
+										<table class="table table-bordered table-hover">
+											<tbody>
+												<th>菜单名称</th>
+												</tr>
+												<#list dataList as item>
+													<tr>
+														<td>
+															<a href="${cxt!}/admin/role/goSelect?menuid=${item.menuid!}&roleid=${data!}">${item.name!}</a>
+														</td>
+												</#list>
+											</tbody>
+										</table>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label>已设置的模块</label>
+											<input id="roleid" value="<#if data??>${data!}</#if>" style="display: none;">
+											<input id="menuid" value="<#if menuid??>${menuid!}</#if>" style="display: none;">
+											<select id="select_exist" multiple="" class="form-control" style="height: 270px;">
+												<#list roleList as item>
+													<option ondblclick="existSelect(this)" value="${item.moduleid}">${item.name}</option>
+												</#list>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label>未设置的模块</label>
+											<select id="select_unexist" multiple="" class="form-control" style="height: 270px;">
+												<#list List as item>
+													<option ondblclick="unexistSelect(this)" value="${item.moduleid}">${item.name}</option>
+												</#list>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="btn-group">
+									<button type="button" onclick="add()" class="btn btn-primary">提交修改</button>
+								</div>
+							</div>
+					</section>
+					</div>
+					<#include "../../inc/footer.html">
+				</div>
+				<script>
+					function add() {
+						var idsStr = "";
+						var options = $("#select_exist").children();
+						options.each(function(i, e) {
+							idsStr += this.value + ",";
+						})
+						var menuid = $("#menuid").val();
+						var moduleidStr = idsStr;
+						var roleid = $("#roleid").val();
+						ajaxUrl = "${cxt!}/admin/role/doAddModuleList";
+						ajaxGet(ajaxUrl, {
+							roleid: roleid,
+							menuid: menuid,
+							moduleidStr: moduleidStr
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("提交成功！", {
+								time: 500,
+								icon: 1
+							});
+						})
+					}
+
+					function existSelect(evt) {
+						if(!jsSelectIsExitItem($("#select_unexist").children(), $(evt).val())) {
+							$("#select_unexist").append($(evt).attr("ondblclick", "unexistSelect(this)").prop("outerHTML"));
+							$(evt).remove();
+						}
+					}
+
+					function unexistSelect(evt) {
+						if(!jsSelectIsExitItem($("#select_exist").children(), $(evt).val())) {
+							$("#select_exist").append($(evt).attr("ondblclick", "existSelect(this)").prop("outerHTML"));
+							$(evt).remove();
+						}
+					}
+
+					function jsSelectIsExitItem(objSelect, val) {
+						var isExit = false;
+						for(var i = 0; i < objSelect.length; i++) {
+							if(objSelect[i].value == val) {
+								isExit = true;
+								break;
+							}
+						}
+						return isExit;
+					}
+				</script>
+	</body>
+
+</html>

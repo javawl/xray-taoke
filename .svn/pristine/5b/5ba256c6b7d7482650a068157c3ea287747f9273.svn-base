@@ -1,0 +1,117 @@
+package com.xray.taoke.admin.app;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.weixin.sdk.utils.HttpUtils;
+import com.xray.act.util.DateUtil;
+import com.xray.taoke.admin.vo.TbGoodsVo;
+
+public class HaodankuApp extends AbstractApp {
+    private static final String apikey = config.get("hdk.apikey");
+    private static final String tbgoods = config.get("redis.prefix") + ".tbgoods.";
+    private static final String haodanku = config.get("redis.prefix") + ".haodanku.";
+
+    public static void main(String[] args) {
+        new HaodankuApp().start();
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp haodanku", e);
+        }
+    }
+
+    public void doRun() {
+        sales_list("hdkssb", 1);
+        sales_list("hdkxlb", 2);
+        sales_list("hdkzsb", 4);
+        fastbuy("hdkkqb", 6);
+        fastbuy("hdkkqb", 7);
+        fastbuy("hdkkqb", 8);
+        fastbuy("hdkkqb", 9);
+        fastbuy("hdkkqb", 10);
+    }
+
+    private void fastbuy(String name, int type) {
+        try {
+            String today = DateUtil.getToday();
+            String key = haodanku + name;
+            if (cache.sismember(key, type + today))
+                return;
+
+            List<TbGoodsVo> list = new ArrayList<TbGoodsVo>();
+            JSONArray arr = JSONObject.parseObject(HttpUtils.get(fastbuy_url(apikey, 6))).getJSONArray("data");
+            logger.info("runapp {},type:{},size:{}", name, type, arr.size());
+            for (int i = 0; i < arr.size(); i++) {
+                list.add(obj2vo(arr.getJSONObject(i)));
+            }
+            cache.set(haodanku + name + type, JSONObject.toJSONString(list));
+            cache.sadd(key, type + today);
+        } catch (Exception e) {
+            logger.error("errapp hdkkqb", e);
+        }
+    }
+
+    private void sales_list(String name, int type) {
+        try {
+            int page = 0;
+            List<TbGoodsVo> list = new ArrayList<TbGoodsVo>();
+            JSONArray arr = JSONObject.parseObject(HttpUtils.get(sales_list_url(apikey, type))).getJSONArray("data");
+            logger.info("runapp {},type:{},size:{}", name, type, arr.size());
+            for (int i = 0; i < arr.size(); i++) {
+                list.add(obj2vo(arr.getJSONObject(i)));
+                if (i > 0 && i % 10 == 0) {
+                    ++page;
+                    cache.set(haodanku + name + page, JSONObject.toJSONString(list));
+                    batchTbGoodsVo(list);
+                    list.clear();
+                }
+            }
+            ++page;
+            cache.set(haodanku + name, JSONObject.toJSONString(list));
+            batchTbGoodsVo(list);
+        } catch (Exception e) {
+            logger.error("errapp " + name, e);
+        }
+    }
+
+    private void batchTbGoodsVo(List<TbGoodsVo> list) {
+        Map<String, String> map = new HashMap<String, String>();
+        for (TbGoodsVo data : list) {
+            map.put(data.getItemid(), JSONObject.toJSONString(data));
+        }
+        String key = tbgoods + "itemid.";
+        cache.setBatch(key, map);
+    }
+
+    private TbGoodsVo obj2vo(JSONObject obj) {
+        TbGoodsVo data = new TbGoodsVo();
+        data.setItemid(obj.getString("itemid"));
+        data.setItemtitle(obj.getString("itemtitle"));
+        data.setItemshorttitle(obj.getString("itemshorttitle"));
+        data.setItempic(obj.getString("itempic"));
+        data.setItemendprice(obj.getDoubleValue("itemprice"));
+        data.setCpmoney(obj.getIntValue("couponmoney"));
+        data.setTkprice(obj.getDoubleValue("itemendprice"));
+        data.setTkrate(obj.getDoubleValue("tkrates") / 100);
+        data.setTkmoney(data.getTkprice() * data.getTkrate());
+        return data;
+    }
+
+    public static String sales_list_url(String apikey, int sale_type) {
+        return "http://v2.api.haodanku.com/sales_list/apikey/" + apikey + "/sale_type/" + sale_type;
+    }
+
+    public static String fastbuy_url(String apikey, int hour_type) {
+        return "http://v2.api.haodanku.com/fastbuy/apikey/" + apikey + "/hour_type/" + hour_type + "/min_id/1";
+    }
+
+}

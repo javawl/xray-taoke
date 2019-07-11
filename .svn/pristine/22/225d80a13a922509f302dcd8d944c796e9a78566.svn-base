@@ -1,0 +1,192 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.app.UserInfoApp;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.TbGoods;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.model.TkMpinfoCount;
+import com.xray.taoke.admin.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/mpinfo")
+public class MpinfoController extends AbstractController {
+
+    public void goList() {
+        String orderby = getPara("orderby", " `seqid` desc");
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby(orderby);
+        setAttr("page", page);
+        List<TkMpinfo> dataList = TkMpinfo.dao.queryList(getCondAll(), page);
+        for (TkMpinfo tkMpinfo : dataList) {
+            tkMpinfo.setUrl1(Constant.getMpInfoUrl() + tkMpinfo.getStr("appid"));
+        }
+        setAttr("dataList", dataList);
+        render("/template/pages/tk_mpinfo/list.html");
+    }
+
+    public void goAdd() {
+        render("/template/pages/tk_mpinfo/form.html");
+    }
+
+    public void goEdit() {
+        setAttr("data", TkMpinfo.dao.findById(getPara("seqid")));
+        render("/template/pages/tk_mpinfo/form.html");
+    }
+
+    public void doAdd() {
+        TkMpinfo data = new TkMpinfo();
+        data.set("appid", getPara("appid"));
+        data.set("name", getPara("name"));
+        data.set("appsecret", getPara("appsecret"));
+        data.set("token", getPara("token"));
+        data.set("encodingaeskey", getPara("encodingaeskey"));
+        data.set("session", getPara("session", ""));
+        data.set("pid", getPara("pid"));
+        data.set("tbname", getPara("tbname"));
+        data.set("shopurl", getPara("shopurl", ""));
+        data.set("apikey", getPara("apikey"));
+        data.set("inputtime", System.currentTimeMillis());
+        data.set("cover", getPara("file_img"));
+        data.set("state", 2);
+        data.save();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        String id = getPara("id");
+
+        String name = getPara("name");
+        String appsecret = getPara("appsecret");
+        String token = getPara("token");
+        String encodingaeskey = getPara("encodingaeskey");
+
+        String session = getPara("session", "");
+        String pid = getPara("pid");
+        String tbname = getPara("tbname");
+        String shopurl = getPara("shopurl", "");
+        String apikey = getPara("apikey");
+
+        TkMpinfo mpinfo2 = TkMpinfo.dao.findById(id);
+        mpinfo2.set("name", name);
+        mpinfo2.set("appsecret", appsecret);
+        mpinfo2.set("token", token);
+        mpinfo2.set("encodingaeskey", encodingaeskey);
+        mpinfo2.set("session", session);
+        mpinfo2.set("pid", pid);
+        mpinfo2.set("tbname", tbname);
+        mpinfo2.set("cover", getPara("file_img"));
+        mpinfo2.set("shopurl", shopurl);
+        mpinfo2.set("apikey", apikey);
+        mpinfo2.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doCreateByAppid() {
+        TkMpinfo data = TkMpinfo.dao.findById(getPara("seqid"));
+
+        String appid = data.getStr("appid");
+        TkMpinfo.dao.createUserByAppid(appid);
+
+        TbGoods.dao.createGoodsByAppid(appid);
+
+        JSONObject obj = new JSONObject();
+        obj.put("type", "text");
+        JSONArray arr = new JSONArray();
+        arr.add(obj);
+
+        TkMaterial mdata = null;
+        long time = System.currentTimeMillis();
+        String[] words = new String[] { "客服" };
+        for (String word : words) {
+            obj.put("content", word);
+
+            mdata = new TkMaterial();
+            mdata.set("mediaid", Constant.toMediaid(word));
+            mdata.set("appid", appid);
+            mdata.set("type", 2);
+            mdata.set("name", word);
+            mdata.set("word", word);
+            mdata.set("content", arr.toJSONString());
+            mdata.set("inputby", getUserid());
+            mdata.set("inputtime", time);
+            mdata.set("state", 1);
+            mdata.save();
+        }
+        data.set("state", 1);
+        data.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doDel() {
+        String seqid = getPara("seqid");
+        TkMpinfo mpinfo = TkMpinfo.dao.findById(seqid);
+        mpinfo.set("state", -1);
+        mpinfo.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doFaBu() {
+        String seqid = getPara("seqid");
+        TkMpinfo data = TkMpinfo.dao.findById(seqid);
+        MpInfoService.instance.setMpInfo(data.getStr("appid"), data);
+        MpInfoService.instance.setMpNames();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doFaBus() {
+        String idsStr = getPara("idsStr");
+        List<TkMpinfo> list = TkMpinfo.dao.queryByIds(Arrays.asList(idsStr.split(",")));
+        for (TkMpinfo data : list) {
+            MpInfoService.instance.setMpInfo(data.getStr("appid"), data);
+        }
+        MpInfoService.instance.setMpNames();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void goListByAppid() {
+        String appid = getPara("appid");
+        setAttr("appid", appid);
+        Map<String, Object> cond = getCondAll();
+        cond.put("appid", appid);
+        String orderby = getPara("orderby", " `inputtime` desc");
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby(orderby);
+        setAttr("page", page);
+        List<TkMpinfo> dataList = TkMpinfo.dao.queryListByAppid(getCondAll(), page);
+        setAttr("dataList", dataList);
+        render("/template/pages/tk_mpuser/list.html");
+    }
+
+    public void doGetUserInfoByAppid() {
+        new UserInfoApp(getPara("appid")).start();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doGetUserInfoByOpenid() {
+        String openid = getPara("openid");
+        String appid = getPara("appid");
+        // allFansApp.runByOpenid(openid, appid);
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void goListCount() {
+        String orderby = getPara("orderby", " `day` desc");
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby(orderby);
+        setAttr("page", page);
+        List<TkMpinfoCount> list = TkMpinfoCount.dao.queryList(getCondAll(), page);
+        setAttr("dataList", list);
+        render("/template/pages/tk_mpinfo_count/list.html");
+    }
+
+}

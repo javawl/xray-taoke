@@ -1,0 +1,85 @@
+package com.xray.taoke.admin.common;
+
+import org.apache.http.client.fluent.Request;
+import org.apache.http.entity.ContentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.taobao.api.DefaultTaobaoClient;
+import com.taobao.api.TaobaoClient;
+import com.taobao.api.request.TbkTpwdCreateRequest;
+import com.taobao.api.response.TbkTpwdCreateResponse;
+import com.xray.act.exception.RtException;
+
+public class TaokeKit {
+    private static Logger logger = LoggerFactory.getLogger(TaokeKit.class);
+    private static String url_privilegeGet = "http://gateway.kouss.com/tbpub/privilegeGet";
+    private static String url_orderGet = "http://gateway.kouss.com/tbpub/orderGet";
+
+    private static TaobaoClient client = new DefaultTaobaoClient(Constant.taoke_serverUrl, Constant.taoke_appKey, Constant.taoke_appSecret);
+
+    public static void main(String[] args) throws Exception {
+        // System.out.println(TaokeKit.privilegeGet("588909002047", Constant.taoke_pid,
+        // Constant.taoke_session));
+        // System.out.println(TaokeKit.privilegeGet("534530396231"));
+        // System.out.println(TaokeKit.orderGet("2019-03-18 10:30:00", ""));
+        System.out.println(TaokeKit.tpwdCreate("【俞兆林】韩版百搭刺绣纯棉女T恤", "https://uland.taobao.com/coupon/edetail?e=mIYOR06QC1oGQASttHIRqQFnRru1PiIPYJFXIFjFNB43eP78KKsfF7HoUVvBoaS11jbqUPS9Kayc0tkCZpBHS5Bh%2BsFgnewCVK4dhaZCKu4t%2FzOJQMDvl6zroKjs8vldxfFlZSCevABMuaLTxEb8p%2FSek3c5sr4aQy7GhFDcL4chFlh0JhZKxKJ7%2BkHL3AEW&pid=mm_44084035_24540890_105835700459", "https://img.alicdn.com/imgextra/https://img.alicdn.com/imgextra/i3/2200617876032/O1CN015lgGff1uQhZYckDNi_!!2200617876032.jpg_430x430q90.jpg", Constant.taoke_pid));
+    }
+
+    public static String tpwdCreate(String title, String url, String cover, String pid) {
+        try {
+            TbkTpwdCreateRequest req = new TbkTpwdCreateRequest();
+            req.setUserId("123");
+            req.setText(title);
+            req.setUrl("https://uland.taobao.com/coupon/edetail?e=5Sw6OgVPMF0GQASttHIRqQi6JCQeoPhPEKRFGI9Afr83eP78KKsfF7HoUVvBoaS11jbqUPS9Kayc0tkCZpBHS5Bh%2BsFgnewCVK4dhaZCKu4t%2FzOJQMDvl6zroKjs8vldxfFlZSCevABMuaLTxEb8p%2FSek3c5sr4aQy7GhFDcL4ejyJ6QYY%2Fle6J7%2BkHL3AEW&traceId=0b0ad2d615531399754903735e&union_lens=lensId:0b0b6072_0bf4_1699e5b4562_7467&xId=NzntiTTbJdIUjigL8o0wdIEjXtHCb80xIahRzy3hT1H08iNwwPSMgStcBLtXf4iLcSjWX4v7OcWYpoNRmKA8cE");
+            req.setLogo(cover);
+            req.setExt("{}");
+            TbkTpwdCreateResponse rsp = client.execute(req);
+            JSONObject jo = JSONObject.parseObject(rsp.getBody()).getJSONObject("tbk_tpwd_create_response").getJSONObject("data");
+            if (jo == null)
+                return "";
+            System.out.println(jo);
+            return jo.getString("model");
+        } catch (Exception e) {
+            logger.error("err tpwdCreate,url:{}", url);
+            logger.error("err tpwdCreate", e);
+            return "";
+        }
+    }
+
+    public static JSONObject privilegeGet(String item_id, String pid, String session) throws Exception {
+        try {
+            // mm_44084035_23420074_79678555
+            String[] arr = pid.split("_");
+            JSONObject obj = new JSONObject();
+            obj.put("adzone_id", arr[3]);
+            obj.put("site_id", arr[2]);
+            obj.put("session", session);
+            obj.put("item_id", item_id);
+            String json = Request.Post(url_privilegeGet).addHeader("accept", "application/json").addHeader("content-type", "application/json;charset=utf-8").bodyString(obj.toJSONString(), ContentType.APPLICATION_JSON).execute().returnContent().asString();
+            return JSONObject.parseObject(json).getJSONObject("result").getJSONObject("data");
+        } catch (Exception e) {
+            throw new RtException("err privilegeGet,item_id:" + item_id, e);
+        }
+    }
+
+    public static JSONArray orderGet(String start_time, String session) throws Exception {
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put("fields", "tb_trade_parent_id,tk_status,tb_trade_id,num_iid,item_title,item_num,price,pay_price,seller_nick,seller_shop_title,commission,commission_rate,unid,create_time,earning_time,tk3rd_pub_id,tk3rd_site_id,tk3rd_adzone_id,relation_id");
+            obj.put("start_time", start_time);
+            obj.put("span", "600");
+            obj.put("page_size", "100");
+            obj.put("tk_status", "1");
+            obj.put("order_query_type", "create_time");
+            obj.put("session", session);
+            String json = Request.Post(url_orderGet).addHeader("accept", "application/json").addHeader("content-type", "application/json;charset=utf-8").bodyString(obj.toJSONString(), ContentType.APPLICATION_JSON).execute().returnContent().asString();
+            return JSONObject.parseObject(json).getJSONObject("tbk_sc_order_get_response").getJSONObject("results").getJSONArray("n_tbk_order");
+        } catch (Exception e) {
+            throw new RtException("err orderGet,start_time:" + start_time, e);
+        }
+    }
+
+}

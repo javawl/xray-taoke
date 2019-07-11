@@ -1,0 +1,89 @@
+//package com.xray.taoke.admin.app.jd;
+//
+//import java.text.SimpleDateFormat;
+//import java.util.Date;
+//
+//import com.alibaba.fastjson.JSONArray;
+//import com.alibaba.fastjson.JSONObject;
+//import com.xray.taoke.admin.model.JdOrderInfo;
+//import com.xray.taoke.jdapi.Jd21dsService;
+//
+//public class JdOrderNewApp extends AbstractApp implements Runnable {
+//	private String appid;
+//
+//	public JdOrderNewApp(String appid) {
+//		this.appid = appid;
+//	}
+//
+//	@Override
+//	public void run() {
+//		try {
+//			doRun(appid);
+//		} catch (Exception e) {
+//			logger.error("errapp JdOrderNewApp,appid:" + appid, e);
+//		}
+//	}
+//
+//	public void doRun(String appid) throws Exception {
+//		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmm");
+//		String time = dateFormat.format(new Date(System.currentTimeMillis() - 300000));
+//		JSONObject obj = Jd21dsService.instance.getjdorder(appid, time, 1);
+//		if (obj.getInteger("code") != 200) {
+//			logger.info("runapp empty JdOrderNewApp,appid:{},time:{}", appid, time);
+//			return;
+//		}
+//		if (!obj.getJSONObject("data").getBooleanValue("hasMore")) {
+//			logger.info("runapp empty JdOrderNewApp,appid:{},time:{}", appid, time);
+//			return;
+//		}
+//		saveByObj(appid, obj.getJSONObject("data").getJSONArray("lists"));
+//	}
+//
+//	public static int saveByObj(String appid, JSONArray array) {
+//		JSONObject jsonObject = null;
+//		JSONObject skuList_object = null;
+//
+//		long tradetime = 0;
+//		String tradeid = null;
+//		String parentid = null;
+//		for (Object object : array) {
+//			jsonObject = JSONObject.parseObject(object.toString());
+//			skuList_object = jsonObject.getJSONObject("skuList");
+//
+//			tradetime = jsonObject.getLongValue("orderTime");
+//			tradeid = jsonObject.getString("orderId");
+//
+//			if (JdOrderInfo.dao.exist(tradeid))
+//				return 0;
+//
+//			parentid = jsonObject.getString("parentid");
+//
+//			synchronized (JdOrderNewApp.class) {
+//
+//				JdOrderInfo data = new JdOrderInfo();
+//				data.set("appidkey", appid);
+//				data.set("tradeid", tradeid);
+//				data.set("tradeprice", skuList_object.getDouble("estimateCosPrice"));
+//				data.set("trademoney", skuList_object.getDouble("estimateFee"));
+//				data.set("traderate", skuList_object.getDouble("commissionRate"));
+//				data.set("tradetime", tradetime);
+//				data.set("itemid", skuList_object.getString("skuId"));
+//				data.set("itemtitle", skuList_object.getString("skuName"));
+//				data.set("itemnum", skuList_object.getInteger("skuNum"));
+//				data.set("tkstatus", skuList_object.getInteger("validCode"));
+//				data.set("parentid", parentid);
+//				if (!tradeid.equals(parentid))
+//					data.set("tradetype", 2);
+//
+//				data.set("dividerate", skuList_object.getDouble("subSideRate"));
+//				data.save();
+//				logger.info("runapp,succ neworder,appid:{},tradeid:{}", appid, tradeid);
+//				return 1;
+//			}
+//
+//		}
+//		return 0;
+//
+//	}
+//
+//}

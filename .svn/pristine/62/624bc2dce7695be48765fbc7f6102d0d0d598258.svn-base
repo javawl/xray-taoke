@@ -1,0 +1,123 @@
+package com.xray.taoke.tkapi.vo;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.util.codec.Base64Codec;
+import com.xray.act.util.codec.URLCodec;
+
+public class TbItemEx {
+    private TbItemVo vdata;
+    private TbItemGy gdata;
+    private double uorate;
+
+    private double tkprice;
+    private double tkmoney;
+    private double flrate;
+    private double jierate;
+    private double jiemoney;
+
+    public static void gy2vo(TbItemVo vdata, TbItemGy gdata) {
+        vdata.setCpmoney(gdata.getCpmoney());
+        vdata.setTkrate(gdata.getTkrate());
+    }
+
+    public JSONObject getObj() {
+        JSONObject obj = new JSONObject();
+        obj.put("pic", vdata.getItempic());
+        obj.put("tkp", gdata.getTkpwd());
+        return obj;
+    }
+
+    public String getEContent() {
+        JSONObject obj = new JSONObject();
+        obj.put("pic", vdata.getItempic());
+        obj.put("tkp", gdata.getTkpwd());
+        return URLCodec.encode(new String(Base64Codec.encode(obj.toJSONString())), "UTF-8");
+    }
+
+    public String getChaTitle() {
+        StringBuilder sb = new StringBuilder();
+        if (gdata.getCpmoney() > 0) {
+            sb.append("★【优惠券】").append(gdata.getCpmoney()).append("元\n");
+            sb.append("★【约返利】").append(ConstTk.formatPrice(getJiemoney())).append("元");
+        } else {
+            sb.append("★【约返利】").append(ConstTk.formatPrice(getJiemoney())).append("元\n");
+            sb.append("★【优惠券】").append(gdata.getCpmoney()).append("元");
+        }
+        return sb.toString();
+    }
+
+    public String getChaDesc() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("付费价:").append(ConstTk.formatPrice(getTkprice())).append("\n");
+        sb.append(vdata.getItemtitle());
+        return sb.toString();
+    }
+
+    public String getChaPicurl() {
+        return vdata.getItempic();
+    }
+
+    public double getTkprice() {
+        if (tkprice <= 0)
+            tkprice = vdata.getItemprice() - gdata.getCpmoney();
+        return tkprice;
+    }
+
+    public double getTkmoney() {
+        if (tkmoney <= 0)
+            tkmoney = getTkprice() * gdata.getTkrate();
+        return tkmoney;
+    }
+
+    public double getFlrate() {
+        if (flrate <= 0) {
+            if (getTkmoney() < 1)
+                flrate = 0.71;
+            else if (getTkmoney() < 15)
+                flrate = 0.61;
+            else
+                flrate = 0.51;
+        }
+        return flrate;
+    }
+
+    public double getJierate() {
+        if (jierate <= 0)
+            jierate = getFlrate() > uorate ? getFlrate() : uorate;
+        return jierate;
+    }
+
+    public double getJiemoney() {
+        if (jiemoney <= 0)
+            jiemoney = getTkprice() * gdata.getTkrate() * getJierate();
+        return jiemoney;
+    }
+
+    public TbItemVo getVdata() {
+        return vdata;
+    }
+
+    public TbItemEx setVdata(TbItemVo vdata) {
+        this.vdata = vdata;
+        return this;
+    }
+
+    public TbItemGy getGdata() {
+        return gdata;
+    }
+
+    public TbItemEx setGdata(TbItemGy gdata) {
+        this.gdata = gdata;
+        return this;
+    }
+
+    public double getUorate() {
+        return uorate;
+    }
+
+    public TbItemEx setUorate(double uorate) {
+        this.uorate = uorate;
+        return this;
+    }
+
+}

@@ -1,0 +1,114 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Enhancer;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.TkMenu;
+import com.xray.taoke.admin.service.WeixinApi;
+
+@ControllerBind(controllerKey = "/menu")
+public class MenuController extends AbstractController {
+    private static WeixinApi wxApi = Enhancer.enhance(WeixinApi.class);
+
+    public void goList() {
+        Map<String, Object> cond = new HashMap<String, Object>();
+        getCond(cond, "menuid");
+
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+
+        List<TkMenu> dataList = TkMenu.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+        logger.debug("dataList,size:{}", dataList.size());
+
+        render("/template/pages/tk_menu/list.html");
+    }
+
+    public void goAdd() {
+        String appid = getPara("appid");
+        if (StringUtil.isNotEmpty(appid)) {
+            setAttr("appid", appid);
+            setAttr("action", getPara("action"));
+            TkMenu menu = TkMenu.dao.queryByMenuid(appid);
+            if (menu != null) {
+                setAttr("data", menu);
+                setAttr("contentList", JSONObject.parseArray(menu.getStr("content")));
+            } else {
+                TkMenu data = new TkMenu();
+                data.set("name", getPara("name"));
+                setAttr("data", data);
+            }
+        }
+        render("/template/pages/tk_menu/form.html");
+    }
+
+    public void goEdit() {
+        String seqid = getPara("seqid");
+
+        TkMenu data = TkMenu.dao.findById(seqid);
+        if (data == null) {
+            data = TkMenu.dao.queryByMenuid(getPara("menuid"));
+        }
+
+        setAttr("data", data);
+        setAttr("contentList", JSONObject.parseArray(data.getStr("content")));
+        render("/template/pages/tk_menu/form.html");
+    }
+
+    public void doAdd() {
+        String appid = getPara("appid", "");
+        TkMenu data = new TkMenu();
+        String content = getPara("content");
+        String menuid = "wx_" + UuidUtil.getUuidByJdk(true).substring(8, 24);
+        data.set("menuid", menuid);
+        data.set("name", getPara("name"));
+        data.set("content", content);
+        data.set("state", 1);
+        data.set("inputtime", System.currentTimeMillis());
+        data.set("inputby", getUserid());
+        data.set("edittime", data.get("inputtime"));
+        data.set("editby", data.get("inputby"));
+        data.set("appid", appid);
+        data.save();
+
+        wxApi.createMenu(appid, content);
+        logger.info("doAdd,menuid:{},opid:{},{}", menuid, getUserid(), getRemoteIp());
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        String seqid = getPara("seqid");
+        TkMenu data = TkMenu.dao.findById(seqid);
+        String appid = data.getStr("appid");
+        data.set("name", getPara("name"));
+        data.set("content", getPara("content"));
+        data.set("edittime", System.currentTimeMillis());
+        data.set("editby", getUserid());
+        data.update();
+
+        wxApi.createMenu(appid, getPara("content"));
+        logger.info("doEdit,menuid:{},opid:{},{}", data.getMenuid(), getUserid(), getRemoteIp());
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doDel() {
+        String seqid = getPara("seqid");
+
+        TkMenu.dao.doDels(getUserid(), seqid);
+        logger.info("doDels,seqids:{},opid:{},{}", seqid, getUserid(), getRemoteIp());
+
+        renderRtn(RtnFactory.succ);
+    }
+
+}

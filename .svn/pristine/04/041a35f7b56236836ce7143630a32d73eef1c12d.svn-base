@@ -1,0 +1,85 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.TkStatDaily;
+import com.xray.taoke.admin.model.TkStatDetail;
+
+public class TkStatDailyApp extends AbstractApp {
+    private String day;
+
+    public TkStatDailyApp(String day) {
+        this.day = day;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun(day);
+        } catch (Exception e) {
+            logger.error("errapp,stat daily,day:" + day, e);
+        }
+    }
+
+    private void doRun(String day) {
+        TkStatDetail detail = TkStatDetail.dao.sumByDay(day);
+        if (detail == null) {
+            logger.error("errapp,empty daily,day:{}", day);
+            return;
+        }
+
+        TkStatDaily.dao.deleteById(day);
+
+        TkStatDaily data = new TkStatDaily();
+        data.set("userall", detail.getInt("userall"));
+        data.set("usernew", detail.getInt("usernew"));
+        data.set("activeuv", detail.getInt("activeuv"));
+        data.set("chaquanpv", detail.getInt("chaquanpv"));
+        data.set("tsoupv", detail.getInt("tsoupv"));
+        data.set("titempv", detail.getInt("titempv"));
+        data.set("tshoppv", detail.getInt("tshoppv"));
+        data.set("tlinkpv", detail.getInt("tlinkpv"));
+
+        int ordernew = 0;
+        double newprice = 0;
+        double newmoney = 0;
+        double newjie = 0;
+        int orderxbind = 0;
+        double xbindmoney = 0;
+        int orderjie = 0;
+        double jiemoney = 0;
+        List<OrderInfo> list = OrderInfo.dao.queryByDay(day);
+        for (OrderInfo order : list) {
+            switch (order.getInt("tkstatus")) {
+            case 13:
+                break;
+            case 3:
+                ++orderjie;
+                jiemoney += order.getDouble("trademoney");
+            default:
+                ++ordernew;
+                newprice += order.getDouble("tradeprice");
+                newmoney += order.getDouble("trademoney");
+                newjie += order.getDouble("jiemoney");
+                break;
+            }
+            if (StringUtil.isEmpty(data.getStr("userid"))) {
+                ++orderxbind;
+                xbindmoney += order.getDouble("trademoney");
+            }
+        }
+        data.set("ordernew", ordernew);
+        data.set("newprice", newprice);
+        data.set("newmoney", newmoney);
+        data.set("newjie", newjie);
+        data.set("orderxbind", orderxbind);
+        data.set("xbindmoney", xbindmoney);
+        data.set("orderjie", orderjie);
+        data.set("jiemoney", jiemoney);
+        data.save();
+        logger.info("runapp,stat daily,day:{}", day);
+    }
+
+}

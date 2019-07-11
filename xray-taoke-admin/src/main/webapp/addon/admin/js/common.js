@@ -1,0 +1,178 @@
+var base = (function(base) {
+	
+	base.domain = cxt;
+	
+    base.getQueryString = function(name) {
+	    var reg = new RegExp("(^|&)"+name+"=([^&]*)(&|$)");
+        var result = window.location.search.substr(1).match(reg);
+        return result?decodeURIComponent(result[2]):null;
+	}
+    
+    base.logout = function() {
+    	layer.confirm('确定要退出管理系统吗？', {
+		  btn: ['退出','取消']
+		}, function(){
+			ajaxGet(base.domain + "/admin/account/doLogout", null, function(rtn) {
+				if(rtn.code!=1) {
+					alert(rtn.msg);
+					return;
+				}
+				location.href=base.domain+"/goLogin";
+			})
+		});
+    }
+    
+    base.showWarMsg = function(msg, callback) {
+    	layer.msg(msg, {icon: 0, time: 1000}, function() {
+    		callback && callback();
+    	});
+    }
+    
+    base.showSuccMsg = function(msg, callback) {
+    	layer.msg(msg, {icon: 1, time: 500}, function() {
+    		callback && callback();
+    	});
+    }
+    
+    base.showErrMsg = function(msg, callback) {
+    	layer.msg(msg, {icon: 2, time: 1500}, function() {
+    		callback && callback();
+    	});
+    }
+    
+    base.openWin = function(url) {
+    	var symbol = "?";
+    	if(url.indexOf("?")!=-1)
+    		symbol = "&";
+    	window.location.href = url + symbol + "referer=" + encodeURIComponent(location.href);
+    }
+    
+    base.backWin = function() {
+    	var referer = base.getQueryString("referer");
+    	if(referer)
+    		window.location.href = referer;
+    	else
+    		history.go(-1)
+    }
+    
+    return base;
+})(window.base || {});
+
+function ajaxGet(url, paras, callback, errback) {
+	var load = layer.load(1, {shade: [0.3,'#000']});
+    paras || (paras = {});
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: paras,
+        dataType: 'jsonp',
+        jsonp: 'jsoncallback',
+        timeout: 15000,
+        success: function(rtn) {
+        	layer.close(load);
+            callback && callback(rtn);
+        },
+        error: function(xhr, type, errorThrown) {
+        	layer.close(load);
+            errback && errback();
+            !errback && alert("请求超时，请检查您的网络！");
+        }
+    });
+}
+
+
+function ajaxGetByHaodanku(url, paras, callback, errback) {
+	var load = layer.load(1, {shade: [0.3,'#000']});
+    paras || (paras = {});
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: paras,
+        dataType: 'jsonp',
+        jsonp: 'jsoncallback',
+        timeout: 300000,
+        success: function(rtn) {
+        	layer.close(load);
+            callback && callback(rtn);
+        },
+        error: function(xhr, type, errorThrown) {
+        	layer.close(load);
+            errback && errback();
+            !errback && alert("请求超时，请检查您的网络！");
+        }
+    });
+}
+
+
+
+function ajaxPost(url, paras, callback, errback) {
+    var load = layer.load(1, {shade: [0.3,'#000']});
+    paras || (paras = {});
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: paras,
+        dataType: 'jsonp',
+        jsonp: 'jsoncallback',
+        timeout: 15000,
+        success: function(rtn) {
+            layer.close(load);
+            callback && callback(rtn);
+        },
+        error: function(xhr, type, errorThrown) {
+            layer.close(load);
+            errback && errback();
+            !errback && alert("请求超时，请检查您的网络！");
+        }
+    });
+}
+
+
+var utilityHandle = {
+	setFocus:function(objFocusEven,values){
+		objFocusEven.focus();
+		// 默认使用focus方法聚焦 
+       	/* -------------- 2012.09.18 代码更新（增加对FF，Opera，Chorme现代浏览器的支持）--------*/
+       	var objEven =  objFocusEven[0]; // 将Jquery对象转换为Dom对象
+	  	if(window.getSelection){
+			// 现代浏览器  
+			objEven.selectionStart =objEven.selectionEnd =   values;  
+		}else if(document.selection){
+	        // Ie浏览器
+	        /*  if ($.browser.msie) { //--- 此段注释代码，于2012.09.18日修改时去除---*/
+	       var txt =  objEven.createTextRange();
+			// 将传入的控件对象转换为Dom对象，并创建一个TextRange对象
+	       txt.moveStart('character', values);
+			// 设置光标显示的位置
+	       txt.collapse(true);
+	       txt.select();
+    	}
+}};
+
+//js时间格式化
+Date.prototype.Format = function (fmt) { //author: meizz 
+    var o = {
+        "M+": this.getMonth() + 1, //月份 
+        "d+": this.getDate(), //日 
+        "h+": this.getHours(), //小时 
+        "m+": this.getMinutes(), //分 
+        "s+": this.getSeconds(), //秒 
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+        "S": this.getMilliseconds() //毫秒 
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+    if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+//  var time1 = new Date().Format("yyyy-MM-dd");
+//	console.log(time1)
+}
+
+function GetDateStr(AddDayCount) { 
+	var dd = new Date(); 
+	dd.setDate(dd.getDate()+AddDayCount);//获取AddDayCount天后的日期 
+	var y = dd.getFullYear(); 
+	var m = dd.getMonth()+1;//获取当前月份的日期 
+	var d = dd.getDate(); 
+	return y+"-"+m+"-"+d; 
+} 

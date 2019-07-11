@@ -1,0 +1,83 @@
+package com.xray.taoke.admin.app;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.taoke.admin.model.TkOrderInfo;
+import com.xray.taoke.admin.model.TkUouser;
+import com.xray.taoke.admin.service.Tk21dsService;
+
+public class OrderJieSuanApp implements Runnable {
+    private static Logger logger = LoggerFactory.getLogger(OrderJieSuanApp.class);
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private String appid;
+
+    public OrderJieSuanApp(String appid) {
+        this.appid = appid;
+    }
+
+    public void updateFiveDaysByJieSuan(JSONArray array) {
+        for (Object object : array) {
+            JSONObject jsonObject2 = JSONObject.parseObject(object.toString());
+            String trade_id = jsonObject2.getString("trade_id");
+            String tk_status = jsonObject2.getString("tk_status");
+            TkOrderInfo info = TkOrderInfo.dao.queryByTraid(trade_id);
+            int tkstatus = info.getInt("tkstatus");
+            String userid = info.getStr("userid");
+            TkUouser tkUouser = TkUouser.dao.queryByUserId(userid);
+            int tk_status_int = Integer.valueOf(tk_status);
+            if (tk_status_int == 3 && tkstatus == 14) {
+                info.set("tkstatus", tk_status_int);
+                info.update();
+                double qbconfirm = tkUouser.getDouble("qbconfirm");
+                double jiemoney = info.getDouble("jiemoney");
+                double balance = 0;
+                if (qbconfirm - jiemoney > 0)
+                    balance = qbconfirm - jiemoney;
+                tkUouser.set("qbconfirm", balance);
+                tkUouser.update();
+            }
+        }
+    }
+
+    public void runListByPaySucc() {
+
+        TkOrderInfo info = TkOrderInfo.dao.queryByAppid(appid);
+        long tradetime = info.getLong("tradetime");
+
+        long five_day_time = tradetime - 1000 * 5 * 60 * 60 * 24;
+        String five_time_str = dateFormat.format(new Date(five_day_time));
+        try {
+
+            JSONObject jsonObject = Tk21dsService.instance.gettkorder(appid, five_time_str, 1200);
+            int code = jsonObject.getIntValue("code");
+            if (code == -1)
+                return;
+            if (code == 200) {
+                String data = jsonObject.getString("data");
+                JSONArray array = JSONArray.parseArray(data);
+                updateFiveDaysByJieSuan(array);
+            }
+
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return;
+    }
+
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
+        try {
+            runListByPaySucc();
+        } catch (Exception e) {
+            logger.error("err gaoyong,appid:" + appid, e);
+        }
+    }
+}

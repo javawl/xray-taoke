@@ -1,0 +1,23 @@
+package com.xray.taoke.act.model;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.taoke.act.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_linkinfo", pkName = "seqid")
+public class LinkInfo extends JfModel<LinkInfo> {
+    private static final long serialVersionUID = 1L;
+    public static final LinkInfo dao = new LinkInfo();
+
+    public String queryAppidByLinkid(String linkid) {
+        String sql = "select `appid` from `tk_linkinfo` where `linkid`=?";
+        return Db.use(Constant.db_dataSource).queryStr(sql, linkid);
+    }
+
+    public LinkInfo queryByLinkid(String linkid) {
+        String sql = "select * from `tk_linkinfo` where `linkid`=?";
+        return dao.findFirst(sql, linkid);
+    }
+
+}

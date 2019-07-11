@@ -1,0 +1,117 @@
+package com.xray.taoke.tkapi;
+
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.client.fluent.Request;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.taoke.tkapi.vo.ConstTk;
+import com.xray.taoke.tkapi.vo.TbItemVo;
+
+public class HaodankuService {
+    private static String itemlist = "http://v2.api.haodanku.com/itemlist/apikey/" + ConstTk.config.get("hdk.apikey");
+    private static String brand = "http://v2.api.haodanku.com/brand/apikey/" + ConstTk.config.get("hdk.apikey");
+    private static String sales_list = "http://v2.api.haodanku.com/sales_list/apikey/" + ConstTk.config.get("hdk.apikey");
+    private static String column = "http://v2.api.haodanku.com/column/apikey/" + ConstTk.config.get("hdk.apikey");
+    private static String supersearch = "http://v2.api.haodanku.com/supersearch/apikey/" + ConstTk.config.get("hdk.apikey");
+
+    public static HaodankuService instance = new HaodankuService();
+
+    public static void main(String[] args) throws Exception {
+        System.out.println(HaodankuService.instance.supersearch("女鞋", 1, 1));
+    }
+
+    // cid：0全部，1女装，2男装，3内衣，4美妆，5配饰，6鞋品，7箱包，8儿童，9母婴，10居家，11美食，12数码，13家电，14其他，15车品，16文体，17宠物
+    public JSONObject itemlist(int cid) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(itemlist);
+        sb.append("/nav/1");
+        sb.append("/cid/").append(cid);
+        sb.append("/back/100");
+        sb.append("/sort/0");// 按最新排序
+        sb.append("/min_id/1");
+        return JSONObject.parseObject(reqGet(sb.toString()));
+    }
+
+    // 超值大牌
+    public JSONObject brand() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(brand);
+        sb.append("/back/100");
+        sb.append("/min_id/1");
+        return JSONObject.parseObject(reqGet(sb.toString()));
+    }
+
+    // 各大榜单
+    public JSONObject sales_list(int sale_type) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(sales_list);
+        sb.append("/sale_type/").append(sale_type);
+        return JSONObject.parseObject(reqGet(sb.toString()));
+    }
+
+    // 商品筛选
+    // type=1是今日上新（当天新券商品），type=2是9.9包邮，type=3是30元封顶，type=4是聚划算，type=5是淘抢购，type=6是0点过夜单，type=7是预告单，type=8是品牌单，type=9是天猫商品，type=10是视频单
+    public JSONObject column(int type) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(column);
+        sb.append("/type/").append(type);
+        sb.append("/back/100");
+        sb.append("/min_id/1");
+        return JSONObject.parseObject(reqGet(sb.toString()));
+    }
+
+    public JSONObject supersearch(String keyword, int min_id, int tp_p) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append(supersearch);
+            sb.append("/keyword/").append(URLEncoder.encode(URLEncoder.encode(keyword, "UTF-8"), "UTF-8"));
+            sb.append("/back/100");
+            sb.append("/min_id/").append(min_id);
+            sb.append("/tp_p/").append(tp_p);
+            return JSONObject.parseObject(reqGet(sb.toString()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String doSupersearch(String keyword, int min_id, int tp_p) {
+        JSONObject obj = HaodankuService.instance.supersearch(keyword, min_id, tp_p);
+        if (obj.getInteger("code") != 1)
+            throw new RtException(ConstTk.data_err);
+
+        List<TbItemVo> list = new ArrayList<TbItemVo>();
+        JSONArray arr = obj.getJSONArray("data");
+        for (int i = 0; i < arr.size(); i++) {
+            list.add(obj2vo(arr.getJSONObject(i)));
+        }
+        String lid = ConstTk.getUuid16();
+        TbItemService.instance.addItemListVo(lid, list);
+        return lid;
+    }
+
+    private String reqGet(String url) {
+        try {
+            return Request.Get(url).execute().returnContent().asString();
+        } catch (Exception e) {
+            throw new RtException(e);
+        }
+    }
+
+    private TbItemVo obj2vo(JSONObject obj) {
+        TbItemVo data = new TbItemVo();
+        data.setItemid(obj.getString("itemid"));
+        data.setItemtitle(obj.getString("itemtitle"));
+        data.setItemprice(obj.getDoubleValue("itemprice"));
+        data.setItempic(obj.getString("itempic"));
+        data.setCpmoney(obj.getDoubleValue("couponmoney"));
+        data.setTkrate(obj.getDoubleValue("tkrates") / 100);
+        return data;
+    }
+
+}

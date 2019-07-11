@@ -1,0 +1,11 @@
+v8.0
+- 支持JDK 8
+- 支持Gradle 4.8
+- 支持Tomcat 9.0
+  -- catalina.properties set jarsToSkip=\*.jar
+- 支持Eclipse Oxygen (4.7)
+  -- eclipse explorer 4.1.0
+  -- eclipse tomcat plugin 9.1.2
+  -- enhanced class decompiler 3.0.0
+- 支持JFinal 3.4
+  -- jfinal weixin 2.0

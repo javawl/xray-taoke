@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>系统设置 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/datepicker/datepicker3.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "../../inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "../../inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li><i class="fa fa-home"></i>主页</li>
+							<li class="active">菜单管理</li>
+							<li class="active">列表</li>
+						</ol>
+						<h1>
+					<small></small>
+				</h1>
+					</section>
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<div class="row">
+											<!-- TODO -->
+											<div class="col-md-3">
+												<input id="word" type="text" class="form-control" value="${word!}" maxlength="30" placeholder="输入菜单名称" />
+											</div>
+											<!--分组-->
+											<div class="col-md-2">
+												<button id="search" class="btn btn-default">查询</button>
+											</div>
+											<!--搜索-->
+											<div class="col-md-7">
+												<!-- TODO -->
+												<div class="pull-right">
+													<button onclick="window.location.href='${cxt!}/admin/menu/goAdd'" type="button" class="btn btn-primary">新增</button>
+													<button id="deletes" type="button" class="btn btn-danger">删除</button>
+												</div>
+											</div>
+										</div>
+
+									</div>
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr>
+																<th width="5%"><input type="checkbox" class="all minimal" /></th>
+																<th>菜单ID</th>
+																<th>菜单名称</th>
+																<th>菜单排序</th>
+																<th width="100px">操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr>
+																	<td><input type="checkbox" class="item minimal" value="${item.menuid!}" /></td>
+																	<td>
+                                                                        <a href="${cxt!}/admin/menu/goQueryAllModuleById?menuid=${item.menuid!}">
+                                                                            ${item.menuid!}
+                                                                        </a>
+                                                                    </td>
+																	<td>
+																		<a href="${cxt!}/admin/menu/goQueryAllModuleById?menuid=${item.menuid!}">
+																			<i class="fa ${item.icon!}">
+																			${item.name!}
+																			</i>
+																		</a>
+																	</td>
+																	<td>${item.orderno!}</a>
+																	</td>
+
+																	<td data-id="${item.menuid!}">
+																		<a href="${cxt!}/admin/menu/goEdit?menuid=${item.menuid!}" class="btn_edit text-yellow">修改</a>&nbsp;&nbsp;&nbsp;&nbsp;
+																		<a href="javascript:;" class="btn_delete text-red">
+																			删除</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+
+										</div>
+
+										<div>
+											<!-- TODO -->
+											<div class="tcdPageCode pull-right" style="padding:0;"></div>
+											<span class="pull-right">总共&nbsp;${page.count}&nbsp;条&nbsp;</span>
+										</div>
+										<!-- /.box-body -->
+									</div>
+									<!-- /.box -->
+								</div>
+							</div>
+					</section>
+					</div>
+					<#include "../../inc/footer.html">
+				</div>
+				<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+				<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+				<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+				<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+				<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+				<script>
+					$(document).ready(function() {
+						if($(".box-body").width() < 800) {
+							$(".box-body").css("overflow", "auto");
+						}
+						//聚焦控件后光标停留在文本框末尾	
+						var setFocusText = $("#word");
+						utilityHandle.setFocus(setFocusText, setFocusText.val().length);
+						//查询绑定回车事件	
+						$("#word").keydown(function(e) {
+							var ev = document.all ? window.event : e;
+							if(ev.keyCode == 13) {
+								$('#search').click();
+							}
+						})
+						$("#search").click(function() {
+								window.location.href = '${cxt!}/admin/menu/goList?word=' + $('#word').val()
+							})
+							//分页	
+						$(".tcdPageCode").createPage({
+							pageCount: ${page.pcount!},
+							current: ${page.pno!},
+							backFn: function(n) {
+								location.href = "${cxt!}/admin/menu/goList?inputtimeStr=${inputtimeStr!}&state=${state!}&word=${word!}&pno=" + n;
+							}
+						});
+
+						var checkList = [],
+							$checkboxAll = $('input[type="checkbox"].all'),
+							$checkbox = $('input[type="checkbox"].item'),
+							i = 0;
+						//启动icheck	
+						$(('input[type="checkbox"].minimal')).iCheck({
+							checkboxClass: 'icheckbox_minimal-blue'
+						});
+						//全选checkbox	
+						$checkboxAll.on('ifChecked', function(event) {
+							$checkbox.iCheck('check');
+							checkList = [];
+							$checkbox.each(function() {
+								if(true == $(this).is(':checked')) {
+									checkList.push($(this).val());
+								}
+							});
+						});
+						$checkboxAll.on('ifUnchecked', function(event) {
+							$checkbox.iCheck('uncheck');
+							checkList = [];
+						});
+						//单项checkbox	
+						$checkbox.on('ifChecked', function(event) {
+							checkList.push(event.target.value);
+						});
+						$checkbox.on('ifUnchecked', function(event) {
+							checkList.forEach(function(e, i) {
+								if(e == event.target.value) {
+									checkList.splice(i, 1);
+									return;
+								}
+							})
+						});
+
+						//删除	
+						$(".btn_delete").click(function() {
+							var menuid = $(this).parent().attr("data-id");
+							layer.confirm('确定删除吗？', {
+								btn: ['删除', '取消']
+							}, function() {
+								ajaxGet("${cxt!}/admin/menu/doDelete", {
+									menuid: 　menuid
+								}, function(rtn) {
+									if(rtn.code != 1) {
+										layer.msg(rtn.msg, {
+											icon: 2
+										});
+										return;
+									}
+									layer.msg('删除成功！即将自动刷新...', {
+										time: 500,
+										icon: 1
+									}, function() {
+										location.reload();
+									});
+								})
+							});
+						})
+
+						//批量删除	
+						$("#deletes").click(function() {
+							if(checkList.length == 0) {
+								layer.msg("请选择要操作的选项！", {
+									icon: 0
+								});
+								return;
+							}
+							var idsStr = "";
+							checkList.forEach(function(e) {
+								idsStr += e + ",";
+
+							})
+							var menuid = $(this).parent().attr("data-id");
+							layer.confirm('确定删除选中的项吗？', {
+								btn: ['删除', '取消']
+							}, function() {
+								ajaxGet("${cxt!}/admin/menu/doDeletes", {
+									idsStr: idsStr
+								}, function(rtn) {
+									if(rtn.code != 1) {
+										layer.msg(rtn.msg, {
+											icon: 2
+										});
+										return;
+									}
+									layer.msg('删除成功！即将自动刷新...', {
+										time: 500,
+										icon: 1
+									}, function() {
+										location.reload();
+									});
+								})
+							});
+						})
+					})
+				</script>
+	</body>
+
+</html>

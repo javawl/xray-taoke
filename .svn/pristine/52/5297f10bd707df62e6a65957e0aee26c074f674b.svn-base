@@ -1,0 +1,30 @@
+<html lang="zh">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+		<title>省钱好券</title>
+		<link rel="shortcut icon" href="http://alicdn.ldpro.cn/img0/favicon.ico" />
+		<link rel="stylesheet" href="http://alicdn.ldpro.cn/css0/weui.min.css">
+	</head>
+	<body ontouchstart="">
+		<div class="container" id="container">
+			<div class="page msg_success js_show">
+				<div class="page msg_success js_show">
+					<div class="weui-msg">
+						<div class="weui-msg__icon-area"><i class="weui-icon-info weui-icon_msg"></i></div>
+						<div class="weui-msg__text-area">
+							<h2 class="weui-msg__title">宝贝找不到</h2>
+							<p class="weui-msg__desc">亲亲，优惠券和返利都是动态的，每天不同</p>
+							<p class="weui-msg__desc">重新发链接进行查询</p>
+						</div>
+						<div class="weui-msg__opr-area">
+							<p class="weui-btn-area">
+								<a href="${cxt!}/tshop?sid=${sid!}" class="weui-btn weui-btn_default">👉👉&nbsp;好券商城&nbsp;👈👈</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

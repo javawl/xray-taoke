@@ -1,0 +1,100 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_orderinfo", pkName = "seqid")
+public class TkOrderInfo extends JfModel<TkOrderInfo> {
+    private static final long serialVersionUID = 1L;
+    public static final TkOrderInfo dao = new TkOrderInfo();
+
+    public boolean exist(String tradeid) {
+        String sql = "select 1 from `tk_orderinfo` where `tradeid`=?";
+        return dao.findFirst(sql, tradeid) != null;
+    }
+
+    public List<TkOrderInfo> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_orderinfo` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        if (cond != null) {
+            if (!StringUtil.isEmpty(cond.get("tradeid"))) {
+                sb.append(" and  `tradeid` =  '").append(cond.get("tradeid")).append("'");
+            }
+            if (!StringUtil.isEmpty(cond.get("userid"))) {
+                sb.append(" and  `userid` =  '").append(cond.get("userid")).append("'");
+            }
+
+            if (StringUtil.isNotEmpty(cond.get("sday"))) {
+                sb.append(" and `tradetime`>=").append(cond.get("sday"));
+            }
+            if (StringUtil.isNotEmpty(cond.get("eday"))) {
+                sb.append(" and `tradetime`<").append(cond.get("eday"));
+            }
+
+            if (!StringUtil.isEmpty(cond.get("tkstatus"))) {
+                if (Integer.valueOf((String) cond.get("tkstatus")) != 0) {
+                    sb.append(" and  `tkstatus` =  '").append(cond.get("tkstatus")).append("'");
+                }
+            }
+
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_orderinfo` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<TkOrderInfo>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+        return dao.find(sql + sb.toString());
+    }
+
+    public TkOrderInfo queryByTraid(String traid) {
+        String sql = "select * from `tk_orderinfo` where  tradeid = ?";
+        return dao.findFirst(sql, traid);
+    }
+
+    public TkOrderInfo queryByAppid(String appid) {
+        String sql = "select * from `tk_orderinfo` where  appid = ? order by tradetime asc";
+        return dao.findFirst(sql, appid);
+    }
+
+    public List<TkOrderInfo> queryByAppidBeweenTime(String appid, long stime, long etime) {
+        String sql = "select * from `tk_orderinfo` where  appid = ? and tradetime >=? and tradetime <=?  and tkstatus = 14 order by tradetime asc";
+        return dao.find(sql, appid, stime, etime);
+    }
+
+    public Boolean updateAvatarByUserId(String userid, String appid) {
+        String sql = "UPDATE   `tk_orderinfo` SET `wxavatar` = (SELECT avatar FROM  `tk_mpuser_" + appid + "` WHERE userid = ? ) WHERE 1=1 AND `userid` =? ";
+        return Db.update(sql, userid, userid) != 0;
+    }
+
+    public Boolean updateNameByUserId(String userid, String appid) {
+        String sql = "UPDATE   `tk_orderinfo` SET `wxname` = (SELECT name FROM  `tk_mpuser_" + appid + "` WHERE userid = ? ) WHERE 1=1 AND `userid` =? ";
+        return Db.update(sql, userid, userid) != 0;
+    }
+
+    public List<TkOrderInfo> queryByNotAvatar() {
+        String sql = "select * from `tk_orderinfo` where 1=1 and wxavatar ='' ";
+        return dao.find(sql);
+    }
+
+    public String getWxnameutf8() {
+        try {
+            return new String(get("wxname"), "UTF-8");
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+}

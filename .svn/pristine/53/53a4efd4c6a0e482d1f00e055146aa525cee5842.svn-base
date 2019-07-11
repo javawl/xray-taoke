@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>回复管理 | ${_TITLE_!}</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+  <link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+  <#include "/template/inc/inc.html">
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+  <div class="wrapper">
+    <#include "/template/inc/header.html">
+    <div class="content-wrapper">
+        <!--content header-->
+        <section class="content-header">
+          <ol class="breadcrumb" style="left: 10px;">
+            <li>运营管理</li>
+            <li>回复管理</li>
+            <li class="active">组合修改</li>
+          </ol>
+          <h1><small></small></h1>
+        </section>
+        <!--/content header-->
+      
+        <#if !data??><#assign data={}/></#if>
+        <section class="content">
+            <!-- Your Page Content Here -->
+            <div class="box box-primary">
+              <div class="box-header">
+                  <div class="sequence_list am-text-sm">
+                    <div class="box-tools">
+                      <button id="btn_content_add_txt" type="button" class="btn btn-primary">添加文字项</button>
+                      <button id="btn_content_add_img" type="button" class="btn btn-primary">添加图片项</button>
+                    </div>
+                  </div>
+              </div>
+              <div class="box-body">
+                  <input type="hidden" id="seqid" value="${data.seqid!}" />
+                  <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                            <label>规则名称</label>
+                            <input class="form-control" type="text" id="name" value="${data.name!}" placeholder="请输入规则名称">
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                            <label>触发关键字</label>
+                            <input class="form-control" type="text" id="word" value="${data.word!}" <#if data.word??>disabled</#if> placeholder="请输入触发关键字">
+                          </div>
+                      </div>
+                  </div>
+                <!-- /.row -->
+              </div>
+              <div class="box-body">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                          <td width="5%">编号</td>
+                          <td>内容</td>
+                          <td width="10%">操作</td>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody">
+                      <#if contentList??>
+                        <#list contentList as item>
+                        <tr>
+                          <td class="tr_index">${item_index+1!}</td>
+                          <#if item.type=="image">
+                            <td>
+															<a href="javascript:;" id="${item_index!}">
+																<#if item.content?index_of("http") == 0 >
+																	<img width="100" height="100" class="img-responsive pad" data-picUrl="${item.content!}" src="${item.content!}" data-id="${item.mediaid!}" alt="封面">
+																<#else>
+																	<img width="100" height="100" class="img-responsive pad" data-picUrl="${item.content!}" src="${cxt!}${item.content!}" data-id="${item.mediaid!}" alt="封面">
+																</#if>
+															</a>
+														</td>
+                          <#elseif item.type=="text">
+                            <td><textarea rows="5" type="text" class="form-control" maxlength="500" placeholder="添加文字内容...">${item.content!}</textarea></td>
+                          </#if>
+                          <td><a href="javascript:;" onclick="removeTr(this)" class="text-red"><i class="fa fa-close"></i>删除</a></td>
+                        </tr>
+                        </#list>
+                      <#else>
+                        <tr>
+                          <td class="tr_index">1</td>
+                          <td><a href="javascript:;" id="0"><img width="100" height="100" class="img-responsive pad" src="${cxt!}/addon/admin/img/default.png" alt="封面"></a><span></span></td>
+                          <td><a href="javascript:;" onclick="removeTr(this)" class="text-red"><i class="fa fa-close"></i>删除</a></td>
+                        </tr>
+                      </#if>
+                    </tbody>
+                  </table>
+              </div>
+              <!-- /.box-body -->
+              <div class="box-footer">
+                <a id="submit" class="btn btn-primary">提交</a>
+              </div>
+            </div>
+        </section>
+    </div>
+    <#include "/template/inc/footer.html">
+  </div>
+  <script src="${cxt!}/addon/input-mask/jquery.inputmask.js"></script>
+  <script src="${cxt!}/addon/input-mask/jquery.inputmask.date.extensions.js"></script>
+  <script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+  <script src="${cxt!}/addon/Sortable/Sortable.min.js"></script>
+  <script type="text/javascript">
+    var uploader;
+  
+    $(document).ready(function() {
+        //Uploader
+        for(var i=0;i<$("tbody").children().length;i++) {
+            uploaderLoad("#"+i);
+        }
+        
+        //Sortable
+        new Sortable($("tbody").get(0),{animation: 150, onUpdate: function() {
+            refreshIndex();
+          }
+        });
+      
+        $("#submit").on("click", function() {
+            var name = $("#name").val();
+            if(!name) {
+                layer.msg("请输入规则名称！", {icon: 0});
+                return;
+            }
+            var word = $("#word").val();
+            if(!word) {
+                layer.msg("请输入关键字！", {icon: 0});
+                return;
+            }
+            var arr = [];
+            var childs = $("tbody").children();
+            for(var i=0;i<childs.length;i++) {
+                var tds = $(childs[i]).find("td");
+                if($(tds[1]).find("img")[0]) {
+                  var content = $(tds[1]).find("img").attr("data-picUrl");
+                  if(!content) {
+                      layer.msg("请上传图片，第"+(i+1)+"项", {icon: 0});
+                      return
+                  }
+                  
+                  var mediaid = $(tds[1]).find("img").attr("data-id");
+                  
+                  arr.push({
+                      type: 'image',
+                      content: content,
+                      mediaid:mediaid
+                  })
+                }else if($(tds[1]).find("textarea")[0]) {
+                  var content = $(tds[1]).find("textarea").val();
+                  if(!content) {
+                      layer.msg("请输入文字内容，第"+(i+1)+"项", {icon: 0});
+                      return
+                  }
+                  arr.push({
+                      type: 'text',
+                      content: content
+                  })
+                }
+            }
+            
+            var seqid = $("#seqid").val();
+            var ajaxUrl = "${cxt!}/material/doAdd";
+            if(seqid) {
+              ajaxUrl = "${cxt!}/material/doEdit";
+            }
+            ajaxPost(ajaxUrl, {
+              seqid: seqid,
+              name: name,
+              word: word,
+              type: 2,
+              content: JSON.stringify(arr)
+            }, function(rtn) {
+              if(rtn.code!=1) {
+                layer.msg(JSON.stringify(rtn), {icon: 2});
+                return;
+              }
+              layer.alert("提交成功！请关闭页面并刷新列表", {icon: 1}, function() {
+                window.opener = null;
+                window.close();
+              });
+            })
+        })
+        
+        $("#btn_content_add_img").click(function() {
+            if($("tbody").children().length>8) {
+                layer.msg("最多可配置8个！", {icon: 0});
+                return;
+            }
+            var html = '<tr>';
+            html += '  <td class="tr_index"></td>';
+            html += '  <td><a href="javascript:;" class="filePick"><img width="100" height="100" class="img-responsive pad" data-id=""  src="${cxt!}/addon/admin/img/default.png" alt="封面"></a><span></span></td>';
+            html += '  <td><a href="javascript:;" onclick="removeTr(this)" class="text-red"><i class="fa fa-close"></i>删除</a></td>';
+            html += '</tr>';
+            $("tbody").append(html);
+            setTimeout("refreshIndex()", 100);
+        })
+        
+        $("#btn_content_add_txt").click(function() {
+            if($("tbody").children().length>8) {
+                layer.msg("最多可配置8个！", {icon: 0});
+                return;
+            }
+            var html = '<tr>';
+            html += '  <td class="tr_index"></td>';
+            html += '  <td><textarea rows="5" type="text" class="form-control" maxlength="500" placeholder="添加文字内容..."></textarea></td>';
+            html += '  <td><a href="javascript:;" onclick="removeTr(this)" class="text-red"><i class="fa fa-close"></i>删除</a></td>';
+            html += '</tr>';
+            $("tbody").append(html);
+            setTimeout("refreshIndex()", 100);
+        })
+    })
+    
+    //刷新编号
+    function refreshIndex() {
+        var childs = $(".tr_index");
+        for (var i=0;i<childs.length;i++) {
+          $(childs[i]).text(i+1);
+          $(childs[i]).next().find("a").attr("id", i);
+          uploaderLoad('#'+i);
+        }
+    }
+    
+    function removeTr(evt) {
+        if($("tbody").children().length<=1) {
+            layer.msg("最少需要一项！", {icon: 0});
+            return;
+        }
+        $(evt).parent().parent().remove();
+        refreshIndex($(""));
+    }
+    
+    function uploaderLoad(select) {
+      //上传
+      uploader = WebUploader.create({
+          auto: true,  // 选完文件后，是否自动上传
+          swf: '${cxt!}/plugins/webUploader/Uploader.swf',
+          server: '${cxt!}/sysext/doUpload',
+          pick: select
+      });
+      
+      uploader.on('beforeFileQueued', function(file) {
+          $img = $(select).find("img");
+          uploader.makeThumb( file, function( error, src ) {
+              if(error) {
+                  $(select).next().html("不能预览");
+                  return;
+              }
+              $img.attr('src', src);
+          });
+      });
+      uploader.on('fileQueued', function(file) {
+          $(select).next().html(file.name);
+      });
+      uploader.on('uploadProgress', function( file, percentage ) {
+          $(select).next().html('正在上传...<span class="text-blue">'+file.name+'</span>'+ Math.floor(percentage* 100)+ '%');  
+      });
+      uploader.on('uploadSuccess', function( file, rtn ) {
+          if(rtn.code!=1) {
+            layer.msg(JSON.stringify(rtn), {icon: 2})
+            return;
+          }
+          $(select).next().html('上传成功！<span class="text-blue">'+file.name+'</span>');
+          $(select).find("img").attr("data-picUrl", rtn.data);
+      });
+      uploader.on('uploadError', function( file ) {
+          layer.msg("上传失败", {icon: 2})
+      });
+    }
+    
+  </script>
+</body>
+</html>

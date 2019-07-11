@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>订单管理 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>订单管理</li>
+							<li class="active">订单管理</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+
+					<section class="content">
+						<!-- Your Page Content Here -->
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+
+									<div class="box-header">
+										<form action="${cxt!}/orderinfo/goList">
+											<div class="row">
+												<div class="col-md-2">
+													<select name="appid" class="form-control">
+														<option value="">选择公众号</option>
+														<#list mpList as item>
+															<option value="${item.appid!}" <#if appid=item.appid>selected</#if>>${item.name!}</option>
+														</#list>
+													</select>
+												</div>
+												
+												<div class="col-md-2">
+													<input name="tradeid" type="text" class="form-control" value="${tradeid!}" placeholder="订单号" />
+												</div>
+												<div class="col-md-2">
+													<select name="tkstatus" class="select2 form-control">
+														<option value=0>选择状态</option>
+														<option value=3>订单结算</option>
+														<option value=12>订单付款</option>
+														<option value=13>订单失效</option>
+														<option value=14>订单成功</option>
+													</select>
+												</div>
+												<div class="col-md-2">
+													<input id="page_pno" name="pno" type="hidden" value="${page.pno!}" />
+                          <input type="hidden" name="day" value="${day!}" />
+													<input type="hidden" name="userid" value="${userid!}" />
+													<input type="hidden" name="tkids" value="${tkids!}" />
+													<input id="view" type="hidden" name="view" value="${view!}" />
+													<button id="search" type="submit" class="btn btn-default">查询</button>
+												</div>
+												<div class="col-md-4">
+													<div class="pull-right">
+														<a onclick="doUserInfoApp()" href="javascript:;" class="btn btn-primary">更新</a>
+														<a onclick="doOrderStateApp()" href="javascript:;" class="btn btn-warning">同步</a>
+														<a onclick="doOrderJie()" href="javascript:;" class="btn btn-danger">结算</a>
+														<a href="javascript:;" onclick="$('#view').val('item_list');$('#search').click();" target="_blank" class="btn btn-default">记录</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr style="white-space:nowrap;">
+																<th>订单时间</th>
+																<th>订单号</th>
+																<th>公众号</th>
+																<th>昵称</th>
+																<th>头像</th>
+																<th>付款</th>
+																<th>佣金</th>
+																<th>佣金率</th>
+																<th>状态</th>
+																<th>返利</th>
+																<th>返利率</th>
+																<th>结算</th>
+																<th>绑定</th>
+																<th>verno</th>
+																<th>推广位</th>
+																<th>操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td>${item.tradetime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</td>
+																	<td>${item.tradeidENC!}<#if (item.tradeid != item.parentid)><i class="fa fa-star-o"></i></#if></td>
+																	<td>${item.mpname!}</td>
+																	<td>${item.wxnameUTF8!}</td>
+																	<td>
+																		<#if item.wxavatar !=''><img width="40px" src="${item.wxavatar!}"></#if>
+																	</td>
+																	<td>${item.tradeprice!}</td>
+																	<td>${item.trademoney!}</td>
+																	<td>${item.traderate?string('0.0#')}</td>
+																	<td>
+																		<#if item.tkstatus==3>
+																			<span class="text-green">订单结算</span>
+																			<#elseif item.tkstatus==12>
+																				<span class="text-yellow">订单付款</span>
+																				<#elseif item.tkstatus==13>
+																					<span class="text-red">订单失效</span>
+																					<#elseif item.tkstatus==14>
+																						<span class="text-green">订单成功</span>
+																		</#if>
+																	</td>
+																	<td>${item.jiemoney?string('0.0#')}</td>
+																	<td>${item.jierate?string('0.0#')}</td>
+																	<td>
+																		<#if item.tkstatus==item.state>
+																			<span class="text-green">已处理</span>
+																				<#else>
+																					<span class="text-red">未处理</span>
+																		</#if>
+																	</td>
+
+																	<td>
+																		<#if item.userid!="">
+																			<#if item.autobind==1>
+																				<span class="text-red">自动</span>
+																				<#elseif item.autobind==0>
+																					<span>手动</span>
+																			</#if>
+																		</#if>
+																	</td>
+
+																	<td>
+																		<#if item.state==3>
+																			<span>${item.verno3}</span>
+																			<#elseif item.state==12>
+																				<span>${item.verno12}</span>
+																				<#elseif item.state==13>
+																					<span>${item.verno13}</span>
+																		</#if>
+																	</td>
+                                  <td>${item.adzoneid!}</td>
+																	<td>
+																		<#if item.userid !="">
+																			<a onclick="doOrderStateByTime('${item.tradetime!}')" href="javascript:;" target="_blank" class="text-green"><i class="fa fa-copy"></i>同步</a>
+																			<a href="${cxt!}/uouser/goList?userid=${item.userid!}" target="_blank" class="text-primary"><i class="fa fa-user"></i>用户</a>
+																			<a href="${cxt!}/orderinfo/goList?userid=${item.userid!}" target="_blank" class="text-yellow"><i class="fa fa-tag"></i>订单</a>
+																			<a href="${cxt!}/cashinfo/goList?userid=${item.userid!}" target="_blank" class="text-danger"><i class="fa fa-dollar"></i>提现</a>
+																		</#if>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+		<script>
+			var checkList = [];
+			var datepicker;
+			$(document).ready(function() {
+				var datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${refDateStr!}');
+
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#page_pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all')
+				var $checkbox = $('input[type="checkbox"].item')
+				i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+
+			function doUserInfoApp() {
+				layer.confirm('确定更新用户信息？', function(i) {
+					ajaxGet("${cxt!}/app/doUserInfoApp", {}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+
+			function doOrderJie() {
+				layer.confirm('确定结算所有订单信息？', function(i) {
+					ajaxGet("${cxt!}/app/doOrderJieApp", {}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+
+			function doOrderStateByTime(tradtime) {
+				layer.confirm('确定同步该订单信息？', function(i) {
+					ajaxGet("${cxt!}/app/doOrderStateByTime", {
+						tradtime:tradtime
+						
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+
+			function getNowFormatDate() {
+				var date = new Date();
+				var seperator1 = "-";
+				var year = date.getFullYear();
+				var month = date.getMonth() + 1;
+				var strDate = date.getDate();
+				if(month >= 1 && month <= 9) {
+					month = "0" + month;
+				}
+				if(strDate >= 0 && strDate <= 9) {
+					strDate = "0" + strDate;
+				}
+				var currentdate = year + seperator1 + month + seperator1 + strDate;
+				return currentdate;
+			}
+
+			function doOrderStateApp(day) {
+				var html = '';
+				html += '<div class="col-sm-12">';
+				html += '  <div class="form-group">';
+				html += '<div class="input-group date">';
+				html += '<div class="input-group-addon">';
+				html += '<i class="fa fa-calendar"></i>';
+				html += '</div>';
+				html += '<input id="datepicker" type="text" class="form-control">';
+				html += '</div>';
+				html += '  </div>';
+				html += '</div>';
+
+				layer.open({
+					closeBtn: 0,
+					title: '选择日期',
+					area: ['500px', ],
+					content: html,
+					btn: ['确定', '取消'],
+					success: function() {
+						datepicker = $("#datepicker").datepicker({
+							language: "zh-CN",
+							autoclose: true,
+							format: "yyyy-mm-dd"
+						})
+						datepicker.datepicker("setDate", getNowFormatDate());
+					},
+					yes: function() {
+						var ref_date = datepicker.datepicker("getDate").Format("yyyy-MM-dd");
+						ajaxGet("${cxt!}/app/doOrderStateByDay", {
+							day: ref_date,
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg('操作成功！即将自动刷新...', {
+								time: 500,
+								icon: 1
+							}, function() {
+								location.reload();
+							});
+						})
+					}
+				});
+			}
+		</script>
+	</body>
+
+</html>

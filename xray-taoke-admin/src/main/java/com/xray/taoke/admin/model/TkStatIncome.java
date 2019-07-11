@@ -1,0 +1,49 @@
+package com.xray.taoke.admin.model;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_stat_income", pkName = "seqid")
+public class TkStatIncome extends JfModel<TkStatIncome> {
+    private static final long serialVersionUID = 1L;
+    public static final TkStatIncome dao = new TkStatIncome();
+
+    public double tradeprice = 0;
+    public double trademoney = 0;
+    public double jiemoney = 0;
+    public double netmoney = 0;
+    public Set<String> sets = new HashSet<String>();
+
+    public TkStatIncome sumByTkids(String day, String tkids) {
+        if (StringUtil.isEmpty(tkids))
+            return null;
+
+        String[] arr = tkids.split(",");
+        StringBuilder sb = new StringBuilder("'");
+        for (String str : arr) {
+            sb.append(",'").append(str).append("'");
+        }
+        String sql = "select sum(`tradeno`) `tradeno`,sum(`tradeprice`) `tradeprice`,sum(`trademoney`) `trademoney`,sum(`jiemoney`) `jiemoney`,sum(`netmoney`) `netmoney` from `tk_stat_income` where `day`=? and `tkid` in (" + sb.substring(2) + ")";
+        return dao.findFirst(sql, day);
+    }
+
+    public void delByDay(String day) {
+        String sql = "delete from `tk_stat_income` where `day`=?";
+        Db.use(Constant.db_dataSource).update(sql, day);
+    }
+
+    public void init() {
+        set("tradeno", sets.size());
+        set("tradeprice", tradeprice);
+        set("trademoney", trademoney);
+        set("jiemoney", jiemoney);
+        set("netmoney", trademoney * 0.9 - jiemoney);
+    }
+
+}

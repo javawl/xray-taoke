@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>旅游管理 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>旅游管理</li>
+							<li class="active">旅游管理</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<form action="${cxt!}/lvinfo/goList">
+											<div class="row">
+												<div class="col-md-2">
+													<div class="input-group date">
+														<div class="input-group-addon">
+															<i class="fa fa-calendar"></i>
+														</div>
+														<input id="datepicker" name="day" type="text" class="form-control">
+													</div>
+												</div>
+
+												<div class="col-md-2">
+													<input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+													<button style="display: none;" id="search" type="submit" class="btn btn-default">查询</button>
+
+													<button id="search" type="submit" class="btn btn-default">查询</button>
+												</div>
+
+												<div class="col-md-8">
+													<div class="pull-right">
+														<a href="javascript:;" class="btn btn-info" target="_blank" onclick="doCatch()">更新</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr>
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>时间</th>
+																<th>名称</th>
+																<th>标题</th>
+																<th>状态</th>
+																<th width="70px">操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr>
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td style="white-space:nowrap;">${item.inputtime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</td>
+
+																	<td style="white-space:nowrap;">
+
+																		<#if item.url=="www.jingchengvip.com">
+																			景程
+																			<#elseif item.url=="www.qilvyoo.com">
+																				骑驴游
+																				<#elseif item.url=="szqz.honeynice.com">
+																					微选
+																		</#if>
+
+																	</td>
+																	<td>
+
+																		<a onclick="doEditTitle('${item.seqid!}','${item.title!}')" href="javascript:;"><i class="fa fa-edit"></i> ${item.title!}
+																		</a>
+
+																	</td>
+																	
+																	<td>
+							
+																		<a onclick="doEditState('${item.seqid!}')" href="javascript:;"><i class="fa fa-edit"></i>
+																			
+																			<#if item.state ==-1>
+																				待处理
+																				<#elseif item.state ==0>
+																					已上架
+																					<#elseif item.state ==1>
+																					已下架
+																				</#if>
+																		</a>
+																	</td>
+																	
+																	<td>
+																		<a href="http://${item.itemurl!}" target="_blank">下单</a>
+																		<#if item.url=="www.jingchengvip.com">
+																			<a href="http://${item.url!}/m2c/snapup/${item.infoid!}.html?order_cust_id=2259781&user_id=lgbb27" target="_blank">详情</a>
+																			<#elseif item.url=="www.qilvyoo.com">
+																				<a href="http://${item.url!}/m2c/snapup/${item.infoid!}.html?order_cust_id=1705370&user_id=qly0825" target="_blank">详情</a>
+																				<#elseif item.url=="szqz.honeynice.com">
+																					<a href="http://${item.url!}/m2c/snapup/${item.infoid!}.html?order_cust_id=2022374&user_id=lgfx13" target="_blank">详情</a>
+																		</#if>
+
+																	</td>
+																	
+																	
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>pt>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/clipboard/clipboard.min.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${dayStr!}');
+
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all'),
+					$checkbox = $('input[type="checkbox"].item'),
+					i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+
+			function doCatch() {
+
+				var html = '';
+				html += '<div class="col-sm-12">';
+				html += '  <div class="form-group">';
+				html += '    <div class="input-group date">';
+				html += '      <div class="input-group-addon">';
+				html += '        <i class="fa fa-calendar"></i>';
+				html += '      </div>';
+				html += '      <input id="datepicker2" type="text" class="form-control">';
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				var datepicker2;
+
+				layer.open({
+					closeBtn: 1,
+					title: '选择日期',
+					content: html,
+					btn: ['确定', '取消'],
+					success: function() {
+						datepicker2 = $("#datepicker2").datepicker({
+							language: "zh-CN",
+							autoclose: true,
+							format: "yyyy-mm-dd"
+						})
+						datepicker2.datepicker("setDate", "${day!}");
+					},
+					yes: function() {
+						ajaxGet("${cxt!}/lvinfo/doCatchByVist", {
+							day: datepicker2.datepicker("getDate").Format("yyyy-MM-dd"),
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg('操作成功！即将自动刷新...', {
+								time: 500,
+								icon: 1
+							}, function() {
+								location.reload();
+							});
+						})
+					},
+				});
+
+				//				layer.confirm('确定更新吗？', function(i) {
+				//					
+				//					
+				//					
+				//					
+				//					
+				//					ajaxGet("${cxt!}/lvinfo/doCatchByVist", {}, function(rtn) {
+				//						if(rtn.code != 1) {
+				//							layer.msg(rtn.msg, {
+				//								icon: 2
+				//							});
+				//							return;
+				//						}
+				//						layer.msg('操作成功！即将自动刷新...', {
+				//							time: 500,
+				//							icon: 1
+				//						}, function() {
+				//							location.reload();
+				//						});
+				//					})
+				//				})
+			}
+
+			function doEditTitle(seqid, title) {
+				var html = '';
+				html += '<div class="box-body">';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">';
+				html += '      <label>标题</label>';
+
+				html += ' <input id="title" type="text" class="form-control" placeholder="请输入标题" value="' + title + '">';
+
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				layer.open({
+					closeBtn: 0,
+					title: '标题',
+					area: ['500px', ],
+					content: html,
+					btn: ['确定', '取消'],
+					yes: function() {
+						var title = $("#title").val();
+						if(!title) {
+							layer.msg("请输入标题！", {
+								icon: 0
+							});
+							return;
+						}
+
+						ajaxGet("${cxt!}/lvinfo/doEditTitle", {
+							seqid: seqid,
+							title: title
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(JSON.stringify(rtn), {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("操作成功！", {
+								icon: 1,
+								time: 600
+							}, function() {
+								window.location.reload();
+							});
+						})
+					}
+				});
+
+			}
+			
+			
+			
+			
+				function doEditState(seqid) {
+				var html = '';
+				html += '<div class="box-body">';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">';
+				html += ' 	<select id="state" class="form-control">';
+				html += ' 	<option value="">选择状态</option>';
+				html += ' 	<option value="-1">待处理</option>';
+				html += ' 	<option value="0">已处理</option>';
+				html += ' 	<option value="1">已下架</option>';
+				html += ' 	</select>';
+					
+
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				layer.open({
+					closeBtn: 0,
+					title: '标题',
+					area: ['500px', ],
+					content: html,
+					btn: ['确定', '取消'],
+					yes: function() {
+						var state = $("#state").val();
+						if(!state) {
+							layer.msg("请选择状态！", {
+								icon: 0
+							});
+							return;
+						}
+
+						ajaxGet("${cxt!}/lvinfo/doEditState", {
+							seqid: seqid,
+							state: state
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(JSON.stringify(rtn), {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("操作成功！", {
+								icon: 1,
+								time: 600
+							}, function() {
+								window.location.reload();
+							});
+						})
+					}
+				});
+
+			}
+			
+			
+			
+			
+		</script>
+	</body>
+
+</html>

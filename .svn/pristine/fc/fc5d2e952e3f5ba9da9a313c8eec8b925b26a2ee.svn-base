@@ -1,0 +1,286 @@
+package com.xray.taoke.tkapi;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.tkapi.vo.ConstTk;
+import com.xray.taoke.tkapi.vo.TbItemGy;
+import com.xray.taoke.tkapi.vo.TbItemVo;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+
+public class TbItemService {
+    private static Logger logger = LoggerFactory.getLogger(TbItemService.class);
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final String prefix = ConstTk.config.get("redis.prefix") + ".tbitem.";
+    private static final int timeout = 86400;
+    private static final int short_timeout = 120;
+
+    public static TbItemService instance = new TbItemService();
+
+    public static void main(String[] args) throws Exception {
+        String appid = "wx3088f1bd705dfd20";
+        String itemid = "575750235976";
+        String tpwkd = "￥3JLBbApNjYM￥";
+        System.out.println(JSONObject.toJSONString(TbItemService.instance.getItemGy(appid, itemid, null)));
+        System.out.println(tpwkd);
+        System.out.println(JSONObject.toJSONString(TbItemService.instance.getItemGyByTkpwd(appid, tpwkd, null)));
+    }
+
+    public void addItemListVo(String lid, List<TbItemVo> list) {
+        String list_key = prefix + "lid." + lid;
+        Jedis jedis = cache.getJedisClient();
+        try {
+            String item_key = null;
+            Pipeline p = jedis.pipelined();
+            for (TbItemVo data : list) {
+                item_key = prefix + data.getItemid() + ".vo";
+                p.setex(item_key, timeout, JSONObject.toJSONString(data));
+                p.lpush(list_key, data.getItemid());
+            }
+            p.expire(list_key, timeout);
+            p.sync();
+            logger.info("add itemlist,lid:{}, size:{}", lid, list.size());
+        } finally {
+            cache.returnResource(jedis);
+        }
+    }
+
+    public List<TbItemVo> getItemListVo(String lid, int page) {
+        String list_key = prefix + "lid." + lid;
+
+        String item_key = null;
+        List<TbItemVo> list = new ArrayList<TbItemVo>();
+        List<String> itemidList = cache.lrange(list_key, (page - 1) * 10, page * 10 - 1);
+        for (String itemid : itemidList) {
+            item_key = prefix + itemid + ".vo";
+            list.add(JSONObject.parseObject(cache.get(item_key), TbItemVo.class));
+        }
+        return list;
+    }
+
+    public List<TbItemVo> getAllItemListVo(String lid) {
+        String list_key = prefix + "lid." + lid;
+
+        String item_key = null;
+        List<TbItemVo> list = new ArrayList<TbItemVo>();
+        List<String> itemidList = cache.lrange(list_key, 0, -1);
+        for (String itemid : itemidList) {
+            item_key = prefix + itemid + ".vo";
+            list.add(JSONObject.parseObject(cache.get(item_key), TbItemVo.class));
+        }
+        return list;
+    }
+
+    public TbItemVo getItemVo(String appid, String itemid) {
+        String key = prefix + itemid + ".vo";
+        String val = cache.get(key);
+        if (StringUtil.isNotEmpty(val))
+            return JSONObject.parseObject(val, TbItemVo.class);
+
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        JSONObject obj = Tk21dsService.instance.getiteminfo(itemid, map.get("apikey"));
+        this.doDataErr(obj, appid, itemid);
+
+        obj = obj.getJSONObject("data").getJSONObject("n_tbk_item");
+        TbItemVo data = new TbItemVo();
+        data.setItemid(itemid);
+        data.setItemtitle(obj.getString("title"));
+        data.setItemprice(obj.getDouble("zk_final_price"));
+        if (StringUtil.isNotEmpty(obj.getString("pict_url")))
+            data.setItempic(obj.getString("pict_url"));
+        else
+            data.setItempic(obj.getJSONObject("small_images").getJSONArray("string").getString(0));
+        cache.setex(key, JSONObject.toJSONString(data), timeout);
+        return data;
+    }
+
+    public TbItemVo getItemVoByHtml(String appid, String tburl) {
+        JSONObject obj = Tk21dsService.instance.getiteminfoByHtml(tburl);
+        String itemid = obj.getString("itemid");
+
+        String key = prefix + itemid + ".vo";
+        String val = cache.get(key);
+        if (StringUtil.isNotEmpty(val))
+            return JSONObject.parseObject(val, TbItemVo.class);
+
+        TbItemVo data = new TbItemVo();
+        data.setItemid(itemid);
+        data.setItemtitle(obj.getString("title"));
+        data.setItemprice(obj.getDouble("priceL"));
+        data.setItempic(obj.getString("pic"));
+        cache.setex(key, JSONObject.toJSONString(data), timeout);
+        return data;
+    }
+
+    public String getItemidByHtml(String tburl) {
+        JSONObject obj = Tk21dsService.instance.getiteminfoByHtml(tburl);
+        return obj.getString("itemid");
+    }
+
+    public TbItemGy getItemGy(String appid, String itemid, String openid) {
+        String key = prefix + itemid + ".gy." + appid;
+        String val = cache.get(key);
+        if (StringUtil.isNotEmpty(val) && openid == null)
+            return JSONObject.parseObject(val, TbItemGy.class);
+
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+
+        String pid = this.calcPidex(itemid, openid, map.get("pidex"));
+        if (StringUtil.isEmpty(pid))
+            pid = map.get("pid");
+
+        JSONObject obj = Tk21dsService.instance.getitemgyurl(itemid, map.get("apikey"), map.get("tbname"), pid);
+        this.doNotaokeErr(obj, appid, itemid);
+        this.doDataErr(obj, appid, itemid);
+
+        this.setPidex(appid, itemid, openid, pid);
+
+        obj = obj.getJSONObject("result").getJSONObject("data");
+        TbItemGy data = new TbItemGy();
+        data.setItemid(itemid);
+        data.setTkpwd(obj.getString("tpwd"));
+        data.setTkrate(obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon"))
+            data.setCpmoney(obj.getDouble("youhuiquan"));
+        cache.setex(key, JSONObject.toJSONString(data), short_timeout);
+        return data;
+    }
+
+    public TbItemGy getItemGyByPid(String appid, String itemid, String pid) {
+        if (StringUtil.isEmpty(pid))
+            return null;
+
+        String key = prefix + itemid + ".gypid." + pid;
+        String val = cache.get(key);
+        if (StringUtil.isNotEmpty(val))
+            return JSONObject.parseObject(val, TbItemGy.class);
+
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+
+        JSONObject obj = Tk21dsService.instance.getitemgyurl(itemid, map.get("apikey"), map.get("tbname"), pid);
+        this.doNotaokeErr(obj, appid, itemid);
+        this.doDataErr(obj, appid, itemid);
+
+        obj = obj.getJSONObject("result").getJSONObject("data");
+        TbItemGy data = new TbItemGy();
+        data.setItemid(itemid);
+        data.setTkpwd(obj.getString("tpwd"));
+        data.setTkrate(obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon"))
+            data.setCpmoney(obj.getDouble("youhuiquan"));
+        cache.setex(key, JSONObject.toJSONString(data), short_timeout);
+        return data;
+    }
+
+    public TbItemGy getItemGyByTkpwd(String appid, String tkpwd, String openid) {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        JSONObject obj = Tk21dsService.instance.getitemgyurlbytpwd(tkpwd, map.get("apikey"), map.get("tbname"), map.get("pid"));
+        this.doNotaokeErr(obj, appid, tkpwd);
+        this.doDataErr(obj, appid, tkpwd);
+        obj = obj.getJSONObject("result").getJSONObject("data");
+
+        String itemid = obj.getString("item_id");
+        String pid = this.calcPidex(itemid, openid, map.get("pidex"));
+        if (StringUtil.isNotEmpty(pid))
+            return getItemGy(appid, itemid, openid);
+
+        TbItemGy data = new TbItemGy();
+        data.setItemid(itemid);
+        data.setTkpwd(obj.getString("tpwd"));
+        data.setTkrate(obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon"))
+            data.setCpmoney(obj.getDouble("youhuiquan"));
+
+        String key = prefix + data.getItemid() + ".gy." + appid;
+        cache.setex(key, JSONObject.toJSONString(data), short_timeout);
+        return data;
+    }
+
+    // 自动跟单
+    private String calcPidex(String itemid, String openid, String pidex) {
+        if (StringUtil.isEmpty(openid))
+            return null;
+        if (StringUtil.isEmpty(pidex))
+            return null;
+        String key = prefix + itemid + ".pidex.";
+        String[] arr = pidex.split(",");
+        for (String str : arr) {
+            if (cache.exists(key + str.split("_")[3]))
+                continue;
+            return str;
+        }
+        return null;
+    }
+
+    private void setPidex(String appid, String itemid, String openid, String pid) {
+        if (StringUtil.isEmpty(openid))
+            return;
+        String key = prefix + itemid + ".pidex." + pid.split("_")[3];
+        cache.setex(key, appid + "," + openid, 36000);
+    }
+
+    public String getPidex(String itemid, String adzoneid) {
+        String key = prefix + itemid + ".pidex." + adzoneid;
+        return cache.get(key);
+    }
+
+    public void delPidex(String itemid, String adzoneid) {
+        String key = prefix + itemid + ".pidex." + adzoneid;
+        cache.delete(key);
+    }
+
+    public double getFlrate(double tkmoney) {
+        if (tkmoney < 2)
+            return 0.81;
+        else if (tkmoney < 100)
+            return 0.61;
+        else
+            return 0.51;
+    }
+
+    public String getTobjUrl(String appid, String e) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(MpInfoService.instance.getUrl(appid)).append("/tobj");
+        sb.append("?e=").append(e);
+        return ConstTk.toShortUrl(sb.toString());
+    }
+
+    public String getTsouUrl(String appid, String word) {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        StringBuilder sb = new StringBuilder();
+        sb.append(map.get("url")).append("/tsou");
+        sb.append("?sid=").append(map.get("sid"));
+        sb.append("&keyword=").append(word);
+        sb.append("&xb=").append(System.currentTimeMillis());
+        return ConstTk.toShortUrl(sb.toString());
+    }
+
+    public String getBindsuccUrl(String appid) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(MpInfoService.instance.getUrl(appid)).append("/bindsucc");
+        return ConstTk.toShortUrl(sb.toString());
+    }
+
+    private void doNotaokeErr(JSONObject obj, String appid, String itemid) {
+        if (obj.getInteger("code") != 200)
+            throw new RtException(ConstTk.notaoke_err, "err notaoke,appid:" + appid + ",itemid:" + itemid + ",json:" + obj.toJSONString());
+    }
+
+    private void doDataErr(JSONObject obj, String appid, String itemid) {
+        if (obj.getInteger("code") != 200)
+            throw new RtException(ConstTk.data_err, "err code,appid:" + appid + ",itemid:" + itemid + ",json:" + obj.toJSONString());
+    }
+
+}

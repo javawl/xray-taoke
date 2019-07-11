@@ -1,0 +1,56 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.act.exception.RtException;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.tkapi.TbItemService;
+
+public class OrderProxyJieApp extends AbstractApp {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp pidexorder", e);
+        }
+    }
+
+    public void doRun() {
+        List<OrderInfo> list = OrderInfo.dao.queryJieByProxy();
+        logger.info("runapp OrderProxyJieApp,size:{}", list.size());
+        for (OrderInfo data : list) {
+            updateProxyJie(data);
+        }
+    }
+
+    private void updateProxyJie(OrderInfo data) {
+        String userid = data.getStr("userid");
+        if (StringUtil.isEmpty(userid))
+            throw new RtException("updateProxy,none userid,orderinfo,seqid:" + data.getLong("seqid"));
+        String proxyby = data.getStr("proxyby");
+
+        UoUser user = UoUser.dao.queryByUserId(proxyby);
+
+        double proxyrate = user.getDouble("proxyrate");
+        int proxyvno = user.getInt("proxyvno");
+
+        double trademoney = data.getDouble("trademoney");
+        double jierate = TbItemService.instance.getFlrate(trademoney);
+        jierate = proxyrate > jierate ? proxyrate : jierate;
+        double jiemoney = trademoney * jierate;
+
+        String seqid = data.getStr("seqid");
+        if (OrderInfo.dao.updateProxySucc(3, userid, seqid) > 0) {
+            logger.info("runapp,succ updateProxyJie,userid:{},seqid:{}", userid, seqid);
+            UoUser.dao.updateProxySucc(proxyby, jiemoney, proxyvno);
+            // wxApi.sendText(appid, openid, MpInfoService.instance.getTradeSucc(appid,
+            // UoUser.dao.queryByUserId(userid), OrderInfo.dao.queryByTradeid(tradeid)));
+            return;
+        }
+    }
+}

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>用户列表 | ${_TITLE_!}</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+    <link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+    <link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+    <link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+    <link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+    <#include "/template/inc/inc.html">
+  </head>
+
+  <body class="hold-transition skin-blue sidebar-mini">
+    <div class="wrapper">
+      <#include "/template/inc/header.html">
+        <div class="content-wrapper">
+          <!--content header-->
+          <section class="content-header">
+            <ol class="breadcrumb" style="left: 10px;">
+              <li>公众号管理</li>
+              <li class="active">用户列表</li>
+            </ol>
+            <h1><small></small></h1>
+
+          </section>
+          <!--/content header-->
+          <section class="content">
+            <div class="row">
+              <div class="col-xs-12">
+                <div class="box box-primary">
+                  <div class="box-header">
+                    <form action="${cxt!}/mpinfo/goListByAppid">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <input id="word" name="word" type="text" class="form-control" value="${word!}" placeholder="OPENID/昵称" />
+                        </div>
+                        <div class="col-md-1">
+                          <input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+                          <input id="appid" name="appid" type="hidden" value="${appid!}" />
+                          <button id="search" type="submit" class="btn btn-default">查询</button>
+                        </div>
+                        <div class="col-md-8">
+                          <div class="pull-right">
+
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                  <!-- box-header -->
+                  <div class="box-body">
+                    <div class="dataTables_wrapper form-inline dt-bootstrap">
+                      <div class="row">
+                        <div class="col-sm-12">
+                          <table class="table table-bordered table-hover">
+                            <tbody>
+                              <tr style="white-space:nowrap;">
+                                <th width="20px"><input type="checkbox" class="all minimal" /></th>
+                                <th>名称</th>
+                                <th>openid</th>
+                                <th>头像</th>
+                                <th>性别</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                              </tr>
+                              <#list dataList as item>
+                                <tr>
+                                  <td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+                                  <td>${item.openid!}</td>
+                                  <td>${item.name!}</td>
+                                  <td><img src="${item.avatar!}"></td>
+
+                                  <td>
+                                    <#if (item.gender==1)>男
+                                      <#elseif (item.gender==2)>女
+                                    </#if>
+                                  </td>
+
+                                  <td>
+                                    <#if (item.state==0)>未初始化
+                                      <#elseif (item.state==1)>正常
+                                        <#else>
+                                          取关
+                                    </#if>
+                                  </td>
+
+                                  <td>
+                                    <a onclick="doCreate('${item.appid!}','${item.seqid!}')" href="javascript:;" target="_blank" class="text-info"><i class="fa fa-plane"></i>创建</a>
+                                    <a onclick="doDel('${item.appid!}','${item.seqid!}')" href="javascript:;" target="_blank" class="text-red"><i class="fa fa-warning"></i>删除</a>
+                                  </td>
+                                </tr>
+                              </#list>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <#if dataList.size()==0>
+                        <div style="text-align:center;">
+                          <p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>
+                        </div>
+                        <hr />
+                      </#if>
+                    </div>
+                    <#if (page.pcount>0)>
+                      <div>
+                        <div class="tcdPageCode pull-right" style="padding: 0;"></div>
+                        <span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+                      </div>
+                    </#if>
+                    <!--<div class="tcdPageCode pull-right"></div>-->
+                  </div>
+                  <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+              </div>
+            </div>
+          </section>
+        </div>
+        <#include "/template/inc/footer.html">
+    </div>
+    <script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+    <script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+    <script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+    <script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+    <script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+    <script>
+      var uploader;
+      var checkList = [];
+      $(document).ready(function() {
+        if($("table").width() < 1000) {
+          $(".box-body").css("overflow", "auto");
+        }
+
+        //查询绑定回车事件
+        $("#word").keydown(function(e) {
+          var ev = document.all ? window.event : e;
+          if(ev.keyCode == 13) {
+            $('#search').click();
+          }
+        })
+        //分页
+        $(".tcdPageCode").createPage({
+          pageCount: ${
+            page.pcount!
+          },
+          current: ${
+            page.pno!
+          },
+          backFn: function(n) {
+            $('#pno').val(n);
+            $('#search').click();
+          }
+        });
+
+        $("#fabuall").click(function() {
+          layer.confirm('确定发布所有关注回复？', function(i) {
+            ajaxGet("${cxt!}/mpresp/doPubAll", {}, function(rtn) {
+              if(rtn.code != 1) {
+                layer.msg(JSON.stringify(rtn), {
+                  icon: 2
+                });
+                return;
+              }
+              layer.msg("操作成功！", {
+                icon: 1,
+                time: 600
+              }, function() {
+                window.location.reload();
+              });
+            })
+          })
+
+        })
+
+        $("#fabuallmenu").click(function() {
+          layer.confirm('确定发布所有菜单？', function(i) {
+            ajaxGet("${cxt!}/mpresp/doPubAllMenu", {}, function(rtn) {
+              if(rtn.code != 1) {
+                layer.msg(JSON.stringify(rtn), {
+                  icon: 2
+                });
+                return;
+              }
+              layer.msg("操作成功！", {
+                icon: 1,
+                time: 600
+              }, function() {
+                window.location.reload();
+              });
+            })
+          })
+
+        })
+
+        //全选
+        var $checkboxAll = $('input[type="checkbox"].all');
+        var $checkbox = $('input[type="checkbox"].item');
+        //启动icheck  
+        $(('input[type="checkbox"].minimal')).iCheck({
+          checkboxClass: 'icheckbox_minimal-blue'
+        });
+        //全选checkbox  
+        $checkboxAll.on('ifChecked', function(event) {
+          $checkbox.iCheck('check');
+          checkList = [];
+          $checkbox.each(function() {
+            if(true == $(this).is(':checked')) {
+              checkList.push($(this).val());
+            }
+          });
+        });
+        $checkboxAll.on('ifUnchecked', function(event) {
+          $checkbox.iCheck('uncheck');
+          checkList = [];
+        });
+        //单项checkbox  
+        $checkbox.on('ifChecked', function(event) {
+          checkList.push(event.target.value);
+        });
+        $checkbox.on('ifUnchecked', function(event) {
+          checkList.forEach(function(e, i) {
+            if(e == event.target.value) {
+              checkList.splice(i, 1);
+              return;
+            }
+          })
+        })
+
+        doInput()
+      })
+
+      function doCreate(appid, seqid) {
+        layer.confirm('确定创建？', function(i) {
+          ajaxGet("${cxt!}/mpinfo/doCreateByAppid", {
+            appid: appid,
+            seqid: seqid
+          }, function(rtn) {
+            if(rtn.code != 1) {
+              layer.msg(JSON.stringify(rtn), {
+                icon: 2
+              });
+              return;
+            }
+            layer.msg("操作成功！", {
+              icon: 1,
+              time: 600
+            }, function() {
+              window.location.reload();
+            });
+          })
+        })
+      }
+
+      function doDel(appid, seqid) {
+        layer.confirm('确定删除？', function(i) {
+          ajaxGet("${cxt!}/mpinfo/  ", {
+            seqid: seqid,
+            appid: appid
+          }, function(rtn) {
+            if(rtn.code != 1) {
+              layer.msg(JSON.stringify(rtn), {
+                icon: 2
+              });
+              return;
+            }
+            layer.msg("操作成功！", {
+              icon: 1,
+              time: 600
+            }, function() {
+              window.location.reload();
+            });
+          })
+        })
+      }
+
+      function dodelMenu(seqid) {
+        layer.confirm('确定删除菜单？', function(i) {
+          ajaxGet("${cxt!}/mpresp/dodelMenu", {
+            seqid: seqid
+          }, function(rtn) {
+            if(rtn.code != 1) {
+              layer.msg(JSON.stringify(rtn), {
+                icon: 2
+              });
+              return;
+            }
+            layer.msg("操作成功！", {
+              icon: 1,
+              time: 600
+            }, function() {
+              window.location.reload();
+            });
+          })
+        })
+      }
+
+      function doPubMenu(seqid) {
+        layer.confirm('确定发布菜单？', function(i) {
+          ajaxGet("${cxt!}/mpresp/doPubMenu", {
+            seqid: seqid
+          }, function(rtn) {
+            if(rtn.code != 1) {
+              layer.msg(JSON.stringify(rtn), {
+                icon: 2
+              });
+              return;
+            }
+            layer.msg("操作成功！", {
+              icon: 1,
+              time: 600
+            }, function() {
+              window.location.reload();
+            });
+          })
+        })
+      }
+
+      function doNoresp(noresp) {
+        $('#noresp').val(noresp);
+        $('#search').click();
+      }
+
+      function doFollow(e) {
+        var html = '';
+        ajaxGet("${cxt!}/mpresp/doGetFollows", {
+          orid: e
+        }, function(rtn) {
+          if(rtn.code != 1) {
+            layer.msg(rtn.msg, {
+              icon: 2
+            });
+            return;
+          }
+          var list = rtn.data;
+          var name = "关注回复";
+          if(list.size != 0) {
+            html += '<div class="box-body">';
+            for(var i = 0; i < 6; i++) {
+              html += '    <div class="col-sm-12">';
+              html += '  <div class="form-group">'
+              html += ' <input type="text" class="form-control title"  data-id="' + i + '"   value="' + list[i] + '" placeholder="请输入回复id" >'
+              html += '    </div>';
+              html += '    </div>';
+            }
+            html += '</div>';
+          } else {
+            html += '<div class="box-body">';
+            for(var i = 0; i < 6; i++) {
+              html += '    <div class="col-sm-12">';
+              html += '  <div class="form-group">'
+              html += ' <input type="text" class="form-control title"  data-id="' + i + '"   value="" placeholder="请输入回复id" >'
+              html += '    </div>';
+              html += '    </div>';
+            }
+            html += '</div>';
+          }
+
+          layer.open({
+            closeBtn: 0,
+            title: name,
+            area: ['500px', ],
+            content: html,
+            btn: ['确定', '取消'],
+            yes: function() {
+              var jsons = "";
+              $(".title").each(function() {
+                jsons = jsons + $(this).val() + ',';
+              });
+
+              console.log(jsons);
+              ajaxGet("${cxt!}/mpresp/doEditByFollow", {
+                orid: e,
+                jsons: jsons,
+              }, function(rtn) {
+                if(rtn.code != 1) {
+                  layer.msg(rtn.msg, {
+                    icon: 2
+                  });
+                  return;
+                }
+                layer.msg('操作成功！即将自动刷新...', {
+                  time: 500,
+                  icon: 1
+                }, function() {
+                  location.reload();
+                });
+
+              })
+            }
+          });
+        })
+
+      }
+
+      function doInput() {
+        uploader = WebUploader.create({
+          auto: true, // 选完文件后，是否自动上传
+          swf: '${cxt!}/addon/webUploader/Uploader.swf',
+          server: '${cxt!}/sysext/doUpload',
+          pick: '#uploadBtn'
+        });
+        uploader.on('fileQueued', function(file) {
+          load = layer.load(1, {
+            shade: [0.3, '#000']
+          });
+        });
+        uploader.on('uploadProgress', function(file, percentage) {});
+        uploader.on('uploadSuccess', function(file, rtn) {
+          if(rtn.code != 1) {
+            layer.msg(JSON.stringify(rtn), {
+              icon: 2
+            })
+            return;
+          }
+          ajaxGet("${cxt!}/mpresp/doInput", {
+            filePath: rtn.data
+          }, function(rtn) {
+            if(rtn.code != 1) {
+              layer.msg(JSON.stringify(rtn), {
+                icon: 2
+              });
+              return;
+            }
+            layer.msg(rtn.data, {
+              icon: 1,
+              time: 1000
+            }, function() {
+              window.location.reload();
+            });
+          })
+        });
+        uploader.on('uploadError', function(file) {
+          layer.msg("上传失败", {
+            icon: 2
+          })
+        });
+      }
+    </script>
+  </body>
+
+</html>

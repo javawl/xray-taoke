@@ -1,0 +1,89 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_tbgoods", pkName = "seqid")
+public class TkTbGoods extends JfModel<TkTbGoods> {
+    private static final long serialVersionUID = 1L;
+    public static final TkTbGoods dao = new TkTbGoods();
+
+    public List<TkTbGoods> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_tbgoods` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        if (cond != null) {
+            if (StringUtil.isNotEmpty(cond.get("link_id"))) {
+                sb.append(" and  seqid IN(SELECT goods_id FROM `tk_link_goods` WHERE link_id = '" + cond.get("link_id") + "') ");
+            }
+
+            if (StringUtil.isNotEmpty(cond.get("sale_type"))) {
+                sb.append(" and  sale_type = ").append(cond.get("sale_type"));
+            }
+
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_tbgoods` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<TkTbGoods>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+
+        return dao.find(sql + sb.toString());
+    }
+
+    public List<TkTbGoods> queryListByType(int sale_type) {
+        String sql = "select * from `tk_tbgoods` where 1=1  and `down_type` = 0  and `itemtitle` !=''  and `sale_type` = " + sale_type + " ORDER BY orderno ASC LIMIT 0,10";
+        return dao.find(sql);
+    }
+
+    public TkTbGoods queryByItemId(String itemid) {
+        String sql = "select * from  `tk_tbgoods` where itemid = ?";
+        return dao.findFirst(sql, itemid);
+    }
+
+    public void updateOrderno() {
+        String sql = "update `tk_tbgoods` set `orderno`=`orderno`+100";
+        Db.update(sql);
+    }
+
+    public void updateIfNotExist(double cpmoney, double tkrate, double tkmoney, int type, String itemid, String itempic, String itemdesc, String itemtitle, String good_url, String couponurl, String itemshorttitle, double itemprice, String shopname, long end_time, double end_price, int orderno) {
+        String bangdan = "";
+        String sql = " INSERT INTO  `tk_tbgoods` (`tkprice`,`cpmoney`,`tkrate`,`tkmoney`,`itemid`,`itempic`,`itemdesc`,`itemtitle`,`cpurl`,`itemshorttitle`,`itemprice`,`shopname`,`orderno`,`inputtime``cpendtime`,`itemendprice`,`" + bangdan + "`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+        switch (type) {
+        case 1:
+            bangdan = "hdkssb";
+            break;
+        case 2:
+            bangdan = "hdkkqb";
+            break;
+        case 3:
+            bangdan = "hdkxlb";
+            break;
+        case 4:
+            bangdan = "hdkzsb";
+            break;
+        default:
+            sql = " INSERT INTO  `tk_tbgoods` (`tkprice`,`cpmoney`,`tkrate`,`tkmoney`,`itemid`,`itempic`,`itemdesc`,`itemtitle`,`cpurl`,`itemshorttitle`,`itemprice`,`shopname`,`orderno`,`inputtime``cpendtime`,`itemendprice`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+            break;
+        }
+        Db.update(sql, end_price, cpmoney, tkrate, tkmoney, itemid, itempic, itemdesc, itemtitle, couponurl, itemshorttitle, itemprice, shopname, orderno, System.currentTimeMillis(), end_time, end_price, type, itemid);
+    }
+
+    public void updateState(String itemid, int cpstate, long endtime) {
+        String sql = " INSERT INTO  `tk_tbgoods` (`itemid`,`cpendtime`,`cpstate`) VALUES(?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+        Db.update(sql, itemid, endtime, cpstate, itemid);
+    }
+
+}

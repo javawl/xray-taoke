@@ -1,0 +1,124 @@
+	<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<meta content="yes" name="apple-mobile-web-app-capable">
+		<meta content="black" name="apple-mobile-web-app-status-bar-style">
+		<meta content="telephone=no" name="format-detection">
+		<meta content="email=no" name="format-detection">
+		
+		<title>搜隐藏优惠券</title>
+
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/react_common_ac60368b18be5881bffa.css" rel="stylesheet">
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/duo_cms_mall_04ac71915602372edc45.css" rel="stylesheet">
+<style>
+			.tab-item {
+				width: 0.29rem;
+				margin-left: 0.16rem
+			}
+			html,body{overflow：hidden}
+			
+		</style>
+	</head>
+
+	<body id="duo-cms-mall">
+		
+		
+		
+		
+		<div id="main">
+			<div class="earn-money-container" style="padding-top: 0; padding-bottom: 0;">
+				<div class="new-bottom-bar">
+					<span class="gaussian-blur"></span>
+					<div class="iphonex-extra-height"></div>
+				</div>
+
+				<div id="goods-list-container" style="min-height: 0;">
+					<li>
+						<div id="sq-item-list" class="react-base-list-wrapper">
+							<div onclick="goItem('${data.itemid!}')" class="single-cms-goods-v2" style="height: auto;width: auto; margin: .12rem;">
+								<div class="goods-image" style="height: auto;width: auto;">
+									<img src="${data.itempic!}" style="height: auto; width: auto;">
+									<div class="goods-list-mall-label"></div>
+								</div>
+								<div class="goods-detail" style="width: auto;">
+									<p class="goods-name">${data.itemtitle!}</p>
+									<div class="privilege">
+										<div class="badge">券</div>
+										<div class="coupon">${data.cpmoney!}元</div>
+
+									</div>
+									<div class="price-detail">
+										<span class="after-coupon">券后</span>
+										<span class="price">¥<span>${data.tkprice?string('0.0#')}</span></span>
+										<span style="margin-left: 40px;">扫描二维码-复制淘口令-打开手淘</span>
+									</div>
+									<div id="qrcode" style="position: absolute;right: .1rem;bottom: .12rem;"></div>
+
+								</div>
+							</div>
+						</div>
+					</li>
+				</div>
+				
+				
+				
+				
+				
+				
+			</div>
+		</div>
+
+		<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+		<script src="${cxt!}/addon/html2canvas/html2canvas.min.js"></script>
+		<script src="${cxt!}/addon/JqueryQrcode/jquery.qrcode.min.js"></script>
+		<!--<script src="https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>-->
+		<script>
+			$(document).ready(function() {
+
+				var qrcode = $('#qrcode').qrcode({
+					width: 98,
+					height: 98,
+					text: "${url!}"
+				});
+
+				html2canvas(document.getElementById('goods-list-container'), {
+					useCORS: true
+				}).then(function(canvas) {
+						
+						
+					var url = canvas.toDataURL();
+					$('body').html('');
+
+
+					var imgURL = canvas.toDataURL("image/png");
+					var fileName = "haibao";
+					var dlLink = document.createElement('img');
+					dlLink.setAttribute("id", "download");
+					
+					dlLink.setAttribute("crossOrigin","anonymous");
+					
+					dlLink.innerHTML = "下载"
+					dlLink.download = fileName;
+					//dlLink.href = imgURL;
+					dlLink.src = imgURL;
+					dlLink.dataset.downloadurl = ["image/png", dlLink.download, dlLink.href].join(':');
+
+					$("#duo-cms-mall").append(dlLink);
+	
+
+
+
+					//document.body.appendChild(canvas);
+
+				});
+	
+	
+	
+			})
+		</script>
+
+	</body>
+
+</html>

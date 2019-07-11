@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>爆品抓取 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>爆品抓取</li>
+							<li class="active">爆品抓取</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+
+										<form action="${cxt!}/linkitem/goList">
+											<div class="row">
+                        <div class="col-md-2">
+                        	<select id="pkey" name="pkey" class="form-control select2">
+                        		<option value="">PID</option>
+                        		<#list configList as item>
+                        			<option value='${item.seqid!}' <#if pkey==item.seqid>selected</#if>  >${item.remark!}</option>
+                        		</#list>
+                        	</select>
+                        </div>
+                        <div class="col-md-2">
+                        	<div class="input-group date">
+                        		<div class="input-group-addon">
+                        			<i class="fa fa-calendar"></i>
+                        		</div>
+                        		<input id="datepicker" name="day" type="text" class="form-control">
+                        	</div>
+                        </div>
+												<div class="col-md-1">
+													<input id="orderby" name="orderby" type="hidden" value="${orderby!}" />
+													<input id="page_pno" name="pno" type="hidden" value="${page.pno!}" />
+													<button id="search" type="submit" class="btn btn-default">查询</button>
+												</div>
+                        <div class="col-md-2">
+                        	<input id="keyword" name="keyword" type="text" class="form-control" />
+                        </div>
+                        <div class="col-md-2">
+                        	<a href="javascript:;" onclick="goHaodanku()" class="btn btn-primary">好单库</a>
+                        	<a href="javascript:;" onclick="goLanlan()" class="btn btn-info">懒懒</a>
+                        </div>
+
+												<div class="col-md-3">
+													<div class="pull-right">
+                            <a href="javascript:;" class="btn btn-default" target="_blank" onclick="doCreate()">生成</a>
+                            <a href="${cxt!}/linkitem/goTrain" target="_blank" class="btn btn-warning"><i class="fa fa-shopping-cart"></i><span id="trainSize">(${trainSize!'0'})</span></a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+                              <tr style="white-space:nowrap;">
+                              	<th onclick="$('#orderby').val('`inputtime` asc, `srcsort` asc');$('#search').click()">时间</th>
+                              	<th>来源</th>
+                              	<th>图片</th>
+                              	<th>标题</th>
+                              	<th>原价</th>
+                              	<th>券后</th>
+                              	<th>返利</th>
+                              	<th>销量</th>
+                              	<th>2H销量</th>
+                              	<th>标签</th>
+                              	<th width="80px">操作</th>
+                              </tr>
+															<#list dataList as item>
+																<tr>
+                                  <td>${item.inputtime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</td>
+																	<td style="white-space:nowrap;">
+                                    <span><#if item.srctype ==1>好单库<#else>懒懒</#if> - ${item.srcsort!}</span>
+                                  </td>
+                                  <td><img class="addTrain" data-seqid="${item.seqid!}" src="${item.itempicmin!}" width="120px"></td>
+                                  <td style="max-width: 600px;">
+                                    <a href="https://item.taobao.com/item.htm?id=${item.itemid!}" target="_blank">${item.itemtitle!}</a>
+                                    <br />
+                                    <br />
+                                    <p>${item.itemdesc!}</p>
+                                  </td>
+                                  <td>${item.itemprice?string('0.0#')}</td>
+                                  <td>
+                                    <#if (item.cpmoney/item.itemprice lt 0.4)>
+                                      ${item.tkprice?string('0.0#')}
+                                    <#else>
+                                      <span class="label btn-danger">${item.tkprice?string('0.0#')}</span>
+                                    </#if>
+                                  </td>
+                                  <td>${item.jiemoney?string('0.0#')}</td>
+                                  <td>${item.itemsale?string(',###')}</td>
+                                  <td>${item.srcsale?string(',###')}</td>
+                                  <td>
+                                    <#if item.intmall == 1><span class="label btn-danger">T</span></#if>
+                                    <#if item.inbrand == 1><span class="label btn-success">B</span></#if>
+                                    <#if item.injutao == 1><span class="label btn-warning">J</span></#if>
+                                  </td>
+																	<td>
+																		<a href="javascript:;" class="btn btn-default" onclick="doChaquan('${item.seqid!}', '${item.itemid!}')">转链</a>
+                                    <a href="javascript:;" style="margin-top: 5px;" class="btn btn-default" onclick="goTobj('${item.seqid!}', '${item.itemid!}')">海报</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到数据！</p>
+												</div>
+												<hr />
+											</#if>
+											<#if (page.pcount>0)>
+												<div>
+													<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+													<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+												</div>
+											</#if>
+
+										</div>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>pt>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/clipboard/clipboard.min.js"></script>
+		<script src="${cxt!}/addon/wangEditor/wangEditor.min.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+				$(".select2").select2();
+				
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+        
+        // 时间
+        datepicker = $("#datepicker").datepicker({
+        		language: "zh-CN",
+        		autoclose: true,
+        		format: "yyyy-mm-dd"
+        })
+        datepicker.datepicker("setDate", '${day!}');
+        
+        //分页
+        $(".tcdPageCode").createPage({
+        	pageCount: ${
+        		page.pcount!
+        	},
+        	current: ${
+        		page.pno!
+        	},
+        	backFn: function(n) {
+        		$('#page_pno').val(n);
+        		$('#search').click();
+        	}
+        });
+        
+        $(".addTrain").click(function() {
+        	var seqid = $(this).attr("data-seqid");
+        	ajaxGet("${cxt!}/linkitem/doAddTrain", {
+        		seqid: seqid
+        	}, function(rtn) {
+        		if(rtn.code != 1) {
+        			layer.msg(JSON.stringify(rtn), {
+        				icon: 2
+        			});
+        			return;
+        		}
+        		$("#trainSize").text("(" + rtn.data + ")");
+        	})
+        });
+			})
+      
+      function doCreate() {
+      	layer.confirm('请选择操作', {
+      		btn: ['生成', '清空']
+      	}, function(i) {
+      		ajaxGet("${cxt!}/linkitem/doCreate", {
+            pkey: $('#pkey').val(),
+          }, function(rtn) {
+      			if(rtn.code != 1) {
+      				layer.msg(JSON.stringify(rtn), {
+      					icon: 2
+      				});
+      				return;
+      			}
+            
+            var html = '';
+            html += '<div class="box-body">';
+            html += '  <div class="col-sm-12">';
+            html += '    <div class="form-group">';
+            html += '      <div id="wechat-copy-main">';
+            html +=          rtn.data;
+            html += '      </div>';
+            html += '      <br />';
+            html += '      <button  class="btn btn-info wechat-copy" data-clipboard-text="">复制</button>'
+            html += '      <span id="copy_succ" class="text-primary" style ="display:none" >复制成功</span>'
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+            
+            layer.open({
+            	closeBtn: 1,
+            	title: '信息',
+            	content: html,
+            	btn: []
+            });
+            
+            $(".wechat-copy").click(function(t) {
+            	var t = document.getElementById("wechat-copy-main");
+            	copyFunction(t, ".wechat-copy");
+            });
+      		})
+      	}, function(i) {
+      		ajaxGet("${cxt!}/linkitem/doRemoveTrain", {}, function(rtn) {
+      			if(rtn.code != 1) {
+      				layer.msg(JSON.stringify(rtn), {
+      					icon: 2
+      				});
+      				return;
+      			}
+      			layer.msg("操作成功！", {
+      				icon: 1,
+      				time: 600
+      			}, function() {
+      				window.location.reload();
+      			});
+      		})
+      	})
+      }
+
+      function doChaquan(seqid, itemid) {
+        ajaxPost("${cxt!}/linkitem/doChaquan", {
+          pkey: $('#pkey').val(),
+          seqid: seqid,
+          itemid: itemid
+        }, function(rtn) {
+          if(rtn.code != 1) {
+            layer.msg(rtn.msg, {
+              icon: 2
+            });
+            return;
+          }
+          
+          var html = '';
+          html += '<div class="box-body">';
+          html += '  <div class="col-sm-12">';
+          html += '    <div class="form-group">';
+          html += '      <div id="wechat-copy-main">';
+          html +=          rtn.data;
+          html += '      </div>';
+          html += '      <br />';
+          html += '      <button  class="btn btn-info wechat-copy" data-clipboard-text="">复制</button>'
+          html += '      <span id="copy_succ" class="text-primary" style ="display:none" >复制成功</span>'
+          html += '    </div>';
+          html += '  </div>';
+          html += '</div>';
+          
+          layer.open({
+            closeBtn: 1,
+            title: '信息',
+            content: html,
+            btn: []
+          });
+          
+          $(".wechat-copy").click(function(t) {
+          	var t = document.getElementById("wechat-copy-main");
+          	copyFunction(t, ".wechat-copy");
+          });
+        })
+      }
+      
+      var copyFunction = function(t, a) {
+      	var e = new ClipboardJS(a, {
+      		target: function() {
+      			return t
+      		}
+      	});
+      	e.on("success", function(t) {
+      			$("#copy_succ").attr("style", "display: block;");
+      			t.clearSelection();
+      		}),
+      		e.on("error", function(t) {
+      			console.log('复制失败');
+      			t.clearSelection()
+      		})
+      };
+      
+      function goTobj(seqid, itemid) {
+        window.open("${cxt!}/linkitem/goTobj?seqid=" + seqid + '&itemid=' + itemid + "&pkey=" + $('#pkey').val());
+      }
+      
+      function goHaodanku(seqid) {
+      	window.open("${cxt!}/linkitem/goHaodanku?keyword=" + $('#keyword').val());
+      }
+      
+       function goLanlan(seqid) {
+      	window.open("${cxt!}/linkitem/goLanlan?keyword=" + $('#keyword').val());
+      }
+			
+		</script>
+	</body>
+
+</html>

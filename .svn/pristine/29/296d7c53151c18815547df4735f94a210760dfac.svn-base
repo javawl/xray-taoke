@@ -1,0 +1,147 @@
+package com.xray.taoke.admin.app;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.http.client.fluent.Request;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.LinkItem;
+
+public class LinkItemApp extends AbstractApp implements Runnable {
+
+    public static void main(String[] args) throws Exception {
+//        System.out.println(unicodeToString("\\u6f0f\\u6d1e\\u30102\\u53cc\\uff014\\u53ea\\uff01\\u3011\\u51b0\\u723d\\u60c5\\u4fa3\\u9632\\u6652"));
+         System.out.println(new LinkItemApp().get_allitem_list("冬阴功泡面", 1));
+    }
+
+    @Override
+    public void run() {
+        try {
+            int startsort = 0;
+            startsort += this.doHdk(1, startsort);
+            startsort += this.doHdk(2, startsort);
+        } catch (Exception e) {
+            logger.error("errapp ListItemApp", e);
+        }
+    }
+
+    public int doHdk(int page, int startsort) throws Exception {
+        LinkItem data = null;
+        int srcsort = 0;
+        int counter = 0;
+        long now = System.currentTimeMillis();
+        
+        JSONObject obj = null;
+        JSONArray arr = this.hdk_list(page);
+        for (int i = 0; i < arr.size(); i++) {
+            obj = arr.getJSONObject(i);
+            data = LinkItem.dao.queryByItemid(obj.getString("itemid"));
+            srcsort = startsort + i + 1;
+            if (data != null) {
+                if (data.getInt("srcsort") > srcsort) {
+                    data.set("srcsort", srcsort);
+                    data.update();
+                }
+                continue;
+            }
+            this.saveHdk(obj, srcsort, now);
+            ++counter;
+        }
+        logger.info("runapp ListItemApp,doHdk size:{}", counter);
+        return arr.size();
+    }
+    
+    public JSONArray hdk_list(int page) throws Exception {
+        String url = "https://www.haodanku.com/indexapi/hdk_list?type=1&p="+page+"&search_type=0&category_id=0&price_min=&price_max=&array_type=&sale_min=&tkrates_min=&coupon_max=&tkmoney_min=&avg_min=&discount_max=";
+        JSONObject obj = JSONObject.parseObject(Request.Get(url).execute().returnContent().asString());
+        return obj.getJSONObject("data").getJSONArray("back");
+    }
+    
+    public JSONArray get_allitem_list(String keyword, int page) throws Exception {
+        String url = "https://www.haodanku.com/indexapi/get_allitem_list?keyword="+URLEncoder.encode(URLEncoder.encode(keyword, "UTF-8"), "UTF-8")+"&p="+page;
+        JSONObject obj = JSONObject.parseObject(Request.Get(url).execute().returnContent().asString());
+        return obj.getJSONArray("item_info");
+    }
+    
+    public static LinkItem obj2LinkItem(JSONObject obj, int srcsort, long now) {
+        LinkItem data = new LinkItem();
+        data.set("srctype", 1);
+        data.set("srcsort", srcsort);
+        data.set("srcsale", obj.getIntValue("itemsale2"));
+
+        data.set("itemid", obj.getString("itemid"));
+        data.set("itemtitle", unicodeToString(obj.getString("itemshorttitle")));
+        data.set("itemprice", obj.getDoubleValue("itemprice"));
+        if (StringUtil.isEmpty(obj.getString("itempic_copy"))) {
+            data.set("itempic", obj.getString("itempic"));
+        } else if (obj.getString("itempic_copy").startsWith("http")) {
+            data.set("itempic", obj.getString("itempic_copy"));
+        } else {
+            data.set("itempic", "http://img.haodanku.com/" + obj.getString("itempic_copy").replaceAll("_600", ""));
+        }
+        data.set("itemsale", obj.getIntValue("itemsale"));
+        data.set("itemtype", obj.getIntValue("fqcat"));
+        data.set("itemdesc", unicodeToString(obj.getString("itemdesc")));
+
+        data.set("cpmoney", obj.getDoubleValue("couponmoney"));
+        data.set("tkrate", obj.getDoubleValue("tkrates") / 100.0);
+        data.set("tkprice", obj.getDoubleValue("itemendprice"));
+
+        data.set("intmall", "B".equals(obj.getString("shoptype")) ? 1 : 0);
+        data.set("inbrand", obj.getIntValue("is_brand") == 1 ? 1 : 0);
+        data.set("injutao", obj.getIntValue("is_foreshow") == 1 ? 1 : 0);
+
+        data.set("inputtime", now);
+        return data;
+    }
+
+    private void saveHdk(JSONObject obj, int srcsort, long now) {
+        obj2LinkItem(obj, srcsort, now).save();
+    }
+
+    static Pattern pattern = Pattern.compile("(\\\\u(\\p{XDigit}{4}))");
+
+    public static String unicodeToString(String str) {
+        Matcher matcher = pattern.matcher(str);
+        char ch;
+        while (matcher.find()) {
+            // group 6728
+            String group = matcher.group(2);
+            // ch:'木' 26408
+            ch = (char) Integer.parseInt(group, 16);
+            // group1 \u6728
+            String group1 = matcher.group(1);
+            str = str.replace(group1, ch + "");
+        }
+        return str;
+    }
+
+    public static String stringToUnicode(String s) {
+        try {
+            StringBuffer out = new StringBuffer("");
+            // 直接获取字符串的unicode二进制
+            byte[] bytes = s.getBytes("unicode");
+            // 然后将其byte转换成对应的16进制表示即可
+            for (int i = 0; i < bytes.length - 1; i += 2) {
+                out.append("\\u");
+                String str = Integer.toHexString(bytes[i + 1] & 0xff);
+                for (int j = str.length(); j < 2; j++) {
+                    out.append("0");
+                }
+                String str1 = Integer.toHexString(bytes[i] & 0xff);
+                out.append(str1);
+                out.append(str);
+            }
+            return out.toString();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+}

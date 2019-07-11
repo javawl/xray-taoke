@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>系统设置 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<#include "../../inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "../../inc/header.html">
+				<div class="content-wrapper">
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>
+								<a href="javascript:history.back();"><i class="fa fa-chevron-left"></i>返回</a>
+							</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<section class="content">
+						<div class="box box-primary">
+							<div class="box-header">
+								<div class="sequence_list am-text-sm">
+									<div class="box-tools">
+									</div>
+								</div>
+							</div>
+							<div class="box-body">
+								<input id="seqid" value="<#if data??>${data.seqid!}<#else>0</#if>" style="display: none;">
+								<div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="control-label">模块ID</label>
+                                            <input id="moduleid" type="text" class="form-control" placeholder="请输入模块ID" value="<#if data??>${data.moduleid!}</#if>">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="control-label">模块名称</label>
+                                            <input id="name" type="text" class="form-control" placeholder="请输入模块名称" value="<#if data??>${data.name!}</#if>">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="control-label">模块类型</label>
+                                            <select id="state" class="form-control">
+                                                <option value="1" <#if data??&&data.state==1>selected="selected"</#if> <#if !data??>selected="selected"</#if> >页面</option>
+                                                <option value="2" <#if data??&&data.state==2>selected="selected"</#if> >接口</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="control-label">模块路径</label>
+                                            <input id="key" type="text" class="form-control" placeholder="请输入模块路径" value="<#if data??>${data.key!}</#if>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="control-label">分组菜单</label>
+                                            <select id="menuid" class="form-control">
+                                                <option value="0">——请选择——</option>
+                                                <#list MenuList as item>
+                                                    <#if menuid??>
+                                                        <option value="${item.menuid}" <#if item.menuid==menuid>selected="selected"</#if> >${item.name}</option>
+                                                    <#else>
+                                                        <option value="${item.menuid}">${item.name}</option>
+                                                    </#if>
+                                                </#list>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="control-label">模块排序</label>
+                                            <input id="orderno" type="text" class="form-control" placeholder="请输入模块排序" value="<#if data??>${data.orderno!}<#else>5</#if>">
+                                        </div>
+                                    </div>
+                                </div>
+								
+							</div>
+							<div class="box-footer">
+								<a id="submit" class="btn btn-primary">提交</a>
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "../../inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/input-mask/jquery.inputmask.js"></script>
+		<script src="${cxt!}/addon/input-mask/jquery.inputmask.date.extensions.js"></script>
+		<script>
+			$(document).ready(function() {
+				//提交	
+				$("#submit").click(function() {
+                    var seqid = $("#seqid").val();
+					var moduleid = $("#moduleid").val();
+					var name = $("#name").val();
+					var key = $("#key").val();
+					var state = $("#state").val();
+					var menuid = $("#menuid").val();
+                    var orderno = $("#orderno").val();
+					if(!moduleid) {
+                        layer.msg("请输入模块ID！", {
+                            icon: 0
+                        });
+                        return;
+                    }
+					if(!name) {
+						layer.msg("请输入模块名称！", {
+							icon: 0
+						});
+						return;
+					}
+					if(!key) {
+						layer.msg("请输入模块路径！", {
+							icon: 0
+						});
+						return;
+					}
+					if(state == 0) {
+						layer.msg("请选择模块类型！", {
+							icon: 0
+						});
+						return;
+					}
+					if(menuid == 0) {
+						layer.msg("请选择分组菜单！", {
+							icon: 0
+						});
+						return;
+					}
+					if(seqid <= 0) {
+						var ajaxUrl = "${cxt!}/admin/module/doAdd"
+						ajaxGet(ajaxUrl, {
+						    moduleid: moduleid,
+							name: name,
+							key: key,
+							menuid: menuid,
+							state: state,
+							orderno: orderno
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("提交成功！即将返回列表...", {
+								time: 500,
+								icon: 1
+							}, function() {
+								location.href = "${cxt!}/admin/module/goList";
+							});
+						})
+					}else {
+						ajaxUrl = "${cxt!}/admin/module/doEdit";
+						ajaxGet(ajaxUrl, {
+							moduleid: moduleid,
+							name: name,
+							key: key,
+							state: state,
+							menuid: menuid,
+                            orderno: orderno
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("提交成功！即将返回列表...", {
+								time: 500,
+								icon: 1
+							}, function() {
+								location.href = "${cxt!}/admin/module/goList";
+							});
+						})
+					}
+
+				})
+
+			})
+		</script>
+	</body>
+
+</html>

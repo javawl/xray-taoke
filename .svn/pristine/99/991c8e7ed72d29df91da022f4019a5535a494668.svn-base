@@ -1,0 +1,282 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.jfinal.weixin.sdk.utils.HttpUtils;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.MD5Codec;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.kit.TaokeKit;
+import com.xray.taoke.admin.model.TKKefuMsg;
+import com.xray.taoke.admin.model.TkTbGoods;
+import com.xray.taoke.admin.model.TkLink;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.service.GoodService;
+import com.xray.taoke.admin.utils.ExtractHttpUtils;
+import com.xray.taoke.admin.utils.ParamUtils;
+
+@ControllerBind(controllerKey = "/tkgood")
+public class TkGoodController extends AbstractController {
+    public static final Prop config = PropKit.use("config.properties");
+
+    public void goList() {
+
+        String linkid = getPara("linkid", "");
+        setAttr("linkid", linkid);
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` asc");
+        setAttr("page", page);
+
+        Map<String, Object> cond = getCondAll();
+        if (StringUtil.isNotEmpty(linkid)) {
+            cond.put("link_id", linkid);
+        }
+        List<TkTbGoods> dataList = TkTbGoods.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+
+        logger.debug("dataList,size:{}", dataList.size());
+
+        render("/template/pages/tk_goods/list.html");
+    }
+
+    public void goAdd() {
+        String type = getPara("type", "1");
+        String appid = getPara("appid");
+        if (StringUtil.isNotEmpty(appid)) {
+            setAttr("appid", appid);
+            setAttr("action", getPara("action"));
+
+            TkMaterial data = new TkMaterial();
+            data.set("name", getPara("name"));
+            setAttr("data", data);
+        }
+        setAttr("send_state", 1);
+        render("/template/pages/tk_goods/form" + type + ".html");
+    }
+
+    public void goEdit() throws UnsupportedEncodingException {
+        String seqid = getPara("seqid");
+        String type = getPara("type");
+        int send_state = 1;
+        TKKefuMsg data = TKKefuMsg.dao.findById(seqid);
+        if (data == null) {
+            data = TKKefuMsg.dao.queryByMediaid(getPara("mediaid"));
+            type = data.getStr("type");
+            send_state = data.getInt("send_state");
+        }
+        setAttr("send_state", send_state);
+        setAttr("data", data);
+        setAttr("contentList", JSONObject.parseArray(new String(data.get("content"), "UTF-8")));
+        render("/template/pages/tk_goods/form" + type + ".html");
+    }
+
+    public void doAdd() {
+
+        String id = MD5Codec.encode(MD5Codec.encode(Long.toString(System.currentTimeMillis())));
+        TkLink link = new TkLink();
+        link.set("link_id", id);
+        link.save();
+        String goods = getPara("goods");
+        ExtractHttpUtils.common(goods, id);
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doTest() {
+        // String appid = "wx3088f1bd705dfd20";
+        // WeixinApi api = new WeixinApi();
+        // WeixinApi wxApi = Enhancer.enhance(WeixinApi.class);
+        // wxApi.geteMenu(appid);
+        try {
+            GoodService.instance.pubGoodsBySaleType();
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        //
+
+        renderRtn(RtnFactory.newSucc(GoodService.instance.getGoodsBySaleType()));
+    }
+
+    public static void commonGetGoods(String url, int type) {
+        TkTbGoods.dao.updateOrderno();
+        String json_result = HttpUtils.get(url);
+        JSONObject jsonObject = JSONObject.parseObject(json_result);
+        String data = jsonObject.getString("data");
+        JSONArray array = JSONArray.parseArray(data);
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject jsonObject2 = JSONObject.parseObject(array.get(i).toString());
+            String couponurl = jsonObject2.getString("couponurl");
+            String itemid = jsonObject2.getString("itemid");
+            String itempic = jsonObject2.getString("itempic");
+            String itemtitle = jsonObject2.getString("itemtitle");
+            String good_url = "https://detail.tmall.com/item.htm?id=" + itemid;
+            String itemdesc = jsonObject2.getString("itemdesc");
+            String itemshorttitle = jsonObject2.getString("itemshorttitle");
+            double itemprice = jsonObject2.getDoubleValue("itemprice");
+            String shopname = jsonObject2.getString("shopname");
+            long end_time = jsonObject2.getLongValue("end_time");
+            double itemendprice = jsonObject2.getDoubleValue("itemendprice");
+
+            double tkmoney = jsonObject2.getDoubleValue("tkmoney");
+            double tkrates = jsonObject2.getDoubleValue("tkrates");
+            double couponprice = itemprice - itemendprice;
+            int orderno = i;
+            TkTbGoods.dao.updateIfNotExist(couponprice, tkrates, tkmoney, type, itemid, itempic, itemdesc, itemtitle, good_url, couponurl, itemshorttitle, itemprice, shopname, end_time, itemendprice, orderno);
+        }
+
+    }
+
+    public static void getDownItems(String url) {
+        String json_result = HttpUtils.get(url);
+        JSONObject jsonObject = JSONObject.parseObject(json_result);
+        String data = jsonObject.getString("data");
+        JSONArray array = JSONArray.parseArray(data);
+
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject jsonObject2 = JSONObject.parseObject(array.get(i).toString());
+            String itemid = jsonObject2.getString("itemid");
+            int down_type = jsonObject2.getIntValue("down_type");
+            long down_time = jsonObject2.getLongValue("down_time");
+            TkTbGoods.dao.updateState(itemid, down_type, down_time);
+        }
+    }
+
+    public static Map<String, Object> getGoodByItemid(String url) {
+        String json_result = HttpUtils.get(url);
+        JSONObject jsonObject = JSONObject.parseObject(json_result);
+        String data = jsonObject.getString("data");
+        @SuppressWarnings("static-access")
+        JSONObject jsonObject2 = JSONObject.parseObject(data);
+        Map<String, Object> cond = new HashMap<>();
+        double tkrates = jsonObject2.getDoubleValue("tkrates");
+        double tkmoney = jsonObject2.getDoubleValue("tkmoney");
+        cond.put("tkrates", tkrates);
+        cond.put("tkmoney", tkmoney);
+        return cond;
+    }
+
+    public void doCopy() {
+        // int pno = 1;
+        // String url = config.get("url");
+        // url = url + pno;
+        // type:0,所有商品,1-4各大榜单
+        // commonGetGoods(url, 0);
+        // TkAllGoods.dao.updateOrderno();
+        String url2 = config.get("sales_list");
+        for (int i = 1; i <= 4; i++) {
+            url2 = url2 + "&sale_type=" + i;
+            // 各大v榜单
+            commonGetGoods(url2, i);
+        }
+
+        String url3 = config.get("fastbuy");
+        commonGetGoods(url3, 0);
+
+        String url4 = config.get("get_down_items");
+
+        getDownItems(url4);
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doCopyByAllGood() {
+        String url = config.get("url");
+        // type:0,所有商品,1-4各大榜单
+        TkTbGoods.dao.updateOrderno();
+        commonGetGoods(url, 0);
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doUpdateGoods() {
+        String itemid = "554185014044";
+        String pid = com.xray.taoke.admin.kit.Constant.taoke_pid;
+        String session = com.xray.taoke.admin.kit.Constant.taoke_session;
+        // String item_url2 = "";
+        try {
+            JSONObject jsonObject = TaokeKit.privilegeGet(itemid, pid, session);
+            String coupon_click_url = jsonObject.getString("coupon_click_url");
+            double yjrates = jsonObject.getDoubleValue("max_commission_rate");
+            // item_url2 = jsonObject.getString("item_url");
+            String coupon_end_time = "";
+            try {
+                coupon_end_time = jsonObject.getString("coupon_end_time");
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+            TkTbGoods allGoods = TkTbGoods.dao.queryByItemId(itemid);
+            if (allGoods == null) {
+                TkTbGoods allGoods2 = new TkTbGoods();
+                allGoods2.set("itemid", itemid);
+                allGoods2.set("yjrates", yjrates);
+                allGoods2.set("link", "");
+                allGoods2.save();
+                allGoods = allGoods2;
+            }
+
+            String itempic = allGoods.getStr("itempic");
+            String title = allGoods.getStr("itemtitle");
+            String url = "";
+
+            if (!StringUtil.isEmpty(coupon_end_time)) {
+                String coupon_info = jsonObject.getString("coupon_info");
+                double discountprice = 0.0;
+                int jian = coupon_info.indexOf("减");
+                int yuan = coupon_info.lastIndexOf("元");
+                if (jian == -1 || yuan == -1) {
+                    discountprice = 0;
+                } else {
+                    discountprice = Double.valueOf(coupon_info.substring(jian + 1, yuan));
+                }
+
+                url = coupon_click_url;
+
+                // url = item_url2;
+                // String model = TaokeKit.tpwdCreate(title, url, itempic);
+                // System.out.println(model);
+                // String text = "【"+title+"】"+url+"点击链接，再选择浏览器咑閞；或復·制这段描述"+model+"后到淘♂寳♀";
+
+                allGoods.set("yjrates", yjrates);
+                allGoods.set("link", coupon_click_url);
+                allGoods.set("discountprice", discountprice);
+                allGoods.update();
+            } else {
+                String item_url = jsonObject.getString("item_url");
+                allGoods.set("link", item_url);
+                url = item_url;
+                // url = item_url2;
+                // String model = TaokeKit.tpwdCreate(title, url, itempic);
+                allGoods.update();
+            }
+
+        } catch (Exception e) {
+            System.out.println(e);
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doUpdateOrder() {
+        String session = com.xray.taoke.admin.kit.Constant.taoke_session;
+        String start_time = "2019-03-18 10:30:00";
+        try {
+            JSONArray jsonArray = TaokeKit.orderGet(start_time, session);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+}

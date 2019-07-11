@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>付款后如何领奖金</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+		<link rel="stylesheet" href="https://cdn.bootcss.com/Swiper/4.5.0/css/swiper.min.css">
+		<link rel="stylesheet" href="http://alicdn.ldpro.cn/act0/css/main.css">
+		<style>
+			html,
+			body {
+				position: relative;
+				height: 100%;
+				overflow-x: hidden;
+			}
+
+			body {
+				background: #eee;
+				font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+				font-size: 14px;
+				color: #000;
+				margin: 0;
+				padding: 0;
+			}
+
+			.swiper-container {
+				width: 100%;
+				height: 100%;
+			}
+
+			.swiper-slide {
+				text-align: center;
+				font-size: 18px;
+				background: #fff;
+
+				/* Center slide text vertically */
+				display: -webkit-box;
+				display: -ms-flexbox;
+				display: -webkit-flex;
+				display: flex;
+				-webkit-box-pack: center;
+				-ms-flex-pack: center;
+				-webkit-justify-content: center;
+				justify-content: center;
+				-webkit-box-align: center;
+				-ms-flex-align: center;
+				-webkit-align-items: center;
+				align-items: center;
+			}
+
+			.css {
+				transition: width 2s;
+				-moz-transition: width 2s;
+				/* Firefox 4 */
+				-webkit-transition: width 2s;
+				/* Safari 和 Chrome */
+				-o-transition: width 2s;
+				/* Opera */
+			}
+
+			.slide_bg {
+				background: #fd8c00;
+				width: 100%;
+				height: 100%;
+			}
+
+			.bg {
+				width: 100vw;
+				height: 100vh;
+			}
+
+			.tip {
+				border-radius: 2vw;
+				padding: 3%;
+				color: #FFFFFF;
+				text-align: left;
+				opacity: 0;
+				position: absolute;
+				top: 48%;
+				left: 20%;
+				width: 54%;
+				font-size: 4vw;
+				background: rgba(0, 0, 0, 0.7);
+			}
+
+			.jiantou {
+				position: absolute;
+				top: 94%;
+				opacity: 0;
+				left: 47vw;
+				width: 6vw;
+				height: 6vw;
+				background-image: url(http://alicdn.ldpro.cn/act0/img/shang.png);
+				background-size: 100%;
+			}
+
+			.title {
+				position: absolute;
+				width: 100%;
+				display: flex;
+				justify-content: center;
+				font-size: 4vw;
+				align-items: center;
+				top: 7%;
+				font-weight: 500;
+				font-family: "微软雅黑";
+			}
+		</style>
+		<style></style>
+	</head>
+	<body>
+		<!-- Swiper -->
+		<div class="swiper-container swiper-container-vertical swiper-container-ios">
+			<div class="swiper-wrapper" style="transform: translate3d(0px, 0px, 0px);">
+				<div class="swiper-slide swiper-slide-active" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="title">付款后如何领奖金 1/6</div>
+						<div style="position:absolute;background: url(http://alicdn.ldpro.cn/act0/img/zhi.gif);background-size: 100%;width:15vw;top:47%;left:38vw;height:15vw;"></div>
+						<img class="bg" src="http://alicdn.ldpro.cn/act0/img/guide15.min.png" style="width: 85vw;">
+						<div class="tip" id="tip1" style="top: 31%; opacity: 1;">付款后，在待发货或待收货页面找到该订单</div>
+						<div class="jiantou" style="top: 91%; opacity: 1;"></div>
+					</div>
+				</div>
+				<div class="swiper-slide swiper-slide-next" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="title">付款后如何领奖金 2/6</div>
+						<div style="position:absolute;background: url(http://alicdn.ldpro.cn/act0/img/zhi.gif);background-size: 100%;width:15vw;top:37%;left:37vw;height:15vw;"></div>
+						<img class="bg" src="http://alicdn.ldpro.cn/act0/img/guide16.min.png" style="width: 85vw;">
+						<div class="tip" id="tip2" style="opacity: 0; top: 48%;">点击购买的商品，进入订单详情页</div>
+						<div class="jiantou" style="top: 91%; opacity: 1;"></div>
+					</div>
+				</div>
+				<div class="swiper-slide" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="title">付款后如何领奖金 3/6</div>
+						<div style="position:absolute;background: url(http://alicdn.ldpro.cn/act0/img/zhi.gif);background-size: 100%;width:15vw;top:52%;left:69vw;height:15vw;"></div>
+						<img class="bg" src="http://alicdn.ldpro.cn/act0/img/guide17.min.png" style="width: 85vw;">
+						<div class="tip" id="tip3" style="opacity: 0; top: 35%;">在订单页下方，点击复制按钮复制订单号</div>
+						<div class="jiantou" style="top: 91%; opacity: 1;"></div>
+					</div>
+				</div>
+				<div class="swiper-slide" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="title">付款后如何领奖金 4/6</div>
+						<div style="position:absolute;background: url(http://alicdn.ldpro.cn/act0/img/zhi.gif);background-size: 100%;width:15vw;top:33%;left:44vw;height:15vw;"></div>
+						<img class="bg" src="http://alicdn.ldpro.cn/act0/img/guide18.min.png" style="width: 85vw;">
+						<div class="tip" id="tip4" style="opacity: 0; top: 48%;">打开微信，找到公众号。</div>
+						<div class="jiantou" style="top: 91%; opacity: 1;"></div>
+					</div>
+				</div>
+				<div class="swiper-slide" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="title">付款后如何领奖金 5/6</div>
+						<div style="position:absolute;background: url(http://alicdn.ldpro.cn/act0/img/zhi.gif);background-size: 100%;width:15vw;top:54%;left:46vw;height:15vw;"></div>
+						<img class="bg" src="http://alicdn.ldpro.cn/act0/img/guide19.min.png" style="width: 85vw;">
+						<div class="tip" id="tip5" style="opacity: 0; top: 39%;">找到公众号，粘贴纯数字订单号并发送</div>
+						<div class="jiantou" style="top: 91%; opacity: 1;"></div>
+					</div>
+				</div>
+				<div class="swiper-slide" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="title">付款后如何领奖金 6/6</div>
+						<img class="bg" src="http://alicdn.ldpro.cn/act0/img/guide20.min.png" style="width: 85vw;">
+						<div class="tip" id="tip6" style="opacity: 0; top: 50%;">订单号绑定后，等待确认收货，奖金发放成功</div>
+					</div>
+				</div>
+				<div class="swiper-slide" style="height: 736px;">
+					<div class="slide_bg">
+						<div class="tip_light"><img src="http://alicdn.ldpro.cn/act0/img/jc_light.png" style="width: 85vw;">猜你还想看</div>
+						<div class="three_skip">
+							<ul>
+								<li>
+									<img class="tubiao" src="http://alicdn.ldpro.cn/act0/img/jc_sq.png" style="width: 85vw;">
+									<a href="cha.html">如何查淘宝隐藏券</a>
+									<img class="jiantou2" src="http://alicdn.ldpro.cn/act0/img/jc_jiantou.png" style="width: 85vw;">
+								</li>
+								<li>
+									<img class="tubiao" src="http://alicdn.ldpro.cn/act0/img/jc_tx.png" style="width: 85vw;">
+									<a href="tix.htm">奖金如何申请提现</a>
+									<img class="jiantou2" src="http://alicdn.ldpro.cn/act0/img/jc_jiantou.png" style="width: 85vw;">
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Add Pagination -->
+			<div class="swiper-pagination swiper-pagination-clickable swiper-pagination-bullets"><span class="swiper-pagination-bullet swiper-pagination-bullet-active"
+				 tabindex="0" role="button" aria-label="Go to slide 1"></span><span class="swiper-pagination-bullet" tabindex="0"
+				 role="button" aria-label="Go to slide 2"></span><span class="swiper-pagination-bullet" tabindex="0" role="button"
+				 aria-label="Go to slide 3"></span><span class="swiper-pagination-bullet" tabindex="0" role="button" aria-label="Go to slide 4"></span><span
+				 class="swiper-pagination-bullet" tabindex="0" role="button" aria-label="Go to slide 5"></span><span class="swiper-pagination-bullet"
+				 tabindex="0" role="button" aria-label="Go to slide 6"></span><span class="swiper-pagination-bullet" tabindex="0"
+				 role="button" aria-label="Go to slide 7"></span></div>
+			<span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span>
+		</div>
+
+		<!-- Swiper JS -->
+		<script src="https://cdn.bootcss.com/Swiper/4.5.0/js/swiper.min.js"></script>
+		<script src="https://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+		<script>
+			if (document.documentElement.clientHeight / document.documentElement.clientWidth < 1.8) {
+				$('img').css('width', '85vw');
+			}
+			$('.jiantou').animate({
+				top: '91%',
+				opacity: '1'
+			}, "1500");
+			setInterval("jiantou()", 1500);
+
+			function jiantou() {
+				$('.jiantou').css('top', '94%');
+				$('.jiantou').css('opacity', '0');
+				$('.jiantou').animate({
+					top: '91%',
+					opacity: '1'
+				}, "1500");
+			}
+
+			var swiper = new Swiper('.swiper-container', {
+				direction: 'vertical',
+				pagination: {
+					el: '.swiper-pagination',
+					clickable: true,
+				},
+				on: {
+					slideChangeTransitionEnd: function() {
+
+						switch (this.activeIndex) {
+							case 0:
+								layopen(0)
+								break;
+							case 1:
+								layopen(1)
+								break;
+							case 2:
+								layopen(2)
+								break;
+							case 3:
+								layopen(3)
+								break;
+							case 4:
+								layopen(4)
+								break;
+							case 5:
+								layopen(5)
+								break;
+						}
+					}
+				}
+			});
+			layopen(0);
+
+			function layopen(index) {
+				if (index == 0) {
+					back()
+					$('#tip1').animate({
+						top: '31%',
+						opacity: '1'
+					}, "2000");
+				} else if (index == 1) {
+					back()
+					$('#tip2').animate({
+						top: '45%',
+						opacity: '1'
+					}, "2000");
+				} else if (index == 2) {
+					back()
+					$('#tip3').animate({
+						top: '32%',
+						opacity: '1'
+					}, "2000");
+				} else if (index == 3) {
+					back()
+					$('#tip4').animate({
+						top: '45%',
+						opacity: '1'
+					}, "2000");
+				} else if (index == 4) {
+					back()
+					$('#tip5').animate({
+						top: '36%',
+						opacity: '1'
+					}, "2000");
+				} else if (index == 5) {
+					back()
+					$('#tip6').animate({
+						top: '47%',
+						opacity: '1'
+					}, "2000");
+				}
+			}
+
+			function back() {
+				console.log(123)
+				$('.tip').css('opacity', '0');
+				$('.tip').css('top', '48%');
+				$('#tip1').css('top', '34%');
+				$('#tip3').css('top', '35%');
+				$('#tip5').css('top', '39%');
+				$('#tip6').css('top', '50%');
+			}
+		</script>
+	</body>
+</html>

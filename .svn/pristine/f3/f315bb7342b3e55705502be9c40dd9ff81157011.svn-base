@@ -1,0 +1,17 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.text.SimpleDateFormat;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.admin.web.controller.AbstractController;
+
+@ControllerBind(controllerKey = "/tkpay")
+public class TkPayController extends AbstractController {
+    public final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public void goList() {
+        String ip = getRemoteIp();
+    }
+
+
+}

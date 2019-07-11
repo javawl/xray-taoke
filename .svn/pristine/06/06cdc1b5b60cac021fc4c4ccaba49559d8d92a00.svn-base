@@ -1,0 +1,149 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.TkOrderInfo;
+
+@ControllerBind(controllerKey = "/tkorderinfo")
+public class TkOrderinfoController extends AbstractController {
+    public final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public void goList() {
+        String refDateStr = getPara("refDateStr", "");
+        setAttr("refDateStr", refDateStr);
+        Map<String, Object> cond = getCondAll();
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+
+        if (!StringUtil.isEmpty(refDateStr)) {
+            long sday = getTimesmorning(refDateStr);
+            long eday = getTimesnight(refDateStr);
+            cond.put("sday", sday);
+            cond.put("eday", eday);
+        }
+
+        List<TkOrderInfo> dataList = TkOrderInfo.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+        logger.debug("dataList,size:{}", dataList.size());
+        render("/template/pages/tk_orderinfo/list.html");
+    }
+
+    public static long getTimesmorning(String day) {
+        Calendar cal = Calendar.getInstance();
+        try {
+            cal.setTime(simpleDateFormat.parse(day));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    public static long getTimesnight(String day) {
+        Calendar cal = Calendar.getInstance();
+        try {
+            cal.setTime(simpleDateFormat.parse(day));
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        cal.set(Calendar.HOUR_OF_DAY, 24);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    public void goAdd() {
+        render("/template/pages/tk_orderinfo/form.html");
+    }
+
+    public void goEdit() {
+        String seqid = getPara("seqid");
+        TkOrderInfo data = TkOrderInfo.dao.findById(seqid);
+        setAttr("data", data);
+        render("/template/pages/tk_orderinfo/form.html");
+    }
+
+    public void goListByUserId() {
+        String refDateStr = getPara("refDateStr", "");
+        setAttr("refDateStr", refDateStr);
+        String userid = getPara("userid");
+        Map<String, Object> cond = getCondAll();
+
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+        if (!StringUtil.isEmpty(refDateStr)) {
+            long sday = getTimesmorning(refDateStr);
+            long eday = getTimesnight(refDateStr);
+            cond.put("sday", sday);
+            cond.put("eday", eday);
+        }
+
+        cond.put("userid", userid);
+        List<TkOrderInfo> dataList = TkOrderInfo.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+        logger.debug("dataList,size:{}", dataList.size());
+        render("/template/pages/tk_orderinfo/list_userid.html");
+    }
+
+    public void doAdd() {
+        TkOrderInfo data = new TkOrderInfo();
+        String content = getPara("content");
+        String menuid = "wx_" + UuidUtil.getUuidByJdk(true).substring(8, 24);
+        data.set("menuid", menuid);
+        data.set("name", getPara("name"));
+        data.set("content", content);
+        data.set("state", 1);
+        data.set("inputtime", System.currentTimeMillis());
+        data.set("inputby", getUserid());
+        data.set("edittime", data.get("inputtime"));
+        data.set("editby", data.get("inputby"));
+        data.save();
+
+        logger.info("doAdd,menuid:{},opid:{},{}", menuid, getUserid(), getRemoteIp());
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        String seqid = getPara("seqid");
+        TkOrderInfo data = TkOrderInfo.dao.findById(seqid);
+        data.set("name", getPara("name"));
+        data.set("content", getPara("content"));
+        data.set("edittime", System.currentTimeMillis());
+        data.set("editby", getUserid());
+        data.update();
+        logger.info("doEdit,opid:{},{}", getUserid(), getRemoteIp());
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doDel() {
+
+        String seqid = getPara("seqid");
+        TkOrderInfo.dao.deleteById(seqid);
+        // TkOrderInfo orderInfo = TkOrderInfo.dao.findById(seqid);
+        // orderInfo.set("", value);
+        // orderInfo.update();
+        logger.info("doDels,seqids:{},opid:{},{}", seqid, getUserid(), getRemoteIp());
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    
+
+}

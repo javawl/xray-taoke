@@ -1,0 +1,55 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.act.exception.RtException;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.tkapi.TbItemService;
+
+public class OrderProxyApp extends AbstractApp {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp pidexorder", e);
+        }
+    }
+
+    public void doRun() {
+        List<OrderInfo> list = OrderInfo.dao.queryProxy();
+        logger.info("runapp OrderProxyApp,size:{}", list.size());
+        for (OrderInfo data : list) {
+            updateProxy(data);
+        }
+    }
+
+    private void updateProxy(OrderInfo data) {
+        String userid = data.getStr("userid");
+        if (StringUtil.isEmpty(userid))
+            throw new RtException("updateProxy,none userid,orderinfo,seqid:" + data.getLong("seqid"));
+        UoUser user = UoUser.dao.queryByUserId(userid);
+        if (user == null) {
+            logger.info("updateProxy,none user,userid:{}", userid);
+            return;
+        }
+        // proxyby
+        String proxyby = user.getStr("proxyby");
+        String seqid = data.getStr("seqid");
+        if (StringUtil.isEmpty(proxyby)) {
+            OrderInfo.dao.updateState(1, "", seqid);
+            logger.info("updateProxy,none proxyby,userid:{}", proxyby);
+            return;
+        }
+        OrderInfo.dao.updateState(2, proxyby, seqid);
+        String appid = data.getStr("appid");
+        String openid = data.getStr("openid");
+        String tradeid = data.getStr("tradeid");
+        // wxApi.sendText(appid, openid, MpInfoService.instance.getTradeSucc(appid,
+        // UoUser.dao.queryByUserId(proxyby), OrderInfo.dao.queryByTradeid(tradeid)));
+    }
+}

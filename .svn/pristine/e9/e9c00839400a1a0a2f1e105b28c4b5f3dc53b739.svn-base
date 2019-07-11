@@ -1,0 +1,85 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.MpUser;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.TkItemDetail;
+import com.xray.taoke.admin.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/orderinfo")
+public class OrderInfoController extends AbstractController {
+    public final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public void goList() {
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<OrderInfo> dataList = OrderInfo.dao.queryList(cond, getPageVo("`tradetime` desc"));
+        for (OrderInfo data : dataList) {
+            data.setMpname(map.get(data.getStr("appid")));
+        }
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        setAttr("dataList", dataList);
+        render("/template/pages/orderinfo/list.html");
+    }
+
+    public void goItemList() {
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<OrderInfo> dataList = OrderInfo.dao.queryList(getCondAll(), getPageVo("`tradetime` desc"));
+        for (OrderInfo data : dataList) {
+            data.setMpname(map.get(data.getStr("appid")));
+        }
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        setAttr("dataList", dataList);
+        render("/template/pages/orderinfo/item_list.html");
+    }
+
+    public void goInvaildList() {
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<OrderInfo> dataList = OrderInfo.dao.queryInvaildOrder(getCondAll(), getPageVo("`tradetime` desc"));
+        for (OrderInfo data : dataList) {
+            data.setMpname(map.get(data.getStr("appid")));
+        }
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        setAttr("dataList", dataList);
+        render("/template/pages/orderinfo/list_invalid.html");
+    }
+
+    public void goChaQuan() {
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<TkItemDetail> dataList = TkItemDetail.dao.queryList(getCondAll(), getPageVo("`seqid` desc"));
+        for (TkItemDetail data : dataList) {
+            data.setMpname(map.get(data.getStr("appid")));
+        }
+        setAttr("dataList", dataList);
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        render("/template/pages/orderinfo/chaquan.html");
+    }
+
+    public void doUserInfo() {
+        List<TkItemDetail> dataList = TkItemDetail.dao.queryListBy();
+        for (TkItemDetail data : dataList) {
+            MpUser mpUser = MpUser.dao.queryWxnameByOpenid(data.getStr("appid"), data.getStr("openid"));
+            data.set("wxavatar", mpUser.getStr("wxavatar"));
+            data.set("wxname", mpUser.get("wxname"));
+            data.set("state", 1);
+            data.update();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+}

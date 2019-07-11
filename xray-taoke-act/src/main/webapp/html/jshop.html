@@ -1,0 +1,114 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<meta content="yes" name="apple-mobile-web-app-capable">
+		<meta content="black" name="apple-mobile-web-app-status-bar-style">
+		<meta content="telephone=no" name="format-detection">
+		<meta content="email=no" name="format-detection">
+		<title>京东内部券</title>
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/react_common_ac60368b18be5881bffa.css" rel="stylesheet">
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/duo_cms_mall_04ac71915602372edc45.css" rel="stylesheet">
+    <style>
+      .tab-item {margin-left:0.22rem}
+    </style>
+	</head>
+
+	<body id="duo-cms-mall">
+		<div id="main">
+			<div class="earn-money-container" style="padding-top: .45rem;">
+				<div class="new-bottom-bar">
+					<span class="gaussian-blur"></span>
+					<div class="iphonex-extra-height"></div>
+				</div>
+				<div class="cms-top-v2" style="height: .45rem;">
+          <div id="top-tabs-container-v2" style="padding-right: 0;">
+          	<div class="top-tabs-scroll"><span data-lwid="j12" class="tab-item">数码</span><span data-lwid="j08" class="tab-item">母婴</span><span data-lwid="j10" class="tab-item">家居</span><span data-lwid="j06" class="tab-item">美妆</span><span data-lwid="j04" class="tab-item">鞋包</span><span data-lwid="j01" class="tab-item">食品</span><span data-lwid="j11" class="tab-item">户外</span></div>
+          </div>
+				</div>
+
+				<div id="goods-list-container">
+					<li>
+						<div id="sq-item-list" class="react-base-list-wrapper">
+						</div>
+					</li>
+				</div>
+        <p id="token" style="display: none;"></p>
+      </div>
+		</div>
+    
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+      var pno = 1;
+      var lwid = '${lwid!}';
+      var canLoad = true;
+      var canRun = true;
+      
+      $(function() {
+      	$(window).scroll(throttle(loadItemList, 1000));
+      	getItemList(false);
+        
+        $('.tab-item').click(function() {
+        	lwid = $(this).attr('data-lwid');
+        	pno = 1;
+          canLoad = true;
+          canRun = true;
+        	getItemList(false);
+        });
+      })
+      
+      function doJToken(id,cpurl) {
+        $.ajax({
+          url: '${cxt!}/doJToken?id='+id+'&pkey='+${pkey!}+"&cpurl="+encodeURIComponent(cpurl),
+          async: false,
+          success: function(res) {
+            console.log(res.data);
+            window.location.href=res.data;
+          }
+        });
+      }
+      
+      function getItemList(append) {
+        $.ajax({
+          url: '${cxt!}/jlist?lwid='+lwid+'&pno='+pno,
+          success: function(rtn) {
+            ++pno;
+            if(append) {
+              if(rtn == '') {
+                canLoad = false;
+              } else {
+                $('#sq-item-list').append(rtn);
+              }
+            } else {
+              canLoad = true;
+              $('#sq-item-list').html(rtn);
+              $('html , body').animate({scrollTop: 0},'slow');
+            }
+          }
+        })
+      }
+      
+      function loadItemList() {
+        if(!canLoad) return;
+        if (($(window).height() + $(window).scrollTop() + 200) >= $(document).height()) {
+          getItemList(true);
+        }
+      }
+      
+      function throttle(fun, delay) {
+      	return function() {
+      		if (!canRun) {
+      			return
+      		}
+      		canRun = false;
+      		setTimeout(function () {
+      			scrollTop = window.scrollY;
+      			fun();
+      			canRun = true
+      		}, delay)
+      	}
+      }
+      
+		</script>
+	</body>
+</html>

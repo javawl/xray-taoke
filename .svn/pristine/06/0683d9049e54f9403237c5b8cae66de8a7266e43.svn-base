@@ -1,0 +1,144 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.SqlUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_mpinfo", pkName = "seqid")
+public class MpInfo extends JfModel<MpInfo> {
+    private static final long serialVersionUID = 1L;
+
+    public static final MpInfo dao = new MpInfo();
+
+    public MpInfo exists(String appid) {
+        String sql = "select * from `tk_mpinfo` where `appid`=?";
+        return dao.findFirst(sql, appid);
+    }
+
+    public List<MpInfo> queryByGoodid(String good_id) {
+        String sql = "select * from `tk_mpinfo` where `good_id` =? ";
+        return dao.find(sql, good_id);
+    }
+
+    public MpInfo isExist(String appid) {
+        String sql = "SELECT t.table_name FROM information_schema.TABLES t WHERE t.TABLE_SCHEMA ='ld_taoke' AND t.TABLE_NAME ='tk_mpuser_" + appid + "'";
+        return dao.findFirst(sql);
+    }
+
+    public List<MpInfo> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_mpinfo` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        sb.append(" and `state` >=0");
+        if (cond != null) {
+            if (!StringUtil.isEmpty(cond.get("word"))) {
+                sb.append(" and  (`appid` like  '%").append(cond.get("word")).append("%'").append(" or `name` like '%").append(cond.get("word")).append("%') ");
+            }
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_mpinfo` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<MpInfo>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+        return dao.find(sql + sb.toString());
+    }
+
+    public List<MpInfo> queryAllInuse() {
+        String sql = "select * from `tk_mpinfo` where `state`=1 order by `seqid` desc";
+        return MpInfo.dao.find(sql);
+    }
+
+    public List<MpInfo> queryTbnameInuse() {
+        String sql = "select `appid`,`tbname` from `tk_mpinfo` where `state`=1 order by `seqid` desc";
+        return MpInfo.dao.find(sql);
+    }
+
+    public List<String> queryAppidInuse() {
+        String sql = "select `appid` from `tk_mpinfo` where `state`=1 order by `seqid` desc";
+        return Db.use(Constant.db_dataSource).query(sql);
+    }
+
+    public List<String> queryUserInfo() {
+        String sql = "select `appid` from `tk_mpinfo` where `state`>0 order by `seqid` desc";
+        return Db.use(Constant.db_dataSource).query(sql);
+    }
+
+    public void createUserByAppid(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("CREATE TABLE `tk_mpuser_" + appid + "` (");
+        sb.append("`seqid` bigint(20) NOT NULL AUTO_INCREMENT,");
+        sb.append("`openid` varchar(60) NOT NULL DEFAULT '', ");
+        sb.append("`userid` varchar(64) NOT NULL DEFAULT '',");
+        sb.append("`wxname` tinyblob,");
+        sb.append("`wxavatar` varchar(255) NOT NULL DEFAULT '' COMMENT '头像',");
+        sb.append("`gender` tinyint(4) NOT NULL DEFAULT '0' COMMENT '性别:1男,2女',");
+        sb.append("`kefuid` varchar(255) NOT NULL DEFAULT '',");
+        sb.append("`followno` tinyint(4) NOT NULL DEFAULT '0',");
+        sb.append("`infollow` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态:1正常,-1取关',");
+        sb.append("`state` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态:0未初始化,1正常',");
+        sb.append("`inputtime` bigint(20) NOT NULL DEFAULT '0',");
+        sb.append("`edittime` bigint(20) NOT NULL DEFAULT '0',");
+        sb.append(" PRIMARY KEY (`seqid`),");
+        sb.append(" UNIQUE KEY `idx_openid` (`openid`)");
+        sb.append(") ENGINE=InnoDB DEFAULT CHARSET=utf8");
+        Db.update(sb.toString());
+    }
+
+    public List<MpInfo> queryByState(String appid, int state) {
+        String sql = "select * from `tk_mpuser_" + appid + "` where `state`=?";
+        return MpInfo.dao.find(sql, state);
+    }
+
+    public List<MpInfo> queryByInfollow(String appid) {
+        String sql = "select * from `tk_mpuser_" + appid + "` where `infollow`=? and `state` <= 1";
+        return MpInfo.dao.find(sql, 1);
+    }
+
+    public void updateUserInfo(String appid, String openid, int gender, int infollow, String wxname, String wxavatar) {
+        String sql = "update  `tk_mpuser_" + appid + "` SET `wxname`=?, `wxavatar`=?, `gender`=?, `infollow`=?,`state`=2 where `openid`=?";
+        Db.update(sql, wxname, wxavatar, gender, infollow, openid);
+    }
+
+    public void updateUserInfoNotInf(String appid, String openid) {
+        String sql = "update  `tk_mpuser_" + appid + "` SET `infollow`=?  where `openid`=?";
+        Db.update(sql, 0, openid);
+    }
+
+    public List<MpInfo> queryByIds(List<String> idList) {
+        String sql = "select  *  from  `tk_mpinfo`  WHERE `seqid` IN (" + SqlUtil.join(idList) + ")";
+        return dao.find(sql);
+    }
+
+    public MpInfo queryByUserid(String appid, String userid) {
+        String sql = "select  *  from  `tk_mpuser_" + appid + "`  WHERE `userid` = '" + userid + "'";
+        return dao.findFirst(sql);
+    }
+
+    public List<MpInfo> queryByAppid(String appid) {
+        String sql = "select  *  from  `tk_mpuser_" + appid + "`  WHERE infollow =1";
+        return dao.find(sql);
+    }
+
+    public String queryUseridByOpenid(String appid, String openid) {
+        String sql = "select `userid` from  `tk_mpuser_" + appid + "` WHERE `openid`=?";
+        return Db.use(Constant.db_dataSource).queryStr(sql, openid);
+    }
+
+    public List<MpInfo> queryByFiveMin(String appid, long inputtime) {
+        String sql = "select  *  from  `tk_mpuser_" + appid + "`  WHERE `inputtime`<? and `infollow`=? order by `seqid` desc limit 50";
+        return dao.find(sql, inputtime, 1);
+    }
+
+}

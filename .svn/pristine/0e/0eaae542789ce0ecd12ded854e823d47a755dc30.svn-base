@@ -1,0 +1,21 @@
+package com.xray.taoke.admin.service;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+
+public class LvInfoService {
+	private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+	private static final Prop config = PropKit.use("config.properties");
+	private static final String prefix = config.get("redis.prefix") + ".lvinfo.";
+
+	public static LvInfoService instance = new LvInfoService();
+
+	public void addAll(String str) {
+		String key = prefix + ".addall";
+		cache.delete(key);
+		cache.set(key, str);
+	}
+}

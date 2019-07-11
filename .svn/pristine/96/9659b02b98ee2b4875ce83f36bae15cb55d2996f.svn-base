@@ -1,0 +1,18 @@
+	<link rel="shortcut icon" href="${cxt!}/addon/admin/img/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" href="${cxt!}/addon/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="${cxt!}/addon/fontawesome/font-awesome.min.css">
+	<link rel="stylesheet" href="${cxt!}/addon/ionicons/ionicons.min.css">
+	<link rel="stylesheet" href="${cxt!}/addon/AdminLTE/css/AdminLTE.min.css">
+	<link rel="stylesheet" href="${cxt!}/addon/AdminLTE/css/skin-blue.min.css">
+	<style>
+	   .fa {margin-right:2px}
+	   td a{margin-right:4px}
+	</style>
+	<script>
+		var cxt = '${cxt!}';
+	</script>
+	<script src="${cxt!}/addon/jQuery/jquery-2.2.3.min.js"></script>
+	<script src="${cxt!}/addon/bootstrap/js/bootstrap.min.js"></script>
+	<script src="${cxt!}/addon/admin/js/app.min.js"></script>
+	<script src="${cxt!}/addon/admin/js/common.js"></script>
+	<script src="${cxt!}/addon/layer/layer.min.js"></script>

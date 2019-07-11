@@ -1,0 +1,121 @@
+package com.xray.taoke.admin.app;
+
+import com.xray.taoke.admin.model.TkStatDaily;
+import com.xray.taoke.admin.model.TkStatDetail;
+import com.xray.taoke.admin.model.TkStatDetailMonth;
+import com.xray.taoke.admin.model.TkStatMonth;
+
+public class TkStatDetailMonthApp extends AbstractApp {
+    private String appid;
+    private String month;
+
+    public TkStatDetailMonthApp(String appid, String month) {
+        this.appid = appid;
+        this.month = month;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun(appid, month);
+        } catch (Exception e) {
+            logger.error("errapp,stat detail,appid:" + appid, e);
+        }
+    }
+
+    public static void doRun(String appid, String month) {
+        doCountDetailMonth(appid, month);
+        doCountMonth(month);
+    }
+
+    private static void doCountDetailMonth(String appid, String month) {
+        TkStatDetail statDetail = TkStatDetail.dao.sumByMonthByAppid(month, appid);
+        if (statDetail == null) {
+            logger.error("errapp,empty daily,month:{}", month);
+            return;
+        }
+        TkStatDetailMonth.dao.deleteByAppidAndMonth(appid, month);
+
+        TkStatDetailMonth data = new TkStatDetailMonth();
+        data.set("month", month);
+        data.set("appid", appid);
+        data.set("userall", statDetail.getInt("userall"));
+        data.set("usernew", statDetail.getInt("usernew"));
+        data.set("activeuv", statDetail.getInt("activeuv"));
+        data.set("chaquanpv", statDetail.getInt("chaquanpv"));
+        data.set("tsoupv", statDetail.getInt("tsoupv"));
+        data.set("titempv", statDetail.getInt("titempv"));
+        data.set("tshoppv", statDetail.getInt("tshoppv"));
+        data.set("tlinkpv", statDetail.getInt("tlinkpv"));
+
+        data.set("ordernew", statDetail.getInt("ordernew"));
+        data.set("newprice", statDetail.getDouble("newprice"));
+        data.set("newmoney", statDetail.getDouble("newmoney"));
+        data.set("newjie", statDetail.getDouble("newjie"));
+        data.set("orderjie", statDetail.getDouble("orderjie"));
+        data.set("jiemoney", statDetail.getDouble("jiemoney"));
+
+        if (data.getInt("userall") > 0)
+            data.set("activerate", 1.0 * data.getInt("activeuv") / data.getInt("userall"));
+
+        double money = data.getDouble("newmoney");
+        if (money > 0)
+            data.set("newjierate", data.getDouble("newjie") / money);
+        
+        if (data.getDouble("newprice") > 0)
+            data.set("newmoneyrate", data.getDouble("newmoney") / data.getDouble("newprice"));
+
+        
+        
+        if (data.getInt("userall") > 0)
+            data.set("arpu", data.getDouble("newmoney") / data.getInt("userall"));
+
+        data.save();
+        logger.info("runapp,stat doCountDetailMonth,appid:{},month:{},", appid, month);
+    }
+
+    private static void doCountMonth(String month) {
+        TkStatDaily tkStatDaily = TkStatDaily.dao.sumByMonth(month);
+        if (tkStatDaily == null) {
+            logger.error("errapp,empty daily,month:{}", month);
+            return;
+        }
+        TkStatMonth.dao.deleteById(month);
+
+        TkStatMonth data = new TkStatMonth();
+        data.set("month", month);
+        data.set("userall", tkStatDaily.getInt("userall"));
+        data.set("usernew", tkStatDaily.getInt("usernew"));
+        data.set("activeuv", tkStatDaily.getInt("activeuv"));
+        data.set("chaquanpv", tkStatDaily.getInt("chaquanpv"));
+        data.set("tsoupv", tkStatDaily.getInt("tsoupv"));
+        data.set("titempv", tkStatDaily.getInt("titempv"));
+        data.set("tshoppv", tkStatDaily.getInt("tshoppv"));
+        data.set("tlinkpv", tkStatDaily.getInt("tlinkpv"));
+
+        data.set("ordernew", tkStatDaily.getInt("ordernew"));
+        data.set("newprice", tkStatDaily.getDouble("newprice"));
+        data.set("newmoney", tkStatDaily.getDouble("newmoney"));
+        data.set("newjie", tkStatDaily.getDouble("newjie"));
+        data.set("orderxbind", tkStatDaily.getInt("orderxbind"));
+        data.set("xbindmoney", tkStatDaily.getDouble("xbindmoney"));
+        data.set("orderjie", tkStatDaily.getDouble("orderjie"));
+        data.set("jiemoney", tkStatDaily.getDouble("jiemoney"));
+
+        if (data.getInt("userall") > 0)
+            data.set("activerate", 1.0 * data.getInt("activeuv") / data.getInt("userall"));
+
+        if (data.getDouble("newprice") > 0)
+            data.set("newmoneyrate", data.getDouble("newmoney") / data.getDouble("newprice"));
+
+        double money = data.getDouble("newmoney") - data.getDouble("xbindmoney");
+        if (money > 0)
+            data.set("newjierate", data.getDouble("newjie") / money);
+
+        if (data.getInt("userall") > 0)
+            data.set("arpu", data.getDouble("newmoney") / data.getInt("userall"));
+
+        data.save();
+        logger.info("runapp,stat doCountMonth,month:{},", month);
+    }
+}

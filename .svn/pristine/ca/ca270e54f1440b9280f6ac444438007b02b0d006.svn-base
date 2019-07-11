@@ -1,0 +1,115 @@
+package com.xray.taoke.admin.utils;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
+import com.jfinal.kit.PathKit;
+
+public class ImageUtil {
+    private Graphics2D g = null;
+
+    /**
+     * 导入本地图片到缓冲区
+     */
+    public BufferedImage loadImageLocal(String imgName) {
+        try {
+            return ImageIO.read(new File(imgName));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    public BufferedImage modifyImagetogeter(BufferedImage b, BufferedImage d) {
+
+        try {
+            int w = b.getWidth();
+            int h = b.getHeight();
+            g = d.createGraphics();
+            g.drawImage(b, 300, -800, w, h, null);
+            g.dispose();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return d;
+    }
+
+    /**
+     * 生成新图片到本地
+     */
+    public void writeImageLocal(String newImage, BufferedImage img) {
+        if (newImage != null && img != null) {
+            try {
+                File outputfile = new File(newImage);
+                ImageIO.write(img, "jpg", outputfile);
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+    
+    
+    public static String generateCode(String codeUrl, String userName) {
+    	Font font = new Font("微软雅黑", Font.PLAIN, 30);// 添加字体的属性设置
+     
+    	String projectUrl = PathKit.getWebRootPath() + "/before/codeImg/";
+    	String imgName = projectUrl + System.currentTimeMillis() + ".png";
+    	try {
+    		// 加载本地图片
+    		String imageLocalUrl = projectUrl + "weixincode2.jpg";
+    		BufferedImage imageLocal = ImageIO.read(new File(imageLocalUrl));
+    		// 加载用户的二维码
+    		BufferedImage imageCode = ImageIO.read(new File(codeUrl));
+    		// 以本地图片为模板
+    		Graphics2D g = imageLocal.createGraphics();
+    		// 在模板上添加用户二维码(地址,左边距,上边距,图片宽度,图片高度,未知)
+    		g.drawImage(imageCode, 200, imageLocal.getHeight() - 350, 350, 350, null);
+    		// 设置文本样式
+    		g.setFont(font);
+    		g.setColor(Color.BLACK);
+    		// 截取用户名称的最后一个字符
+//    		String lastChar = userName.substring(userName.length() - 1);
+//    		// 拼接新的用户名称
+//    		String newUserName = userName.substring(0, 1) + "**" + lastChar + " 的邀请二维码";
+//    		// 添加用户名称
+//    		g.drawString(newUserName, 620, imageLocal.getHeight() - 530);
+    		// 完成模板修改
+    		g.dispose();
+    		// 获取新文件的地址
+    		File outputfile = new File(imgName);
+    		// 生成新的合成过的用户二维码并写入新图片
+    		ImageIO.write(imageLocal, "png", outputfile);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    	System.out.println(imgName);
+    	// 返回给页面的图片地址(因为绝对路径无法访问)
+    	//imgName = Constants.PROJECT_URL + "codeImg/" + userId + ".png";
+     
+    	return imgName;
+    }
+
+    
+    
+
+    public static void main(String[] args) {
+    	String codeUrl = "C:\\Users\\swenht\\Desktop\\testQrcode\\20190418004028.jpg";
+    	generateCode(codeUrl, "test2");
+//        ImageUtil tt = new ImageUtil();
+//
+//        BufferedImage d = tt.loadImageLocal("C://Users/wenht/Desktop/soul.png");
+//        BufferedImage b = tt.loadImageLocal("C://Users/wenht/Desktop/20190417195317.png");
+//
+//        tt.writeImageLocal("C://Users/wenht/Desktop/dunnew10.png", tt.modifyImagetogeter(b, d));
+//        // 将多张图片合在一起
+//        System.out.println("success");
+    	
+    }
+}

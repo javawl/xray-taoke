@@ -1,0 +1,104 @@
+package com.xray.taoke.admin.vo;
+
+public class TbItemVo {
+	private String itemurl;
+	private String itemtitle;
+	private double itemprice;
+	private String ratemoney;
+	private String rate;
+	private String itemid;
+	private int sales;
+	private String yuexiao;
+	private String cpmoney;
+	private Double beforeprice;
+	private String itemimg;
+
+	public String getItemurl() {
+		return itemurl;
+	}
+
+	public void setItemurl(String itemurl) {
+		this.itemurl = itemurl;
+	}
+
+	public String getItemtitle() {
+		return itemtitle;
+	}
+
+	public void setItemtitle(String itemtitle) {
+		this.itemtitle = itemtitle;
+	}
+
+	public double getItemprice() {
+		return itemprice;
+	}
+
+	public void setItemprice(double itemprice) {
+		this.itemprice = itemprice;
+	}
+
+	public String getRatemoney() {
+		return ratemoney;
+	}
+
+	public void setRatemoney(String ratemoney) {
+		this.ratemoney = ratemoney;
+	}
+
+	public String getRate() {
+		return rate;
+	}
+
+	public void setRate(String rate) {
+		this.rate = rate;
+	}
+
+	public String getItemid() {
+		return itemid;
+	}
+
+	public void setItemid(String itemid) {
+		this.itemid = itemid;
+	}
+
+	public int getSales() {
+		return sales;
+	}
+
+	public void setSales(int sales) {
+		this.sales = sales;
+	}
+
+	public String getYuexiao() {
+		return yuexiao;
+	}
+
+	public void setYuexiao(String yuexiao) {
+		this.yuexiao = yuexiao;
+	}
+
+	public String getCpmoney() {
+		return cpmoney;
+	}
+
+	public void setCpmoney(String cpmoney) {
+		this.cpmoney = cpmoney;
+	}
+
+	public Double getBeforeprice() {
+		return beforeprice;
+	}
+
+	public void setBeforeprice(Double beforeprice) {
+		this.beforeprice = beforeprice;
+	}
+
+	public String getItemimg() {
+		return itemimg;
+	}
+
+	public void setItemimg(String itemimg) {
+		this.itemimg = itemimg;
+	}
+
+}

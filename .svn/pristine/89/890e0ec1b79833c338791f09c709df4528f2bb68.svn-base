@@ -1,0 +1,50 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+		<meta name="format-detection" content="telephone=no">
+		<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
+    <link href="http://alicdn.ldpro.cn/css0/sou.css" rel="stylesheet">
+	</head>
+	<body>
+		<div id="__next">
+			<div id="main">
+				<div id="classification-container">
+					<div style="display: block;" class="jsx-2265687815 view-wraper">
+						<div class="jsx-1019117763 wraper ">
+							<div class="jsx-1019117763 container-box">
+								<form action="${cxt!}/tsoulist" class="jsx-1019117763">
+                  <input type="hidden" name="sid" value="${sid!}" />
+                  <input name="word" type="search" placeholder="美白霜" value="" class="jsx-1019117763 search-input">
+                  <button id="submit" type="submit"></button>
+                </form>
+							</div>
+							<div onclick="document.getElementById('submit').click();" class="jsx-1019117763 search-btn">搜索</div>
+						</div>
+						<div class="y_y6FRWZ">
+							<div class="qk3jQIt2">热门分类</div>
+							<div class="_2wHDLuKB">
+                <a href="${cxt!}/tcate?cid=1&sid=${sid!}" class="xIBCfKPv">女装</a>
+                <a href="${cxt!}/tcate?cid=2&sid=${sid!}" class="xIBCfKPv">男装</a>
+                <a href="${cxt!}/tcate?cid=3&sid=${sid!}" class="xIBCfKPv">内衣</a>
+                <a href="${cxt!}/tcate?cid=4&sid=${sid!}" class="xIBCfKPv">美妆</a>
+                <a href="${cxt!}/tcate?cid=5&sid=${sid!}" class="xIBCfKPv">配饰</a>
+                <a href="${cxt!}/tcate?cid=6&sid=${sid!}" class="xIBCfKPv">鞋品</a>
+                <a href="${cxt!}/tcate?cid=7&sid=${sid!}" class="xIBCfKPv">箱包</a>
+                <a href="${cxt!}/tcate?cid=8&sid=${sid!}" class="xIBCfKPv">儿童</a>
+                <a href="${cxt!}/tcate?cid=9&sid=${sid!}" class="xIBCfKPv">母婴</a>
+                <a href="${cxt!}/tcate?cid=10&sid=${sid!}" class="xIBCfKPv">居家</a>
+                <a href="${cxt!}/tcate?cid=11&sid=${sid!}" class="xIBCfKPv">美食</a>
+                <a href="${cxt!}/tcate?cid=12&sid=${sid!}" class="xIBCfKPv">数码</a>
+                <a href="${cxt!}/tcate?cid=13&sid=${sid!}" class="xIBCfKPv">家电</a>
+                <a href="${cxt!}/tcate?cid=17&sid=${sid!}" class="xIBCfKPv">宠物</a>
+              </div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

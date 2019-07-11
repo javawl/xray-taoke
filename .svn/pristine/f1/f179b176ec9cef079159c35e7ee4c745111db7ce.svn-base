@@ -1,0 +1,12 @@
+package com.xray.taoke.admin.model;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.xray.act.jfinal.JfModel;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_stat_daily", pkName = "day")
+public class TkStatDaily extends JfModel<TkStatDaily> {
+    private static final long serialVersionUID = 1L;
+    public static final TkStatDaily dao = new TkStatDaily();
+
+}

@@ -1,0 +1,66 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+
+public class OrderJieApp extends AbstractApp implements Runnable {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp jieorder", e);
+        }
+    }
+
+    public void doRun() throws Exception {
+        UoUser user = null;
+        List<OrderInfo> list = OrderInfo.dao.queryDiffState(10);
+        logger.info("runapp jieorder,size:{}", list.size());
+
+        String userid = null;
+        String tradeid = null;
+        int tkstatus = 0;
+        double jiemoney = 0;
+        double qbcash = 0;
+        double qbconfirm = 0;
+
+        int verno = 0;
+        for (OrderInfo data : list) {
+            userid = data.getStr("userid");
+            tradeid = data.getStr("tradeid");
+            tkstatus = data.getInt("tkstatus");
+
+            user = UoUser.dao.queryByUserId(userid);
+            verno = user.getInt("verno");
+            qbcash = user.getDouble("qbcash");
+            qbconfirm = user.getDouble("qbconfirm");
+
+            switch (tkstatus) {
+            case 3:
+                jiemoney = data.getDouble("jiemoney");
+                OrderInfo.dao.updateJie(tradeid, verno);
+                UoUser.dao.updateJie(userid, jiemoney, verno);
+                logger.info("runapp,tkstatus:3,tradeid:{},qbcash:{},qbconfirm:{}", tradeid, qbcash, qbconfirm);
+                break;
+            case 13:
+                jiemoney = data.getDouble("jiemoney");
+                OrderInfo.dao.updateInvalid(tradeid, verno);
+                UoUser.dao.updateInvalid(userid, jiemoney, verno);
+                logger.info("runapp,tkstatus13,tradeid:{},qbcash:{},qbconfirm:{}", tradeid, qbcash, qbconfirm);
+                break;
+            case 14:
+                OrderInfo.dao.updateState(tradeid, 14);
+                logger.info("runapp,tkstatus:12,tradeid:{},qbcash:{},qbconfirm:{}", tradeid, qbcash, qbconfirm);
+                break;
+            default:
+                break;
+            }
+        }
+        OrderInfo.dao.updateEmpty();
+    }
+
+}

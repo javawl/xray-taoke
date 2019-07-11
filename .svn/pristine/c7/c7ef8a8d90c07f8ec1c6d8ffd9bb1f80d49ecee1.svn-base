@@ -1,0 +1,178 @@
+package com.xray.taoke.admin.app;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.TkOrderInfo;
+import com.xray.taoke.admin.model.TkUouser;
+import com.xray.taoke.admin.service.Tk21dsService;
+
+public class OrderQueryApp extends AbstractApp implements Runnable {
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private String appid;
+    private int type;
+
+    public OrderQueryApp(String appid, int type) {
+        this.appid = appid;
+        this.type = type;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp orderinfo,appid:" + appid, e);
+        }
+    }
+
+    public void doRun() throws Exception {
+        String starttime = DateUtil.formatDate(new Date(System.currentTimeMillis() - 30000));
+
+        JSONObject obj = Tk21dsService.instance.gettkorder(appid, starttime, 60);
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.data_err, "err code gettkorder,appid:" + appid + ",json:" + obj.toJSONString());
+
+        TkOrderInfo data = null;
+        JSONArray arr = obj.getJSONArray("data");
+        for (int i = 0; i < arr.size(); i++) {
+            obj = arr.getJSONObject(i);
+            if (TkOrderInfo.dao.exist(obj.getString("trade_id")))
+                continue;
+
+            data = new TkOrderInfo();
+            data.set("tradeid", obj.getString("trade_id"));
+            data.set("tradeprice", obj.getDouble("alipay_total_price"));
+            data.set("trademoney", obj.getDouble("pub_share_pre_fee"));
+            data.set("traderate", obj.getDouble("income_rate"));
+            data.set("tradetime", DateUtil.getDate(obj.getString("create_time")).getTime());
+
+            data.set("itemid", obj.getString("num_iid"));
+            data.set("itemtitle", obj.getString("item_title"));
+            data.set("itemnum", obj.getInteger("item_num"));
+
+            data.set("tkstatus", obj.getInteger("tk_status"));
+            data.save();
+            logger.info("add orderinfo,tradeid:{}", obj.getString("trade_id"));
+        }
+
+    }
+
+    public void saveBySucc(JSONArray array) {
+        for (Object object : array) {
+            JSONObject jsonObject2 = JSONObject.parseObject(object.toString());
+            String trade_id = jsonObject2.getString("trade_id");
+            String num_iid = jsonObject2.getString("num_iid");
+            String item_title = jsonObject2.getString("item_title");
+            // String price = jsonObject2.getString("price");
+            String pay_price = jsonObject2.getString("pay_price");
+            // String commission = jsonObject2.getString("commission");
+            String create_time = jsonObject2.getString("create_time");
+            String tk_status = jsonObject2.getString("tk_status");
+            // String alipay_total_price = jsonObject2.getString("alipay_total_price");
+            String total_commission_rate = jsonObject2.getString("total_commission_rate");
+            String total_commission_fee = jsonObject2.getString("total_commission_fee");
+
+            TkOrderInfo info = TkOrderInfo.dao.queryByTraid(trade_id);
+            if (info == null) {
+                TkOrderInfo data = new TkOrderInfo();
+                data.set("appid", appid);
+                data.set("tradeid", trade_id);
+                data.set("itemid", num_iid);
+                data.set("itemtitle", item_title);
+                data.set("itemendprice", Double.valueOf(pay_price));
+                data.set("tkstatus", Integer.valueOf(tk_status));
+                try {
+                    data.set("tradetime", dateFormat.parse(create_time).getTime());
+                } catch (ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                data.set("tkmoney", Double.valueOf(total_commission_fee));
+                data.set("tkrate", Double.valueOf(total_commission_rate));
+                data.save();
+            }
+        }
+    }
+
+    public void updateOverDue(JSONArray array) {
+        for (Object object : array) {
+            JSONObject jsonObject2 = JSONObject.parseObject(object.toString());
+            String trade_id = jsonObject2.getString("trade_id");
+            String tk_status = jsonObject2.getString("tk_status");
+            int tk_status_int = Integer.valueOf(tk_status);
+            TkOrderInfo info = TkOrderInfo.dao.queryByTraid(trade_id);
+            if (info != null) {
+                String userid = info.getStr("userid");
+                TkUouser tkUouser = TkUouser.dao.queryByUserId(userid);
+                if (tk_status_int == 13) {
+                    info.set("tkstatus", tk_status_int);
+                    info.update();
+                    if (!StringUtil.isEmpty(userid)) {
+                        // 未收货金额
+                        double qbconfirm = tkUouser.getDouble("qbconfirm");
+                        double jiemoney = info.getDouble("jiemoney");
+                        double balance = 0;
+                        if (qbconfirm - jiemoney > 0)
+                            balance = qbconfirm - jiemoney;
+                        tkUouser.set("qbconfirm", balance);
+                        tkUouser.update();
+                    }
+                }
+            }
+
+        }
+    }
+
+    public void doRun1() {
+        long start_time = System.currentTimeMillis();
+        String start_time_str = dateFormat.format(new Date(start_time));
+        int span = 0;
+        try {
+            switch (type) {
+            case 1:
+                span = 30;
+                break;
+            case 2:
+                span = 600;
+                break;
+            default:
+                break;
+            }
+
+            JSONObject jsonObject = Tk21dsService.instance.gettkorder(appid, start_time_str, span);
+            int code = jsonObject.getIntValue("code");
+            if (code == -1)
+                return;
+            if (code == 200) {
+                String data = jsonObject.getString("data");
+                JSONArray array = JSONArray.parseArray(data);
+
+                switch (type) {
+                case 1:
+                    saveBySucc(array);
+                    break;
+                case 2:
+                    updateOverDue(array);
+                    break;
+                default:
+                    break;
+                }
+                // saveBySucc(array);
+            }
+
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return;
+    }
+
+}

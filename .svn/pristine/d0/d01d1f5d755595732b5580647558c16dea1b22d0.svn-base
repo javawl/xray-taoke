@@ -1,0 +1,40 @@
+package com.xray.taoke.act.model;
+
+import java.util.List;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.taoke.act.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_orderinfo", pkName = "seqid")
+public class OrderInfo extends JfModel<OrderInfo> {
+    private static final long serialVersionUID = 1L;
+    public static final OrderInfo dao = new OrderInfo();
+
+    public OrderInfo queryByTradeidInuse(String tradeid) {
+        String sql = "select * from `tk_orderinfo` where `tradeid`=? and `appidkey`='wx8dd7601283019269'";
+        return dao.findFirst(sql, tradeid);
+    }
+
+    public List<OrderInfo> queryByParentTradeid(String tradeid) {
+        String sql = "select * from `tk_orderinfo` where `parentid`=? and `tradetype` = 2 ";
+        return dao.find(sql, tradeid);
+    }
+
+    public int updateUseridByTradeid(String appid, String userid, String tradeid) {
+        String sql = "update `tk_orderinfo` set `appid`=?,`userid`=? where `tradeid`=? and `userid`=''";
+        return Db.use(Constant.db_dataSource).update(sql, appid, userid, tradeid);
+    }
+
+    public int updateSucc(String appid, String userid, String tradeid, double jiemoney, double jierate, int verno) {
+        String sql = "update `tk_orderinfo` set `appid`=?,`userid`=?,`jiemoney`=?,`jierate`=?,`verno12`=?,`state`=12 where `tradeid`=? and `verno12`<=0";
+        return Db.update(sql, appid, userid, jiemoney, jierate, verno, tradeid);
+    }
+
+    public int updateSuccParentId(String appid, String userid, long seqid, double jiemoney, double jierate, int verno) {
+        String sql = "update `tk_orderinfo` set `appid`=?,`userid`=?,`jiemoney`=?,`jierate`=?,`verno12`=?,`state`=12 where `seqid`=? and `verno12`<=0";
+        return Db.update(sql, appid, userid, jiemoney, jierate, verno, seqid);
+    }
+
+}

@@ -1,0 +1,73 @@
+package com.xray.taoke.admin.app;
+
+import java.util.Calendar;
+import java.util.List;
+
+import com.xray.act.exception.RtException;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.tkapi.TbItemService;
+
+public class OrderPidexApp extends AbstractApp {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp pidexorder", e);
+        }
+    }
+
+    public void doRun() {
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.MINUTE, -10);
+
+        String itemid = null;
+        String adzoneid = null;
+        String value = null;
+        List<OrderInfo> list = OrderInfo.dao.queryLatestTradetime(cal.getTimeInMillis());
+        logger.info("runapp pidexorder,size:{}", list.size());
+        for (OrderInfo data : list) {
+            itemid = data.getStr("itemid");
+            adzoneid = data.getStr("adzoneid");
+            value = TbItemService.instance.getPidex(itemid, adzoneid);
+            if (StringUtil.isEmpty(value))
+                continue;
+
+            String[] values = value.split(",");
+            updateJie(values[0], values[1], data);
+            TbItemService.instance.delPidex(itemid, adzoneid);
+        }
+    }
+
+    private void updateJie(String appid, String openid, OrderInfo data) {
+        String userid = MpInfo.dao.queryUseridByOpenid(appid, openid);
+        if (StringUtil.isEmpty(userid))
+            throw new RtException("errapp,none userid,appid:" + appid + ",openid:" + openid);
+
+        UoUser user = UoUser.dao.queryByUserId(userid);
+        int verno = user.getInt("verno");
+
+        double trademoney = data.getDouble("trademoney");
+        double jierate = TbItemService.instance.getFlrate(trademoney);
+        jierate = user.getDouble("rate") > jierate ? user.getDouble("rate") : jierate;
+
+        double dividerate = data.getDouble("dividerate");
+        double jiemoney = 0;
+        if (dividerate > 0)
+            jiemoney = trademoney * jierate * dividerate;
+
+        String tradeid = data.getStr("tradeid");
+        if (OrderInfo.dao.updateSucc(appid, userid, tradeid, jiemoney, jierate, verno) > 0) {
+            logger.info("runapp,succ pidexorder,appid:{},openid:{},tradeid:{}", appid, openid, tradeid);
+            UoUser.dao.updateSucc(userid, jiemoney, verno);
+            wxApi.sendText(appid, openid, MpInfoService.instance.getTradeSucc(appid, UoUser.dao.queryByUserId(userid), OrderInfo.dao.queryByTradeid(tradeid)));
+            return;
+        }
+
+    }
+}

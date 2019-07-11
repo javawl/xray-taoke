@@ -1,0 +1,98 @@
+package com.xray.taoke.jdapi;
+
+import java.util.Map;
+
+import org.apache.http.client.fluent.Request;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.codec.URLCodec;
+import com.xray.taoke.tkapi.MpInfoService;
+import com.xray.taoke.tkapi.vo.ConstTk;
+
+public class Jd21dsService {
+    private static String iteminfo = "https://api.open.21ds.cn/jd_api_v1/getjdunionitems";
+
+    private static String jdorder = "https://api.open.21ds.cn/jd_api_v1/getjdunionorders";
+
+    private static String cpurl = "https://api.open.21ds.cn/jd_api_v1/getitemcpsurl";
+
+    private static String jfjingxuan = "https://api.open.21ds.cn/jd_api_v1/jfjingxuan";
+
+    public static Jd21dsService instance = new Jd21dsService();
+
+    public static void main(String[] args) throws Exception {
+        String appid = "wx3088f1bd705dfd20";
+        // String skuIds = "34551570209";
+        // String url = "https://m.tb.cn/h.3B43F8N?sm=f3df9e";
+        // JSONObject jsonObject = Jd21dsService.instance.getiteminfo(appid, skuIds);
+        // JSONObject jsonObject = Jd21dsService.instance.getjfjingxuan(appid, "1",
+        // "price");
+        String unionId = "1001529478";
+        String materialId = "https%3a%2f%2fwqitem.jd.com%2fitem%2fview%3fsku%3d23484023378";
+        JSONObject jsonObject = Jd21dsService.instance.getitemcpsurl(appid, materialId, unionId);
+        System.out.println(jsonObject);
+    }
+
+    public JSONObject getiteminfo(String appid, String skuIds) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(iteminfo);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&skuIds=").append(skuIds);
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject getjdorder(String appid, String time, int type) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+
+        String key = "ece3b6ab1c8b87a74aa01949e4d6d1f3f12d2303eaee387344fb8e3d880b5c8f50a8320d317f2e94";
+
+        // key jd推广key,redis
+        StringBuilder sb = new StringBuilder();
+        sb.append(jdorder);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&time=").append(URLCodec.encode(time, "UTF-8"));
+        sb.append("&type=").append(type);
+        sb.append("&pageNo=").append(1);
+        sb.append("&pageSize=").append(100);
+
+        sb.append("&key=").append(key);
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject getitemcpsurl(String appid, String materialId, String unionId) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+        // materialId 推广商品或者推广优惠券链接
+        // unionId jd推广id,redis
+        StringBuilder sb = new StringBuilder();
+        sb.append(cpurl);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&materialId=").append(URLCodec.encode(materialId, "UTF-8"));
+        sb.append("&unionId=").append(unionId);
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject getjfjingxuan(String appid, String eliteId, String sortName) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+        StringBuilder sb = new StringBuilder();
+        sb.append(jfjingxuan);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&eliteId=").append(eliteId);
+        sb.append("&pageIndex=").append(1);
+        sb.append("&pageSize=").append(50);
+        sb.append("&sortName=").append(sortName);
+        sb.append("&sort=").append("desc");
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+}

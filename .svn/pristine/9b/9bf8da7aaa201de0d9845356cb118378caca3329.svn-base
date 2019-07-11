@@ -1,0 +1,96 @@
+package com.xray.taoke.act.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.DateUtil;
+import com.xray.taoke.act.common.Constant;
+import com.xray.taoke.act.model.TbGoods;
+import com.xray.taoke.act.vo.TbGoodsVo;
+
+public class TbGoodsService {
+    private static Logger logger = LoggerFactory.getLogger(TbGoodsService.class);
+
+    public static TbGoodsService instance = new TbGoodsService();
+
+    public static void main(String[] args) throws Exception {
+        TbGoodsVo data = TbGoodsService.instance.chaquanByUrl("https://www.baidu.com");
+//        TbGoodsVo data = TbGoodsService.instance.chaquanByUrl("https://m.tb.cn/h.3B43F8N?sm=f3df9e");
+        System.out.println(data.toJSONString());
+    }
+
+    public TbGoodsVo chaquanByUrl(String url) throws Exception {
+        JSONObject obj = Tk21dsService.instance.getiteminfoByHtml(url);
+        // 有记录，返回
+        String itemid = obj.getString("itemid");
+        TbGoods data = TbGoods.dao.queryByItemid(itemid);
+        if (data != null)
+            return data.buildVo(TbGoodsVo.class);
+        // 基本信息
+        data = new TbGoods();
+        data.set("itemid", itemid);
+        data.set("itemtitle", obj.getString("title"));
+        data.set("itemendprice", obj.getDouble("priceL"));
+        data.set("itempic", obj.getString("pic"));
+
+        obj = Tk21dsService.instance.getitemgyurl(itemid);
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        // 高佣信息
+        obj = obj.getJSONObject("result").getJSONObject("data");
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+        }
+
+        data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.set("chaquan", 1);
+        data.save();
+        logger.info("add chaquan tbgoods,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+    public TbGoodsVo chaquanByItemid(String itemid) throws Exception {
+        // 有记录，返回
+        TbGoods data = TbGoods.dao.queryByItemid(itemid);
+        if (data != null)
+            return data.buildVo(TbGoodsVo.class);
+
+        JSONObject obj = Tk21dsService.instance.getitemgyurl(itemid);
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        // 高佣信息
+        obj = obj.getJSONObject("result").getJSONObject("data");
+        data = new TbGoods();
+        data.set("itemid", itemid);
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+        }
+        // 基本信息
+        obj = Tk21dsService.instance.getiteminfo(itemid);
+        data.set("itemtitle", obj.getString("title"));
+        data.set("itemprice", obj.getDouble("reserve_price"));
+        data.set("itemendprice", obj.getDouble("zk_final_price"));
+        data.set("itempic", obj.getJSONObject("small_images").getJSONArray("string").get(0));
+        data.set("shopname", obj.getString("nick"));
+
+        // 计算
+        data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.set("chaquan", 1);
+        data.save();
+        logger.info("add chaquan tbgoods,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+}

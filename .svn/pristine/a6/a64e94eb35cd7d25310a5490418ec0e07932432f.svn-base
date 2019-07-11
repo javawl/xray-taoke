@@ -1,0 +1,84 @@
+package com.xray.taoke.admin.app;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.taoke.admin.model.TkOrderInfo;
+import com.xray.taoke.admin.service.Tk21dsService;
+
+public class OrderJieSuanMonthApp implements Runnable {
+    private static Logger logger = LoggerFactory.getLogger(OrderJieSuanMonthApp.class);
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private String appid;
+
+    public OrderJieSuanMonthApp(String appid) {
+        this.appid = appid;
+    }
+
+    public void runListByPaySucc() {
+        long sys = System.currentTimeMillis();
+        long five_day_time = sys - 1000 * 5 * 60 * 60 * 24;
+        long month_time = sys - 1000 * 30 * 60 * 60 * 24;
+
+        List<TkOrderInfo> list = TkOrderInfo.dao.queryByAppidBeweenTime(appid, month_time, five_day_time);
+
+        for (TkOrderInfo tkOrderInfo : list) {
+            String five_time_str = dateFormat.format(new Date(tkOrderInfo.getLong("tradetime")));
+            String traid = tkOrderInfo.getStr("tradeid");
+            try {
+
+                JSONObject jsonObject = Tk21dsService.instance.gettkorder(appid, five_time_str, 1200);
+                int code = jsonObject.getIntValue("code");
+                if (code == -1)
+                    return;
+                if (code == 200) {
+                    String data = jsonObject.getString("data");
+                    JSONArray array = JSONArray.parseArray(data);
+                    for (Object object : array) {
+                        JSONObject jsonObject2 = JSONObject.parseObject(object.toString());
+                        String trade_id = jsonObject2.getString("trade_id");
+                        String tk_status = jsonObject2.getString("tk_status");
+
+                        if (trade_id.equals(traid)) {
+                            int tk_status_int = Integer.valueOf(tk_status);
+                            if (tk_status_int == 3) {
+                                tkOrderInfo.set("tkstatus", tk_status_int);
+                                tkOrderInfo.update();
+                                // double qbconfirm = tkUouser.getDouble("qbconfirm");
+                                // double jiemoney = tkOrderInfo.getDouble("jiemoney");
+                                // double balance = 0;
+                                // if(qbconfirm-jiemoney>0)
+                                // balance = qbconfirm-jiemoney;
+                                // tkUouser.set("qbconfirm", balance);
+                                // tkUouser.update();
+                            }
+                        }
+
+                    }
+
+                }
+
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
+        try {
+            runListByPaySucc();
+        } catch (Exception e) {
+            logger.error("err gaoyong,appid:" + appid, e);
+        }
+    }
+}

@@ -1,0 +1,249 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/mpinfo")
+public class TkMpinfoController extends AbstractController {
+    public void goList() {
+        String orderby = getPara("orderby", " `inputtime` desc");
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby(orderby);
+        setAttr("page", page);
+        List<TkMpinfo> dataList = TkMpinfo.dao.queryList(getCondAll(), page);
+        setAttr("dataList", dataList);
+        render("/template/pages/tk_mpinfo/list.html");
+    }
+
+    public void goAdd() {
+        render("/template/pages/tk_mpinfo/form.html");
+    }
+
+    public void goEdit() {
+        String seqid = getPara("seqid");
+
+        TkMpinfo data = TkMpinfo.dao.findById(seqid);
+        setAttr("data", data);
+        render("/template/pages/tk_mpinfo/form.html");
+    }
+
+    public void doAdd() {
+        String appid = getPara("appid");
+        String name = getPara("name");
+        String appsecret = getPara("appsecret");
+        String token = getPara("token");
+        String encodingaeskey = getPara("encodingaeskey");
+        String session = getPara("session", "");
+        String pid = getPara("pid");
+        String tbname = getPara("tbname");
+        String rate = getPara("rate", "0");
+        String apikey = getPara("apikey");
+
+        TkMpinfo mpinfo2 = new TkMpinfo();
+        mpinfo2.set("appid", appid);
+        mpinfo2.set("name", name);
+        mpinfo2.set("appsecret", appsecret);
+        mpinfo2.set("token", token);
+        mpinfo2.set("encodingaeskey", encodingaeskey);
+        mpinfo2.set("state", 1);
+        mpinfo2.set("inputtime", System.currentTimeMillis());
+        mpinfo2.set("session", session);
+        mpinfo2.set("pid", pid);
+        mpinfo2.set("tbname", tbname);
+        mpinfo2.set("rate", Double.valueOf(rate));
+        mpinfo2.set("apikey", apikey);
+        mpinfo2.save();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        String id = getPara("id");
+
+        String name = getPara("name");
+        String appsecret = getPara("appsecret");
+        String token = getPara("token");
+        String encodingaeskey = getPara("encodingaeskey");
+
+        String session = getPara("session", "");
+        String pid = getPara("pid");
+        String tbname = getPara("tbname");
+        String rate = getPara("rate", "");
+        String apikey = getPara("apikey");
+        double rate1 = 0.0;
+        if (StringUtil.isNotEmpty(rate)) {
+            rate1 = Double.valueOf(rate);
+        }
+
+        TkMpinfo mpinfo2 = TkMpinfo.dao.findById(id);
+        mpinfo2.set("name", name);
+        mpinfo2.set("appsecret", appsecret);
+        mpinfo2.set("token", token);
+        mpinfo2.set("encodingaeskey", encodingaeskey);
+        mpinfo2.set("state", 0);
+        mpinfo2.set("session", session);
+        mpinfo2.set("pid", pid);
+        mpinfo2.set("tbname", tbname);
+        mpinfo2.set("rate", rate1);
+        mpinfo2.set("apikey", apikey);
+        mpinfo2.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doCreateByAppid() {
+        String appid = getPara("appid");
+        String seqid = getPara("seqid");
+
+        TkMpinfo mpinfo = TkMpinfo.dao.isExist(appid);
+        if (mpinfo != null) {
+            renderRtn(RtnFactory.newFail("该APPID已经存在！"));
+            return;
+        }
+
+        TkMpinfo mpinfo2 = TkMpinfo.dao.findById(seqid);
+        mpinfo2.set("state", 1);
+        mpinfo2.update();
+        TkMpinfo.dao.createUserByAppid(appid);
+
+        String name = appid + "_mpmaterial";
+        // String word ="关键字";
+        for (int i = 0; i < 8; i++) {
+            JSONArray array = new JSONArray();
+            array.clear();
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("type", "text");
+            jsonObject = setJson(i, jsonObject);
+            array.add(jsonObject);
+
+            String array_str = array.toJSONString();
+            String mediaid = "wx_" + UuidUtil.getUuidByJdk(true).substring(8, 24);
+            TkMaterial material = new TkMaterial();
+            material.set("content", array_str);
+            material.set("name", name);
+            material.set("word", jsonObject.get("content"));
+            material.set("type", 2);
+            material.set("inputtime", System.currentTimeMillis());
+            material.set("inputby", getUserid());
+            material.set("appid", appid);
+            material.set("state", 1);
+            material.set("mediaid", mediaid);
+            material.save();
+        }
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doDocking() {
+        String seqid = getPara("seqid");
+        String url = getPara("url");
+        String token = getPara("Token");
+        String EncodingAESKey = getPara("EncodingAESKey");
+        String appsecret = getPara("appsecret");
+        TkMpinfo mpinfo = TkMpinfo.dao.findById(seqid);
+        mpinfo.set("url", url);
+        mpinfo.set("appsecret", appsecret);
+        mpinfo.set("encodingaeskey", EncodingAESKey);
+        mpinfo.set("token", token);
+        mpinfo.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public static JSONObject setJson(int i, JSONObject jsonObject) {
+        String content = "";
+        switch (i) {
+        case 0:
+            content = "关注";
+            break;
+        case 1:
+            content = "转链";
+            break;
+        case 2:
+            content = "订单";
+            break;
+        case 3:
+            content = "提现";
+            break;
+        case 4:
+            content = "私人号";
+            break;
+        case 5:
+            content = "早场券";
+            break;
+        case 6:
+            content = "晚场券";
+            break;
+        case 7:
+            content = "48H提醒";
+            break;
+
+        default:
+            break;
+        }
+        jsonObject.put("content", content);
+        return jsonObject;
+    }
+
+    public void doDel() {
+        String seqid = getPara("seqid");
+        TkMpinfo mpinfo = TkMpinfo.dao.findById(seqid);
+        mpinfo.set("state", -1);
+        mpinfo.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doFaBu() {
+        String seqid = getPara("seqid");
+        TkMpinfo data = TkMpinfo.dao.findById(seqid);
+        MpInfoService.instance.setMpInfo(data.getStr("appid"), data);
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doFaBus() {
+        String idsStr = getPara("idsStr");
+        List<TkMpinfo> list = TkMpinfo.dao.queryByIds(Arrays.asList(idsStr.split(",")));
+        for (TkMpinfo data : list) {
+            MpInfoService.instance.setMpInfo(data.getStr("appid"), data);
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void goListByAppid() {
+        String appid = getPara("appid");
+        setAttr("appid", appid);
+        Map<String, Object> cond = getCondAll();
+        cond.put("appid", appid);
+        String orderby = getPara("orderby", " `inputtime` desc");
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby(orderby);
+        setAttr("page", page);
+        List<TkMpinfo> dataList = TkMpinfo.dao.queryListByAppid(getCondAll(), page);
+        setAttr("dataList", dataList);
+        render("/template/pages/tk_mpuser/list.html");
+
+    }
+
+    public static void main(String[] args) {
+        List<Integer> list = new ArrayList<>();
+        list.add(1);
+        list.add(2);
+        list.add(5);
+        list.stream().filter(s -> s == 2).forEach((s) -> {
+            System.out.print(s);
+        });
+
+    }
+
+}

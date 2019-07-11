@@ -1,0 +1,51 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.DateUtil;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.app.TkStatDailyApp;
+import com.xray.taoke.admin.app.TkStatDetailApp;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.TkStatDaily;
+import com.xray.taoke.admin.model.TkStatDetail;
+import com.xray.taoke.admin.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/tkstat")
+public class TkStatController extends AbstractController {
+
+    public void goDailyList() {
+        setAttr("day", getPara("day", DateUtil.getToday()));
+        setAttr("dataList", TkStatDaily.dao.queryList(getCondAll(), getPageVo("`day` desc")));
+        render("/template/pages/tkstat/daily_list.html");
+    }
+
+    public void goDetailList() {
+        Map<String, Object> cond = getCondAll();
+        if (isParaBlank("appid"))
+            getCond(cond, "day", DateUtil.getToday());
+
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<TkStatDetail> dataList = TkStatDetail.dao.queryList(cond, getPageVo("`day` desc,`userall` desc"));
+        for (TkStatDetail data : dataList) {
+            data.setMpname(map.get(data.getStr("appid")));
+        }
+
+        setAttr("dataList", dataList);
+        render("/template/pages/tkstat/detail_list.html");
+    }
+
+    public void doStat() {
+        List<String> list = MpInfo.dao.queryAppidInuse();
+        String day = getPara("day", DateUtil.getToday());
+        for (String appid : list) {
+            TkStatDetailApp.doRun(appid, day);
+            TkStatDailyApp.doRun(day);
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+}

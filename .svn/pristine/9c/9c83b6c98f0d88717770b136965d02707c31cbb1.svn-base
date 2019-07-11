@@ -1,0 +1,136 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.model.TkOrderInfo;
+import com.xray.taoke.admin.model.TkUouser;
+import com.xray.taoke.admin.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/tkuouser")
+public class TkUoUserController extends AbstractController {
+    public final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public void goList() {
+        Map<String, Object> cond = getCondAll();
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+        List<TkUouser> dataList = TkUouser.dao.queryList(cond, page);
+        for (TkUouser tkUouser : dataList) {
+            Map<String, String> cond2 = MpInfoService.instance.getMpNames();
+            String bind_appid = tkUouser.getStr("bindappid");
+            if (StringUtil.isNotEmpty(cond2.get(bind_appid)))
+                tkUouser.setWx_name(cond2.get(bind_appid));
+            else
+                tkUouser.setWx_name("");
+        }
+        setAttr("dataList", dataList);
+        logger.debug("dataList,size:{}", dataList.size());
+        render("/template/pages/tk_uouser/list.html");
+    }
+
+    public void goAdd() {
+        render("/template/pages/tk_uouser/form.html");
+    }
+
+    public void doCopy() {
+        List<TkUouser> list = TkUouser.dao.queryList();
+        for (TkUouser tkUouser : list) {
+            String bind = tkUouser.getStr("bindappid");
+            String userid = tkUouser.getStr("userid");
+            TkMpinfo mpinfo = TkMpinfo.dao.queryByUserid(bind, userid);
+            String name = mpinfo.getName1();
+            String avatar = mpinfo.getStr("avatar");
+            tkUouser.set("name", name);
+            tkUouser.set("avatar", avatar);
+            tkUouser.update();
+        }
+        renderRtn(RtnFactory.succ);
+
+    }
+
+    public void doCopyByBindId() {
+        String bind_id = getPara("bind_id");
+        String userid = getPara("userid");
+        TkUouser tkUouser = TkUouser.dao.queryByUserId(userid);
+        TkMpinfo mpinfo = TkMpinfo.dao.queryByUserid(bind_id, userid);
+        String name = mpinfo.getName1();
+        String avatar = mpinfo.getStr("avatar");
+        tkUouser.set("name", name);
+        tkUouser.set("avatar", avatar);
+        tkUouser.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void goEdit() {
+        String seqid = getPara("seqid");
+        TkOrderInfo data = TkOrderInfo.dao.findById(seqid);
+        setAttr("data", data);
+        render("/template/pages/tk_uouser/form.html");
+    }
+
+    public void goListByUserId() {
+        String userid = getPara("userid");
+        Map<String, Object> cond = getCondAll();
+
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+
+        cond.put("userid", userid);
+        List<TkUouser> dataList = TkUouser.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+        logger.debug("dataList,size:{}", dataList.size());
+        render("/template/pages/tk_orderinfo/list_userid.html");
+    }
+
+    public void doAdd() {
+        TkOrderInfo data = new TkOrderInfo();
+        String content = getPara("content");
+        String menuid = "wx_" + UuidUtil.getUuidByJdk(true).substring(8, 24);
+        data.set("menuid", menuid);
+        data.set("name", getPara("name"));
+        data.set("content", content);
+        data.set("state", 1);
+        data.set("inputtime", System.currentTimeMillis());
+        data.set("inputby", getUserid());
+        data.set("edittime", data.get("inputtime"));
+        data.set("editby", data.get("inputby"));
+        data.save();
+
+        logger.info("doAdd,menuid:{},opid:{},{}", menuid, getUserid(), getRemoteIp());
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        String seqid = getPara("seqid");
+        TkUouser data = TkUouser.dao.findById(seqid);
+        data.set("rate", getPara("rate"));
+        data.set("ratereason", getPara("ratereason"));
+        data.set("rateopby", getUser().getName());
+        data.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doDel() {
+
+        String seqid = getPara("seqid");
+        TkOrderInfo.dao.deleteById(seqid);
+        // TkOrderInfo orderInfo = TkOrderInfo.dao.findById(seqid);
+        // orderInfo.set("", value);
+        // orderInfo.update();
+        logger.info("doDels,seqids:{},opid:{},{}", seqid, getUserid(), getRemoteIp());
+
+        renderRtn(RtnFactory.succ);
+    }
+
+}

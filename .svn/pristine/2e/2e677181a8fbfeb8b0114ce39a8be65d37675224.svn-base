@@ -1,0 +1,6 @@
+<footer class="main-footer">
+		<div class="pull-right hidden-xs" style="font-size: 14px;">
+				${_COPYRIGHT_!}
+		</div>
+		<strong>&nbsp;</strong>
+</footer>

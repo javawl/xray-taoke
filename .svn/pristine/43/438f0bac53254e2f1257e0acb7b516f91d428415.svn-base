@@ -1,0 +1,94 @@
+// package com.xray.taoke.admin.model;
+//
+// import java.util.ArrayList;
+// import java.util.List;
+// import java.util.Map;
+//
+// import com.jfinal.ext.plugin.tablebind.TableBind;
+// import com.jfinal.plugin.activerecord.Db;
+// import com.xray.act.jfinal.JfModel;
+// import com.xray.act.util.StringUtil;
+// import com.xray.act.web.vo.PageVo;
+// import com.xray.taoke.admin.common.Constant;
+//
+// @TableBind(configName = Constant.db_dataSource, tableName = "tk_turnlink",
+// pkName = "seqid")
+// public class TkTurnLink extends JfModel<TkTurnLink> {
+// private static final long serialVersionUID = 1L;
+// public static final TkTurnLink dao = new TkTurnLink();
+//
+// public List<TkTurnLink> queryList(Map<String, Object> cond, PageVo page) {
+// String sql = "select * from `tk_turnlink` where 1=1 ";
+// StringBuilder sb = new StringBuilder();
+// if (cond != null) {
+//
+// if (StringUtil.isNotEmpty(cond.get("sale_type"))) {
+// sb.append(" and sale_type = ").append(cond.get("sale_type"));
+// }
+//
+// }
+// if (page != null) {
+// String countSql = "select count(1) from `tk_turnlink` where 1=1 " +
+// sb.toString();
+// int count = Db.queryLong(countSql).intValue();
+// page.setCount(count);
+// if (count <= 0) {
+// return new ArrayList<TkTurnLink>();
+// }
+// sb.append(page.orderbySql());
+// sb.append(page.limitSql());
+// }
+//
+// return dao.find(sql + sb.toString());
+// }
+//
+//
+//
+// public List<TkTurnLink> queryListByType(int sale_type) {
+// String sql = "select * from `tk_turnlink` where 1=1 and `down_type` = 0 and
+// `sale_type` = "+sale_type+" ORDER BY orderno ASC LIMIT 0,10";
+// return dao.find(sql);
+// }
+//
+//
+//
+//
+//
+//
+// public TkTurnLink queryByItemId(String itemid) {
+// String sql = "select * from `tk_turnlink` where itemid = ?";
+// return dao.findFirst(sql,itemid);
+// }
+//
+//
+//
+//
+// public void updateOrderno() {
+// String sql = "update `tk_turnlink` set `orderno`=`orderno`+100";
+// Db.update(sql);
+// }
+//
+// public void updateIfNotExist(double couponprice,double tkrates,double
+// tkmoney,int type, String itemid, String activityid, String itempic, String
+// itemdesc, String itemtitle, String good_url, String couponurl, String
+// itemshorttitle, double itemprice, String shopname, long start_time, long
+// end_time, double end_price, int orderno, int couponnum) {
+// String sql = " INSERT INTO `tk_turnlink`
+// (`couponprice`,`tkrates`,`tkmoney`,`sale_type`,`itemid`,`activityid`,`itempic`,`itemdesc`,`itemtitle`,`good_url`,`couponurl`,`itemshorttitle`,`itemprice`,`shopname`,`orderno`,`inputtime`,`start_time`,`end_time`,`itemendprice`,`couponnum`)
+// VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
+// `itemid`=? , `activityid` =?";
+// Db.update(sql, couponprice,tkrates,tkmoney,type, itemid, activityid, itempic,
+// itemdesc, itemtitle, good_url, couponurl, itemshorttitle, itemprice,
+// shopname, orderno, System.currentTimeMillis(), start_time, end_time,
+// end_price, couponnum, itemid, activityid);
+// }
+//
+// public void updateState(String itemid, String activityid, int down_type, long
+// endtime) {
+// String sql = " INSERT INTO `tk_turnlink`
+// (`itemid`,`activityid`,`end_time`,`down_type`) VALUES(?,?,?,?) ON DUPLICATE
+// KEY UPDATE `itemid`=? , `activityid` =?";
+// Db.update(sql, itemid, activityid, endtime, down_type, itemid, activityid);
+// }
+//
+// }

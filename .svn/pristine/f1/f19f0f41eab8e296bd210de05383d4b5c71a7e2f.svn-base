@@ -1,0 +1,12 @@
+package com.xray.taoke.admin.service;
+
+
+public class UoUserService {
+//    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+//    private static final Prop config = PropKit.use("config.properties");
+//
+//    public String getUserid(String appid, String openid) {
+//        return null;
+//    }
+
+}

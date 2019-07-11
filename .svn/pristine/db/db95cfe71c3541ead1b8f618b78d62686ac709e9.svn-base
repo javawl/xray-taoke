@@ -1,0 +1,56 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.taoke.admin.model.TkCashinfo;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.model.TkOrderInfo;
+
+public class UserInfoApp extends AbstractApp implements Runnable {
+
+    private String appid;
+
+    public UserInfoApp(String appid) {
+        this.appid = appid;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+            doCopyUserInfo();
+        } catch (Exception e) {
+            logger.error("errapp userinfo,appid:" + appid, e);
+        }
+    }
+
+    public void doCopyUserInfo() {
+        for (TkCashinfo data : TkCashinfo.dao.queryByNotAvatar()) {
+            TkCashinfo.dao.updateAvatarByUserId(data.getStr("userid"), appid);
+            TkCashinfo.dao.updateNameByUserId(data.getStr("userid"), appid);
+        }
+        for (TkOrderInfo data : TkOrderInfo.dao.queryByNotAvatar()) {
+            TkOrderInfo.dao.updateAvatarByUserId(data.getStr("userid"), appid);
+            TkOrderInfo.dao.updateNameByUserId(data.getStr("userid"), appid);
+        }
+    }
+
+    public void doRun() {
+        List<TkMpinfo> list = TkMpinfo.dao.queryByState(appid, 0);
+        logger.info("runapp userinfo,size:{}", list.size());
+
+        JSONObject obj = null;
+        String openid = null;
+        for (TkMpinfo data : list) {
+            openid = data.getStr("openid");
+            try {
+                obj = JSONObject.parseObject(wxApi.queryByOpenid(appid, openid).getJson());
+                TkMpinfo.dao.updateUserInfo(appid, openid, obj.getIntValue("sex"), obj.getIntValue("subscribe"), obj.getString("nickname"), obj.getString("headimgurl"));
+            } catch (Exception e) {
+                logger.error("errapp userinfo,appid:" + appid + ",openid:" + openid, e);
+            }
+        }
+    }
+
+}

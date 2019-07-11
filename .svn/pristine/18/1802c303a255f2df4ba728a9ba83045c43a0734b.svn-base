@@ -1,0 +1,61 @@
+package com.xray.taoke.admin.app;
+
+import java.util.Date;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.DateUtil;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.TkOrderInfo;
+import com.xray.taoke.admin.service.Tk21dsService;
+
+public class OrderAddApp extends AbstractApp implements Runnable {
+    private String appid;
+
+    public OrderAddApp(String appid) {
+        this.appid = appid;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp addorder,appid:" + appid, e);
+        }
+    }
+
+    public void doRun() throws Exception {
+        String starttime = DateUtil.formatDate(new Date(System.currentTimeMillis() - 30000));
+
+        JSONObject obj = Tk21dsService.instance.gettkorder(appid, starttime, 60);
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.data_err, "err code gettkorder,appid:" + appid + ",json:" + obj.toJSONString());
+
+        TkOrderInfo data = null;
+        JSONArray arr = obj.getJSONArray("data");
+        for (int i = 0; i < arr.size(); i++) {
+            obj = arr.getJSONObject(i);
+            if (TkOrderInfo.dao.exist(obj.getString("trade_id")))
+                continue;
+
+            data = new TkOrderInfo();
+            data.set("tradeid", obj.getString("trade_id"));
+            data.set("tradeprice", obj.getDouble("alipay_total_price"));
+            data.set("trademoney", obj.getDouble("pub_share_pre_fee"));
+            data.set("traderate", obj.getDouble("income_rate"));
+            data.set("tradetime", DateUtil.getDate(obj.getString("create_time")).getTime());
+
+            data.set("itemid", obj.getString("num_iid"));
+            data.set("itemtitle", obj.getString("item_title"));
+            data.set("itemnum", obj.getInteger("item_num"));
+
+            data.set("tkstatus", obj.getInteger("tk_status"));
+            data.save();
+            logger.info("runapp addorder,tradeid:{}", obj.getString("trade_id"));
+        }
+
+    }
+
+}

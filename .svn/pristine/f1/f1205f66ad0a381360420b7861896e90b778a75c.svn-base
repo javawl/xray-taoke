@@ -1,0 +1,20 @@
+<#list dataList as item><div onclick="doJToken('${item.itemid!}','${item.cpurl!}')" class="single-cms-goods-v2" style="height:auto;">
+	<div class="goods-image" style="height:auto;">
+		<img src="${item.itempic!}" style="height:auto;">
+    <div class="goods-list-mall-label"><div class="store-type-label double-type-label flagship-label">京东</div></div>
+	</div>
+	<div class="goods-detail">
+		<p class="goods-name">${item.itemtitle!}</p>
+		<div class="privilege">
+			<div class="badge">券</div>
+			<div class="coupon">${item.cpmoney!}元</div>
+			<div class="badge2">返</div>
+			<div class="coin">${(item.tkmoney*0.55)?string('0.0#')}元</div>
+		</div>
+		<div class="price-detail">
+			<span class="after-coupon">券后</span>
+			<span class="price">¥<span>${item.tkprice?string('0.0#')}</span></span>
+			   <span class="sold-quantity">月销${item.sales!}件</span>
+		</div>
+	</div>
+</div></#list>

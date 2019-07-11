@@ -1,0 +1,15 @@
+package com.xray.taoke.admin.web.controller;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.MpUser;
+
+@ControllerBind(controllerKey = "/mpuser")
+public class MpUserController extends AbstractController {
+
+    public void goList() {
+        setAttr("dataList", MpUser.dao.queryList(getCondAll(), getPageVo("`inputtime` desc")));
+        render("/template/pages/mpuser/list.html");
+    }
+
+}

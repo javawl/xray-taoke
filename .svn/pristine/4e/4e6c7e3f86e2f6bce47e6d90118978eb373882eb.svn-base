@@ -1,0 +1,20 @@
+<#list list as item>
+	<li class="list-item" style="height: auto;">
+		<#if item.url=="www.jingchengvip.com">
+			<a href="http://${item.url!}/m2c/prod.jsp?info_id=${item.infoid!}&order_cust_id=2259781&user_id=lgbb27" target="_blank">
+				<#elseif item.url=="www.qilvyoo.com">
+					<a href="http://${item.url!}/m2c/prod.jsp?info_id=${item.infoid!}&order_cust_id=1705370&user_id=qly0825" target="_blank">
+						<#elseif item.url=="szqz.honeynice.com">
+							<a href="http://${item.url!}/m2c/prod.jsp?info_id=${item.infoid!}&order_cust_id=2022374&user_id=lgfx13" target="_blank">
+
+		</#if>
+
+		<div class="title" style="margin-left: auto;">
+			<div class="area twoline">${item.title!}
+			</div>
+		</div>
+		<div class="date">${item.inputtime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</div>
+		</a>
+	</li>
+
+</#list>

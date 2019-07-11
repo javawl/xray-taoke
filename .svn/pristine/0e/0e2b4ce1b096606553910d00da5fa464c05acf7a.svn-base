@@ -1,0 +1,47 @@
+package com.xray.taoke.admin.service;
+
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.taoke.admin.model.TkTbGoods;
+import com.xray.taoke.admin.vo.TkAllGoodsVo;
+
+public class GoodService {
+
+    //private static Logger logger = LoggerFactory.getLogger(GoodService.class);
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".good.";
+
+    public static GoodService instance = new GoodService();
+
+    public void pubGoodsBySaleType() throws UnsupportedEncodingException {
+         String key = prefix;
+         Map<String, String> map = cache.hgetAll(key);
+         map.put("fast_rush_0", doGoodsByType(0));
+         map.put("real_time_1", doGoodsByType(1));
+         map.put("today_2", doGoodsByType(2));
+         map.put("output4", doGoodsByType(4));
+         cache.hmset(key, map);
+    }
+
+    private String doGoodsByType(int sale_type) throws UnsupportedEncodingException {
+        List<TkTbGoods> list = TkTbGoods.dao.queryListByType(sale_type);
+        List<TkAllGoodsVo> allGoods = TkTbGoods.dao.listVo(list, TkAllGoodsVo.class);
+        String str = JSONObject.toJSONString(allGoods);
+        return str;
+    }
+    
+    public Map<String,String> getGoodsBySaleType(){
+        String key = prefix;
+        return cache.hgetAll(key);
+    }
+
+}

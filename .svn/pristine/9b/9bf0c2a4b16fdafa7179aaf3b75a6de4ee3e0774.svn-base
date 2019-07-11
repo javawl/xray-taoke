@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>购物车 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>购物车</li>
+							<li class="active">购物车</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+
+										<form action="${cxt!}/linkinfo/goCart">
+											<div class="row">
+                        <div class="col-md-2">
+                          <select id="pkey" name="pkey" class="form-control select2">
+                            <option value="">选择PID</option>
+                            <#list configList as item >
+                              <option value='${item.seqid!}'>${item.remark!}</option>
+                            </#list>
+                          </select>
+                        </div>
+												<div class="col-md-4">
+													<a href="javascript:;" class="btn btn-info" target="_blank" onclick="doCreate()">生成链接</a>
+													<a href="javascript:;" class="btn btn-success" target="_blank" onclick="doCreateImg()">生成海报</a>
+													<a href="javascript:;" class="btn btn-default" target="_blank" onclick="doDelete()">清空</a>
+												</div>
+												<div class="col-md-6">
+													<div class="pull-right">
+                            <a href="javascript:;" class="btn btn-primary" target="_blank" onclick="doInputCart()">录入</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												
+											  <div class="col-sm-6">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<#list dataList1 as item>
+																<tr>
+																	<td><img class="cart_shop" data-id="${item.itemid!}" src="${item.itempicmin!}" width="120px"></td>
+																	<td>
+																		<a href="https://item.taobao.com/item.htm?id=${item.itemid!}" target="_blank">${item.itemtitle!}</a>
+																		<br />
+																		<span>【券后】</span>
+																		<span>${item.tkprice!}</span>
+																		<span>【原价】</span>
+																		<span>${item.itemprice!}</span>
+																		<br />
+																		<span>【销量】</span>
+																		<#if item.itemsale lt 1000>
+																			<span class="text-green">${item.itemsale!}</span>
+																			<#else>
+																				<span class="text-red">${item.itemsale!}</span>
+																		</#if>
+																		<br />
+																		<span>【券值】</span>
+																		<#if item.cpmoney lt 30>
+																			<span class="text-green">${item.cpmoney!}</span>
+																			<#else>
+																				<span class="text-red">${item.cpmoney!}</span>
+																		</#if>
+																		<br />
+																		<span>【佣金】</span>
+																		<#if item.tkmoney lt 4>
+																			<span class="text-green">${item.tkmoney?string('0.0#')}</span>
+																			<#else>
+																				<span class="text-red">${item.tkmoney?string('0.0#')}</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<a href="javascript:;" onclick="doDelCart('${item.itemid!}')" class="btn btn-default">删除</a>
+																		<br/>
+																		<a href="javascript:;" style="margin-top: 5px;" onclick="showChaquan('https://item.taobao.com/item.htm?id=${item.itemid!}');doChaquan()" class="btn btn-default">转链</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+												
+												<div class="col-sm-6">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<#list dataList2 as item>
+																<tr>
+																	<td><img class="cart_shop" data-id="${item.itemid!}" src="${item.itempic!}_220x220.jpg" width="120px"></td>
+																	<td>
+																		<a href="https://item.taobao.com/item.htm?id=${item.itemid!}" target="_blank">${item.itemtitle!}</a>
+																		<br />
+																		<span>【券后】</span>
+																		<span>${item.tkprice!}</span>
+																		<span>【原价】</span>
+																		<span>${item.itemprice!}</span>
+																		<br />
+																		<span>【销量】</span>
+																		<#if item.itemsale lt 1000>
+																			<span class="text-green">${item.itemsale!}</span>
+																			<#else>
+																				<span class="text-red">${item.itemsale!}</span>
+																		</#if>
+																		<br />
+																		<span>【券值】</span>
+																		<#if item.cpmoney lt 30>
+																			<span class="text-green">${item.cpmoney!}</span>
+																			<#else>
+																				<span class="text-red">${item.cpmoney!}</span>
+																		</#if>
+																		<br />
+																		<span>【佣金】</span>
+																		<#if item.tkmoney lt 4>
+																			<span class="text-green">${item.tkmoney?string('0.0#')}</span>
+																			<#else>
+																				<span class="text-red">${item.tkmoney?string('0.0#')}</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<a href="javascript:;" onclick="doDelCart('${item.itemid!}')" class="btn btn-default">删除</a>
+																		<br/>
+																		<a href="javascript:;" style="margin-top: 5px;" onclick="showChaquan('https://item.taobao.com/item.htm?id=${item.itemid!}');doChaquan()" class="btn btn-default">转链</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+												
+											</div>
+										</div>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/clipboard/clipboard.min.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+			})
+      
+      function doDelete() {
+      	layer.confirm('确定清空购物车吗？', function(i) {
+      		ajaxGet("${cxt!}/linkinfo/doDeleteByCart", {}, function(rtn) {
+      			if(rtn.code != 1) {
+      				layer.msg(JSON.stringify(rtn), {
+      					icon: 2
+      				});
+      				return;
+      			}
+      			layer.msg("操作成功！", {
+      				icon: 1,
+      				time: 600
+      			}, function() {
+      				window.location.reload();
+      			});
+      		})
+      	})
+      }
+      
+      function showChaquan(content) {
+        var html = '';
+        html += '<div class="box-body">';
+        html += '  <div class="col-sm-12">';
+        html += '    <div class="form-group">'
+        html += '      <textarea id="src_content" rows="20" style ="height:100px"  type="text" class="form-control title" placeholder="输入需要转链的链接">'+content+'</textarea>'
+        html += '    </div>';
+        html += '    <div class="form-group">'
+        html += '      <button onclick="doChaquan()" class="btn btn-primary">转链</button>'
+        html += '      <button  class="btn btn-info wechat-copy" data-clipboard-text="">复制</button>'
+        html += '      <span id="copy_succ" class="text-primary" style ="display:none" >复制成功</span>'
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="col-sm-12">';
+        html += '    <div class="form-group" id="wechat-copy-main">'
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+
+        layer.open({
+          closeBtn: 1,
+          title: '查券',
+          area: ['600px', '550px'],
+          content: html,
+          btn: []
+        });
+      }
+
+      function doChaquan() {
+        var src_content = $("#src_content").val();
+        if(!src_content) {
+          layer.msg('请输入链接或者淘口令');
+          return;
+        }
+        $("#copy_succ").attr("style", "display: none;");
+
+        ajaxPost("${cxt!}/linkinfo/doChaquan", {
+          pkey: $('#pkey').val(),
+          content: src_content
+        }, function(rtn) {
+          if(rtn.code != 1) {
+            layer.msg(rtn.msg, {
+              icon: 2
+            });
+            return;
+          }
+          $("#wechat-copy-main").empty();
+          $("#wechat-copy-main").append(rtn.data);
+
+          $(".wechat-copy").click(function(t) {
+            var t = document.getElementById("wechat-copy-main");
+            copyFunction(t, ".wechat-copy", "文案复制成功");
+          });
+        })
+      }
+
+      var copyFunction = function(t, a, i) {
+        var e = new ClipboardJS(a, {
+          target: function() {
+            return t
+          }
+        });
+        e.on("success", function(t) {
+            $("#copy_succ").attr("style", "display: block;");
+            t.clearSelection()
+          }),
+          e.on("error", function(t) {
+            console.log('复制失败');
+            t.clearSelection()
+          })
+      };
+			
+			function doDelCart(itemid) {
+				ajaxGet("${cxt!}/linkinfo/doDelCart", {
+          itemid: itemid
+        }, function(rtn) {
+					if(rtn.code != 1) {
+						layer.msg(JSON.stringify(rtn), {
+							icon: 2
+						});
+						return;
+					}
+					layer.msg("操作成功！", {
+						icon: 1,
+						time: 600
+					}, function() {
+						window.location.reload();
+					});
+				})
+			}
+      
+      function doInputCart() {
+      	var html = '';
+      	html += '<div class="box-body" >';
+      	html += '  <div class="col-sm-12">';
+      	html += '    <div class="form-group">'
+      	html += '      <textarea id="src_content" rows="10" cols="5" class="form-control title" placeholder="添加商品到购物车"></textarea>'
+      	html += '    </div>';
+      	html += '  </div>';
+      	html += '</div>';
+      	layer.open({
+      		closeBtn: 1,
+      		title: '商品信息',
+      		area: ['500px', ],
+      		content: html,
+      		btn: ['确定', '取消'],
+      		yes: function() {
+      			var src_content = $("#src_content").val();
+      			ajaxGet("${cxt!}/linkinfo/doInputCart", {
+      				content: src_content,
+      			}, function(rtn) {
+      				if(rtn.code != 1) {
+      					layer.msg(rtn.msg, {
+      						icon: 2
+      					});
+      					return;
+      				}
+      				layer.msg('操作成功！即将自动刷新...', {
+      					time: 500,
+      					icon: 1
+      				}, function() {
+      					location.reload();
+      				});
+      			})
+      		}
+      	});
+      }
+      
+      function doCreate() {
+        var have_word = localStorage.getItem("word");
+
+        layer.confirm('确定生成链接吗？', function(i) {
+          ajaxGet("${cxt!}/linkinfo/doCreate", {
+            pkey: $('#pkey').val(),
+            remark: have_word
+          }, function(rtn) {
+            if(rtn.code != 1) {
+              layer.msg(JSON.stringify(rtn), {
+                icon: 2
+              });
+              return;
+            }
+
+            var html = '';
+            html += '<div class="box-body">';
+            html += '  <div class="col-sm-12">';
+            html += '    <div class="form-group">'
+            html += '      <textarea rows="20" cols="5" style ="height:200px"  type="text" class="form-control">' + rtn.data + '</textarea>'
+            html += '    </div>';
+            html += '  </div>';
+            html += '</div>';
+            layer.open({
+              closeBtn: 1,
+              title: '信息',
+              area: ['500px', ],
+              content: html,
+              btn: []
+            });
+          })
+        })
+      }
+			
+			function doCreateImg() {
+				layer.confirm('确定生成海报吗？', function(i) {
+					ajaxGet("${cxt!}/linkinfo/doCreateByImg", {
+						pid: "${pid!}",
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+
+						var html = '';
+						html += '<div class="box-body">';
+						html += '  <div class="col-sm-12">';
+						html += '    <div class="form-group">'
+						html += '      <a href="${cxt!}/'+rtn.data+'" target="_blank"><img style="height:400px" src="${cxt!}/'+rtn.data+'"></img></a>'
+						html += '    </div>';
+						html += '  </div>';
+						html += '</div>';
+						layer.open({
+							closeBtn: 1,
+							title: '信息',
+							content: html,
+							btn: []
+						});
+
+					})
+				})
+			}
+			
+		</script>
+	</body>
+
+</html>

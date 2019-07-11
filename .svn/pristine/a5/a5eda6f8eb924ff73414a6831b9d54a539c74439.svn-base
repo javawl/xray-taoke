@@ -1,0 +1,57 @@
+package com.xray.taoke.act.model;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.taoke.act.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_uouser", pkName = "seqid")
+public class UoUser extends JfModel<UoUser> {
+    private static final long serialVersionUID = 1L;
+    public static final UoUser dao = new UoUser();
+
+    public String queryUseridByOpenid(String openid) {
+        String sql = "select `userid` from `tk_uouser` where `userid` =? ";
+        return Db.use(Constant.db_dataSource).queryStr(sql, openid);
+    }
+
+    public void addData(String userid, String openid) {
+        String sql = "insert into `tk_uouser` set `userid` =?, `openid`=?, `inputtime`=?";
+        Db.use(Constant.db_dataSource).update(sql, userid, openid, System.currentTimeMillis());
+    }
+    
+    public void addData(String userid, String openid, String invite) {
+        String sql = "insert into `tk_uouser` set `userid` =?, `openid`=?, `inputtime`=?, `inviteby`=?, `invitetime`=?";
+        long now = System.currentTimeMillis();
+        Db.use(Constant.db_dataSource).update(sql, userid, openid, now, invite, now);
+    }
+    
+    public void updateInviteByUserid(String userid, String invite) {
+        String sql = "update `tk_uouser` set `inviteby`=?, `invitetime`=? where `userid`=? and `inviteby`='' ";
+        Db.update(sql, invite, System.currentTimeMillis(), userid);
+    }
+    
+    public void updateUseridByOpenid(String openid, String appid, String media_id) {
+        String sql = "update  `tk_mpuser_" + appid + "`  set `private` =  ?  where openid = ? ";
+        System.out.println(sql);
+        Db.update(sql, media_id, openid);
+    }
+    
+    
+
+    public UoUser queryByUserId(String userid) {
+        String sql = "select * from `tk_uouser` where `userid` =? ";
+        return dao.findFirst(sql, userid);
+    }
+
+    public void updateByOpenid(String openid, String appid, String media_id) {
+        String sql = "update  `tk_mpuser_" + appid + "`  set `private` =  ?  where openid = ? ";
+        System.out.println(sql);
+        Db.update(sql, media_id, openid);
+    }
+
+    public void insertOpenid(String openid, String appid) {
+        String sql = "insert into `tk_mpuser_" + appid + "` (`openid`) values(?) ";
+        Db.update(sql, openid);
+    }
+}

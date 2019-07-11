@@ -1,0 +1,91 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.MpUser;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+
+public class OrderProxyApp extends AbstractApp {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp pidexorder", e);
+        }
+    }
+
+    public void doRun() {
+        List<OrderInfo> list = OrderInfo.dao.queryProxy();
+        logger.info("runapp OrderProxyApp,size:{}", list.size());
+        for (OrderInfo data : list) {
+            updateProxy(data);
+        }
+    }
+
+    private void updateProxy(OrderInfo data) {
+        String userid = data.getStr("userid");
+
+        UoUser user = UoUser.dao.queryByUserId(userid);
+        if (user == null) {
+            logger.error("errapp,updateProxy,none user,userid:{}", userid);
+            return;
+        }
+        String proxyby = user.getStr("proxyby");
+        if (StringUtil.isEmpty(proxyby)) {
+            OrderInfo.dao.updateProxyState(data.getStr("tradeid"), -1);
+            return;
+        }
+
+        UoUser uoUser = UoUser.dao.queryByUserId(proxyby);
+        double proxyrate = uoUser.getDouble("proxyrate");
+
+        double proxymoney = data.getDouble("proxymoney");
+        double traderate = data.getDouble("traderate");
+        double trademoney = data.getDouble("trademoney");
+
+        String tradeid = data.getStr("tradeid");
+
+        switch (data.getInt("tkstatus")) {
+        case 3:
+            if (proxymoney > 0) {
+                if (OrderInfo.dao.updateProxyState(tradeid, 3) > 0)
+                    UoUser.dao.updateProxyJie(userid, proxymoney, proxymoney);
+            } else {
+                proxymoney = (proxyrate - traderate) * trademoney;
+                proxymoney = proxymoney > 0 ? 0 : proxymoney;
+                if (OrderInfo.dao.updateProxyrate(proxyrate, proxymoney, 3, tradeid) > 0)
+                    UoUser.dao.updateProxyJie(userid, proxymoney, 0);
+            }
+            break;
+        case 12:
+            if (proxymoney > 0) {
+                if (OrderInfo.dao.updateProxyState(tradeid, 12) > 0)
+                    UoUser.dao.updateProxyConfirm(userid, proxymoney);
+            } else {
+                proxymoney = (proxyrate - traderate) * trademoney;
+                proxymoney = proxymoney > 0 ? 0 : proxymoney;
+                if (OrderInfo.dao.updateProxyrate(proxyrate, proxymoney, 12, tradeid) > 0)
+                    UoUser.dao.updateProxyConfirm(userid, proxymoney);
+            }
+
+            String appid = user.getStr("bindapid");
+            wxApi.sendText(appid, MpUser.dao.queryOpenidByUserid(appid, userid), MpInfoService.instance.getProxyorder(appid));
+            break;
+
+        case 13:
+            if (OrderInfo.dao.updateProxyState(tradeid, 13) > 0) {
+                if (proxymoney > 0)
+                    UoUser.dao.updateProxyUseless(userid, proxymoney);
+            }
+            break;
+        default:
+            break;
+        }
+
+    }
+}

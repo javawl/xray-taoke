@@ -1,0 +1,123 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.weixin.sdk.utils.HttpUtils;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.common.TaokeKit;
+import com.xray.taoke.admin.model.TKKefuMsg;
+import com.xray.taoke.admin.model.TbGoods;
+import com.xray.taoke.admin.model.TkLink;
+import com.xray.taoke.admin.model.TkMaterial;
+
+@ControllerBind(controllerKey = "/tkgood")
+public class TkGoodController extends AbstractController {
+
+    public void goList() {
+        String appid = getPara("appid");
+        String linkid = getPara("linkid", "");
+
+        TkLink tkLink = TkLink.dao.queryByLinkid(linkid);
+        String idsStr = tkLink.getStr("itemids");
+        setAttr("linkid", linkid);
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` asc");
+        setAttr("page", page);
+        Map<String, Object> cond = getCondAll();
+        if (StringUtil.isNotEmpty(linkid)) {
+            cond.put("link_id", linkid);
+        }
+        List<String> idList = Arrays.asList(idsStr.split(","));
+        cond.put("idList", idList);
+        cond.put("appid", appid);
+        List<TbGoods> dataList = TbGoods.dao.queryList(cond, page);
+        setAttr("dataList", dataList);
+
+        logger.debug("dataList,size:{}", dataList.size());
+
+        render("/template/pages/tk_goods/list.html");
+    }
+
+    public void goAdd() {
+        String type = getPara("type", "1");
+        String appid = getPara("appid");
+        if (StringUtil.isNotEmpty(appid)) {
+            setAttr("appid", appid);
+            setAttr("action", getPara("action"));
+
+            TkMaterial data = new TkMaterial();
+            data.set("name", getPara("name"));
+            setAttr("data", data);
+        }
+        setAttr("send_state", 1);
+        render("/template/pages/tk_goods/form" + type + ".html");
+    }
+
+    public void goEdit() throws UnsupportedEncodingException {
+        String seqid = getPara("seqid");
+        String type = getPara("type");
+        int send_state = 1;
+        TKKefuMsg data = TKKefuMsg.dao.findById(seqid);
+        if (data == null) {
+            data = TKKefuMsg.dao.queryByMediaid(getPara("mediaid"));
+            type = data.getStr("type");
+            send_state = data.getInt("send_state");
+        }
+        setAttr("send_state", send_state);
+        setAttr("data", data);
+        setAttr("contentList", JSONObject.parseArray(new String(data.get("content"), "UTF-8")));
+        render("/template/pages/tk_goods/form" + type + ".html");
+    }
+
+    public static void getDownItems(String url) {
+        String json_result = HttpUtils.get(url);
+        JSONObject jsonObject = JSONObject.parseObject(json_result);
+        String data = jsonObject.getString("data");
+        JSONArray array = JSONArray.parseArray(data);
+
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject jsonObject2 = JSONObject.parseObject(array.get(i).toString());
+            String itemid = jsonObject2.getString("itemid");
+            int down_type = jsonObject2.getIntValue("down_type");
+            long down_time = jsonObject2.getLongValue("down_time");
+            TbGoods.dao.updateState(itemid, down_type, down_time);
+        }
+    }
+
+    public static Map<String, Object> getGoodByItemid(String url) {
+        String json_result = HttpUtils.get(url);
+        JSONObject jsonObject = JSONObject.parseObject(json_result);
+        String data = jsonObject.getString("data");
+        JSONObject jsonObject2 = JSONObject.parseObject(data);
+        Map<String, Object> cond = new HashMap<>();
+        double tkrates = jsonObject2.getDoubleValue("tkrates");
+        double tkmoney = jsonObject2.getDoubleValue("tkmoney");
+        cond.put("tkrates", tkrates);
+        cond.put("tkmoney", tkmoney);
+        return cond;
+    }
+
+    public void doUpdateOrder() {
+        String session = com.xray.taoke.admin.common.Constant.taoke_session;
+        String start_time = "2019-03-18 10:30:00";
+        try {
+            @SuppressWarnings("unused")
+            JSONArray jsonArray = TaokeKit.orderGet(start_time, session);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+}

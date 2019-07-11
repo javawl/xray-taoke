@@ -1,0 +1,156 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.TKKefuMsg;
+import com.xray.taoke.admin.model.TkLink;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.admin.service.TbGoodsService;
+import com.xray.taoke.admin.utils.ShortUrlUtils;
+import com.xray.taoke.admin.vo.TbGoodsVo;
+
+@ControllerBind(controllerKey = "/tklink")
+public class TkLinkController extends AbstractController {
+
+    public void goList() {
+        setAttr("appid", "");
+        Map<String, Object> cond = getCondAll();
+
+        String appid = getPara("appid");
+        if (StringUtil.isEmpty(appid)) {
+            appid = getCookie("ck_appid");
+            if (StringUtil.isNotEmpty(appid)) {
+                getCond(cond, "appid", appid);
+            }
+        } else {
+            setCookie("ck_appid", appid, Integer.MAX_VALUE);
+        }
+
+        setAttr("mpList", TkMpinfo.dao.queryAllInuse());
+        setAttr("dataList", TkLink.dao.queryList(cond, getPageVo("seqid desc")));
+        render("/template/pages/tk_link/list.html");
+    }
+
+    public void doUpdateRemark() {
+        String seqid = getPara("seqid");
+        String remark = getPara("remark");
+        TkLink link = TkLink.dao.findById(seqid);
+        link.set("remark", remark);
+        link.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void goAdd() {
+        String type = getPara("type", "1");
+        String appid = getPara("appid");
+        if (StringUtil.isNotEmpty(appid)) {
+            setAttr("appid", appid);
+            setAttr("action", getPara("action"));
+
+            TkMaterial data = new TkMaterial();
+            data.set("name", getPara("name"));
+            setAttr("data", data);
+        }
+        setAttr("send_state", 1);
+        render("/template/pages/tk_link/form" + type + ".html");
+    }
+
+    public void goEdit() throws UnsupportedEncodingException {
+        String seqid = getPara("seqid");
+        String type = getPara("type");
+        int send_state = 1;
+        TKKefuMsg data = TKKefuMsg.dao.findById(seqid);
+        if (data == null) {
+            data = TKKefuMsg.dao.queryByMediaid(getPara("mediaid"));
+            type = data.getStr("type");
+            send_state = data.getInt("send_state");
+        }
+        setAttr("send_state", send_state);
+        setAttr("data", data);
+        setAttr("contentList", JSONObject.parseArray(new String(data.get("content"), "UTF-8")));
+        render("/template/pages/tk_link/form" + type + ".html");
+    }
+
+    public void doChaquan() {
+        String appid = getPara("appid");
+        String src_url = getPara("src_url");
+        TbGoodsVo data = null;
+        try {
+            if (src_url.contains("taobao") || src_url.contains("tmall")) {
+                data = TbGoodsService.instance.chaquanByItemid(appid, Constant.parseItemid(src_url));
+            } else if (src_url.startsWith("http")) {
+                data = TbGoodsService.instance.chaquanByUrl(appid, Constant.parseUrl(src_url));
+            } else {
+                data = TbGoodsService.instance.chaquanByTpwdcode(appid, src_url);
+            }
+            data.setJierate(MpInfoService.instance.getRate(appid, data.getTkmoney()));
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(data.getItemtitle() + "\n");
+            sb.append("【约返】" + data.getJiemoney() + "\n");
+            sb.append("【优惠券】" + data.getCpmoney() + "\n");
+            sb.append("【付费价】" + data.getItemendprice() + "\n");
+            sb.append("-----------------\n");
+            sb.append("复制这条信息，" + data.getTkpwd() + "，到【手机淘宝】即可查看");
+            renderRtn(RtnFactory.newSucc(sb.toString()));
+        } catch (Exception e) {
+            logger.error("err doChaquan", e);
+            renderRtn(RtnFactory.exception);
+        }
+    }
+
+    public void doZhaoquan() {
+        String appid = getPara("appid");
+        String goods = getPara("goods");
+
+        StringBuilder sb = new StringBuilder();
+        List<String> list = TbGoodsService.instance.parseItemidByHdk(goods);
+        for (String itemid : list) {
+            sb.append(",").append("'").append(itemid).append("'");
+            try {
+                TbGoodsService.instance.chaquanByItemid(appid, itemid);
+            } catch (Exception e) {
+                logger.error("err doZhaoquan,appid:" + appid + ",itemid:" + itemid, e);
+            }
+        }
+
+        
+        String linkid = UuidUtil.getUuidByJdk(true);
+        TkMpinfo mpinfo = TkMpinfo.dao.exists(appid);
+        String domain = mpinfo.getStr("shopurl");
+        
+        
+        String url = Constant.getTkLinkUrl();
+        url = domain+url+linkid;
+        String shorturl= ShortUrlUtils.instance.toShorUrl(url);
+        TkLink data = new TkLink();
+        data.set("appid", appid);
+        data.set("linkid", UuidUtil.getUuidByJdk(true));
+        data.set("itemids", sb.substring(1));
+        data.set("url", shorturl);
+        data.set("size", list.size());
+        data.set("inputtime", System.currentTimeMillis());
+        data.set("inputby", getUser().getName());
+        data.save();
+
+        
+        
+        sb.setLength(0);
+        sb.append("亲，找了几款优惠券，请点击查看\n");
+        //sb.append(data.getStr("url"));
+        sb.append(shorturl);
+        renderRtn(RtnFactory.newSucc(sb.toString()));
+    }
+
+}

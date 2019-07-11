@@ -1,0 +1,396 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.LinkInfo;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.service.ItemService;
+import com.xray.taoke.admin.service.TkMpService;
+import com.xray.taoke.admin.utils.ShortUrlUtils;
+import com.xray.taoke.tkapi.MpInfoService;
+import com.xray.taoke.tkapi.TbItemService;
+import com.xray.taoke.tkapi.vo.ConstTk;
+import com.xray.taoke.tkapi.vo.TbItemEx;
+import com.xray.taoke.tkapi.vo.TbItemGy;
+import com.xray.taoke.tkapi.vo.TbItemVo;
+
+@ControllerBind(controllerKey = "/linkinfo")
+public class LinkInfoController extends AbstractController {
+
+	private static Pattern p_itemid = Pattern.compile("item.htm\\?id=(\\d+)");
+
+	public void goList() {
+		Map<String, Object> cond = getCondAll();
+		String appid = getCond(cond, "appid", "");
+		if (StringUtil.isEmpty(appid)) {
+			appid = getCookie("ck_appid");
+			if (StringUtil.isNotEmpty(appid)) {
+				getCond(cond, "appid", appid);
+			}
+		} else {
+			setCookie("ck_appid", appid, Integer.MAX_VALUE);
+		}
+		setAttr("mpList", MpInfo.dao.queryAllInuse());
+		setAttr("dataList", LinkInfo.dao.queryList(cond, getPageVo("seqid desc")));
+		render("/template/pages/linkinfo/list.html");
+	}
+
+	public void doFaBuJx() {
+		String appid = getPara("appid");
+		String seqid = getPara("seqid");
+		String content = TkMpService.instance.getJxContent(appid);
+		if (StringUtil.isEmpty(content)) {
+			renderRtn(RtnFactory.newFail("精选尚未发布！"));
+			return;
+		}
+		JSONObject jsonObject = JSONObject.parseObject(content);
+		JSONArray array = jsonObject.getJSONArray("data");
+		JSONArray array2 = new JSONArray();
+
+		Calendar cal = Calendar.getInstance();
+		int month = (cal.get(Calendar.MONTH)) + 1;
+		int day_of_month = cal.get(Calendar.DAY_OF_MONTH);
+
+		LinkInfo info = LinkInfo.dao.findById(seqid);
+		String url = info.getStr("url");
+		String long_url = info.getStr("longurl");
+
+		for (Object object : array) {
+			JSONObject jsonObject2 = JSONObject.parseObject(object.toString());
+			if (StringUtil.isEmpty(long_url))
+				jsonObject2.put("url", url);
+			else
+				jsonObject2.put("url", long_url);
+			jsonObject2.put("title", "限时优惠券（" + month + "月" + day_of_month + "日）");
+			array2.add(jsonObject2);
+		}
+		TkMaterial material = TkMaterial.dao.queryByAppidAndJingXuan(appid);
+		material.set("content", array2.toJSONString());
+		material.update();
+		TkMpService.instance.pubMaterial(appid);
+		// JSONObject obj2 = new JSONObject();
+		// obj2.put("type", "wx_news");
+		// obj2.put("data", array2);
+		// TkMpService.instance.setJxContent(appid, obj2.toJSONString());
+		renderRtn(RtnFactory.succ);
+	}
+
+	public void doUpdateRemark() {
+		String seqid = getPara("seqid");
+		String remark = getPara("remark");
+		LinkInfo link = LinkInfo.dao.findById(seqid);
+		link.set("remark", remark);
+		link.update();
+		renderRtn(RtnFactory.succ);
+	}
+
+	public void doChaquan() {
+		String appid = getPara("appid");
+		String content = getPara("src_url");
+
+		TbItemVo vdata = null;
+		TbItemGy gdata = null;
+
+		if (StringUtil.isNotEmpty(ConstTk.parseTbUrl(content))) {
+			vdata = TbItemService.instance.getItemVo(appid, ConstTk.parseItemid(content));
+			gdata = TbItemService.instance.getItemGy(appid, ConstTk.parseItemid(content), null);
+		} else if (StringUtil.isNotEmpty(ConstTk.parseTkpwd(content))) {
+			gdata = TbItemService.instance.getItemGyByTkpwd(appid, ConstTk.parseTkpwd(content), null);
+			vdata = TbItemService.instance.getItemVo(appid, gdata.getItemid());
+		} else {
+			renderRtn(RtnFactory.fail);
+			return;
+		}
+
+		TbItemEx data = new TbItemEx().setVdata(vdata).setGdata(gdata);
+
+		StringBuffer sb = new StringBuffer();
+		sb.append(vdata.getItemtitle()).append("\n");
+		if (gdata.getCpmoney() > 0) {
+			sb.append("★【优惠券】").append(gdata.getCpmoney()).append("元\n");
+			sb.append("★【约返利】").append(ConstTk.formatPrice(data.getJiemoney())).append("元").append("\n");
+		} else {
+			sb.append("★【约返利】").append(ConstTk.formatPrice(data.getJiemoney())).append("元\n");
+			sb.append("★【优惠券】").append(gdata.getCpmoney()).append("元").append("\n");
+		}
+		sb.append("【付费价】" + data.getTkprice() + "\n");
+		sb.append("-----------------\n");
+		sb.append("复制信息，打开【手啕】即可下单，").append(gdata.getTkpwd());
+		renderRtn(RtnFactory.newSucc(sb.toString()));
+	}
+
+	public void doZhaoquan() {
+		String appid = getPara("appid");
+		String goods = getPara("goods");
+		if (StringUtil.isEmpty(appid)) {
+			renderRtn(RtnFactory.newFail("未选择公众号"));
+			return;
+		}
+		List<TbItemVo> list = new ArrayList<TbItemVo>();
+		List<String> idlist = this.parseItemidByHdk(goods);
+		Collections.reverse(idlist);
+		for (String itemid : idlist) {
+			TbItemVo vdata = TbItemService.instance.getItemVo(appid, itemid);
+			TbItemGy gdata = TbItemService.instance.getItemGy(appid, itemid, null);
+			TbItemEx.gy2vo(vdata, gdata);
+			list.add(vdata);
+		}
+
+		String lid = ConstTk.getUuid16();
+		TbItemService.instance.addItemListVo(lid, list);
+
+		String url = MpInfoService.instance.getUrl(appid) + "/tlink?sid=" + MpInfoService.instance.getSid(appid)
+				+ "&lid=" + lid;
+		String shorturl = ShortUrlUtils.instance.toShorUrl(url);
+		LinkInfo data = new LinkInfo();
+		data.set("appid", appid);
+		data.set("lid", lid);
+		data.set("url", shorturl);
+		data.set("size", idlist.size());
+		data.set("inputtime", System.currentTimeMillis());
+		data.set("inputby", getUser().getName());
+		data.set("longurl", url);
+		data.save();
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("亲，找了几款优惠券，请点击查看\n");
+		sb.append(shorturl);
+		renderRtn(RtnFactory.newSucc(sb.toString()));
+	}
+
+	public void doAppendZhaoquan() {
+		String seqid = getPara("seqid");
+		String appid = getPara("appid");
+		String goods = getPara("goods");
+		if (StringUtil.isEmpty(appid)) {
+			renderRtn(RtnFactory.newFail("未选择公众号"));
+			return;
+		}
+		LinkInfo info = LinkInfo.dao.findById(seqid);
+		String lid = info.getStr("lid");
+		// String shorturl = info.getStr("url");
+		List<TbItemVo> list = new ArrayList<TbItemVo>();
+		List<String> idlist = this.parseItemidByHdk(goods);
+		List<TbItemVo> all_item = TbItemService.instance.getAllItemListVo(lid);
+		List<String> before_list = new ArrayList<>();
+
+		for (TbItemVo tbItemVo : all_item) {
+			before_list.add(tbItemVo.getItemid());
+		}
+
+		Collections.reverse(idlist);
+		for (String itemid : idlist) {
+			if (before_list.contains(itemid))
+				continue;
+			TbItemVo vdata = TbItemService.instance.getItemVo(appid, itemid);
+			TbItemGy gdata = TbItemService.instance.getItemGy(appid, itemid, null);
+			TbItemEx.gy2vo(vdata, gdata);
+			list.add(vdata);
+		}
+		TbItemService.instance.addItemListVo(lid, list);
+		info.set("size", info.getInt("size") + list.size());
+		info.update();
+		renderRtn(RtnFactory.succ);
+	}
+
+	private List<String> parseItemidByHdk(String text) {
+		List<String> list = new ArrayList<String>();
+		Matcher m = p_itemid.matcher(text);
+		while (m.find()) {
+			list.add(m.group(1));
+		}
+		return list;
+	}
+
+	public void goListByItemVo() throws UnsupportedEncodingException {
+
+		setAttr("mpList", MpInfo.dao.queryAllInuse());
+		Map<String, Object> cond = getCondAll();
+		String appid = getCond(cond, "appid", "");
+		setAttr("appid", appid);
+		int pno = getParaToInt("pno", 1);
+		String orderby = getPara("orderby", "");
+
+		setAttr("orderby", orderby);
+		String userid = getUserid();
+
+		List<com.xray.taoke.admin.vo.TbItemVo> list = new ArrayList<>();
+		String jsonStr = ItemService.instance.getJsonStr(userid);
+		if (StringUtil.isEmpty(jsonStr)) {
+			setAttr("dataList", list);
+			PageVo pageVo = new PageVo();
+			pageVo.setCount(list.size());
+			pageVo.setPcount(list.size() / 20);
+			pageVo.setPno(pno);
+			setAttr("page", pageVo);
+			render("/template/pages/linkinfo/list_itemvo.html");
+			return;
+		}
+		list = JSONArray.parseArray(jsonStr, com.xray.taoke.admin.vo.TbItemVo.class);
+
+		PageVo pageVo = new PageVo();
+		pageVo.setCount(list.size());
+		pageVo.setPcount(list.size() / 20);
+		pageVo.setPno(pno);
+		setAttr("page", pageVo);
+
+		String cpmoney_str = null;
+		double cpmoney = 0.0;
+		double beforeprice = 0.0;
+		String yuexiao = null;
+		int sales = 0;
+		for (com.xray.taoke.admin.vo.TbItemVo tbItemVo : list) {
+			cpmoney_str = tbItemVo.getCpmoney();
+			cpmoney = Double.valueOf(cpmoney_str.replaceAll("￥", ""));
+			beforeprice = cpmoney + tbItemVo.getItemprice();
+			tbItemVo.setBeforeprice(beforeprice);
+
+			yuexiao = tbItemVo.getYuexiao();
+			yuexiao = yuexiao.replaceAll("月销 ", "");
+			if (yuexiao.contains("万")) {
+				yuexiao = yuexiao.replaceAll("万", "");
+				sales = (int) (Double.valueOf(yuexiao) * 10000);
+			} else {
+				sales = Integer.parseInt(yuexiao);
+			}
+			tbItemVo.setSales(sales);
+		}
+		int end = 20;
+		int size = list.size();
+		sortByType(list, orderby);
+		list = list.subList((pno - 1) * end, (pno * end > size ? size : end * pno));
+
+		setAttr("dataList", list);
+		render("/template/pages/linkinfo/list_itemvo.html");
+	}
+
+	public void doDelHaoDanKu() {
+		String userid = getUserid();
+
+		ItemService.instance.delJsonStr(userid);
+		renderRtn(RtnFactory.succ);
+	}
+
+	private void sortByType(List<com.xray.taoke.admin.vo.TbItemVo> list, String orderby) {
+		Collections.sort(list, new Comparator<com.xray.taoke.admin.vo.TbItemVo>() {
+
+			public int compare(com.xray.taoke.admin.vo.TbItemVo o1, com.xray.taoke.admin.vo.TbItemVo o2) {
+
+				switch (orderby) {
+				case "juanhou desc":
+					if (o1.getItemprice() > o2.getItemprice()) {
+						return -1;
+					}
+					if (o1.getItemprice() == o2.getItemprice()) {
+						return 0;
+					}
+
+					break;
+				case "juan desc":
+
+					break;
+				case "yongjin desc":
+					double d1 = Double.valueOf(o1.getRatemoney());
+					double d2 = Double.valueOf(o2.getRatemoney());
+					if (d1 > d2) {
+						return -1;
+					}
+					if (d1 == d2) {
+						return 0;
+					}
+					break;
+				case "sales desc":
+					if (o1.getSales() > o2.getSales()) {
+						return -1;
+					}
+					if (o1.getSales() == o2.getSales()) {
+						return 0;
+					}
+					break;
+				default:
+					break;
+				}
+
+				return 1;
+			}
+		});
+	}
+
+	public void doShopById() {
+		String itemid = getPara("itemid");
+		String itemtitle = getPara("itemtitle");
+		String itemprice = getPara("itemprice");
+		String itempic = getPara("itempic");
+		String tkrate = getPara("tkrate");
+		String yongjin = getPara("yongjin");
+		tkrate = tkrate.replaceAll("%", "");
+
+		String cpmoney = getPara("cpmoney");
+		cpmoney = cpmoney.replaceAll("￥", "");
+		String userid = getUserid();
+		TbItemVo tbItemVo = new TbItemVo();
+		tbItemVo.setCpmoney(Double.valueOf(cpmoney));
+		tbItemVo.setItemid(itemid);
+		tbItemVo.setItempic(itempic.replaceAll("_310x310.jpg", ""));
+		tbItemVo.setItemprice(Double.valueOf(itemprice));
+		tbItemVo.setItemtitle(itemtitle);
+		tbItemVo.setTkrate(Double.valueOf(tkrate) / 100);
+		ItemService.instance.setShop(userid, JSON.toJSONString(tbItemVo));
+		renderRtn(RtnFactory.succ);
+	}
+
+	public void doCreate() {
+		String appid = getPara("appid");
+		String userid = getUserid();
+
+		Set<String> set = ItemService.instance.getShop(userid);
+		List<TbItemVo> list = new ArrayList<TbItemVo>();
+		for (String string : set) {
+			TbItemVo itemVo = JSONObject.parseObject(string, TbItemVo.class);
+			list.add(itemVo);
+		}
+
+		String lid = ConstTk.getUuid16();
+		TbItemService.instance.addItemListVo(lid, list);
+
+		String url = MpInfoService.instance.getUrl(appid) + "/tlink?sid=" + MpInfoService.instance.getSid(appid)
+				+ "&lid=" + lid;
+		String shorturl = ShortUrlUtils.instance.toShorUrl(url);
+		LinkInfo data = new LinkInfo();
+		data.set("appid", appid);
+		data.set("lid", lid);
+		data.set("url", shorturl);
+		data.set("size", list.size());
+		data.set("inputtime", System.currentTimeMillis());
+		data.set("inputby", getUser().getName());
+		data.set("longurl", url);
+		data.save();
+
+		ItemService.instance.delShop(userid);
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("亲，找了几款优惠券，请点击查看\n");
+		sb.append(shorturl);
+		renderRtn(RtnFactory.newSucc(sb.toString()));
+
+	}
+
+}

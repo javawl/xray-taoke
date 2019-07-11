@@ -1,0 +1,311 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 1.0 Transitional//EN">
+<html>
+
+	<head>
+		<title>旅游分销平台</title>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<link rel="stylesheet" type="text/css" href="https://saas.zowoyoo.com/css/global.css">
+		<script type="text/javascript" language="JavaScript" src="https://saas.zowoyoo.com/js/currency/currency_utils.js"></script>
+	</head>
+
+	<body>
+		<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+		<script language="javascript" src="/js/doubleDatePicker.js"></script>
+		<script type='text/javascript'>
+			$(function() {
+				$('#sdate').doubleDatePicker({
+					minDate: '2012-01-01'
+				});
+				$('#edate').doubleDatePicker({
+					minDate: '2012-01-01'
+				});
+			});
+		</script>
+		<style>
+		div.control-bar {
+				background: none repeat scroll 0 0 #F9F9FA;
+				border-right: 0 none;
+			}
+			
+			div.date-select-bar {
+				font-size: 12px;
+				height: 30px;
+				overflow: hidden;
+				padding: 10px;
+			}
+			
+			div.date-select-bar .l {
+				float: left;
+			}
+			
+			div.date-select-bar a.cur {
+				background: none repeat scroll 0 0 #5B6ECD;
+				border: 1px solid #2E308A;
+				color: #FFFFFF;
+				padding: 2px 8px;
+				text-decoration: none;
+			}
+			
+			div.date-select-bar a {
+				display: inline-block;
+				margin: 0 10px 0 0;
+				overflow: hidden;
+				padding: 4px 8px;
+				text-decoration: underline;
+			}
+			
+			input.date {
+				font-family: Arial;
+				font-size: 12px;
+				vertical-align: middle;
+				width: 160px;
+			}
+			
+			div.date-select-bar img {
+				cursor: pointer;
+			}
+		}
+		</style><br>
+		<table width="98%" border="0" cellspacing="0" cellpadding="0" align="center">
+			<tr>
+				<td width="60%" height="18">当前位置：&nbsp;
+					<a href="/b2b/prod_list.jsp">产品预订</a> > 产品上架情况</td>
+			</tr>
+			<tr>
+				<td height="2" bgcolor="#003333"></td>
+			</tr>
+		</table><br><br>
+		<table width="98%" border="0" cellspacing="0" cellpadding="0" align="center">
+			<tr>
+				<td>
+					<form action="prod_log.jsp" method="post">
+						<div class="control-bar">
+							<div id="DateSelectBar" class="date-select-bar">
+								<div class="l">
+									<a href="prod_log.jsp?sdate=2019-06-17&edate=2019-06-21&s=0">本周</a>
+									<a href="prod_log.jsp?sdate=2019-06-01&edate=2019-06-21&s=0">本月</a>
+								</div>
+								<div class="l"> 选择任意时段： <input type="text" id="sdate" name="sdate" value="2019-06-20" class="date" /> &nbsp;到&nbsp; <input type="text" id="edate" name="edate" value="2019-06-20" class="date" /> <input type="submit" name="search" value="提 交" class="button"> <input type="hidden" name="s" value="0"> </div>
+							</div>
+						</div>
+					</form> <br/>
+					<table width="100%" border="0" cellspacing="0" cellpadding="0" align="center" class="l_detail">
+						<tr>
+							<th width="80"><b>产品编号</b></th>
+							<th width="600"><b>产品标题</b></th>
+						</tr>
+						<tr>
+							<td><b>25013219</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25013219" target="_blank">【龙华清湖美食】限量300套！19.9元抢购火遍全抖音的拾贝乐卜卜贝海鲜火锅震撼来袭~含3荤6素+包茶位纸巾+30元代金券+免费停车，周末节假日通用！夜宵榜的“半壁江山”值得你一试！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25012786</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25012786" target="_blank">【深圳】太好玩了！29.9元玩转西丽哈士尼乐园！周未不加收！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25012701</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25012701" target="_blank">【东莞·观音山→冰动登山节】百粤秘境cool爽湿身~6月30日盛大开玩！限时特惠：108元，穿越水帘洞、炫彩泡泡站、湿身水枪阵、酷爽大冰池、水球大作战···激爽夏日，一起冲鸭</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25012659</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25012659" target="_blank">【合肥】49.9元=畅玩金孔雀温泉+水世界单人票，冰火两重天的别致养生，嗨翻这个夏天！周末通用不加收~</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25012642</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25012642" target="_blank">【合肥】不得不去的温泉胜地，周末通用不加收~【89.9元=2大1小】畅玩金孔雀温泉+水乐园！清凉+养生的超赞组合等你嗨~</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25012639</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25012639" target="_blank">【上海】9.9元抢原价80元赛梦微缩世界畅玩儿童票，打卡全新赛梦微缩世界，超1000平方体验空间，定于北外滩的上海白玉兰广场，足不出沪体验“猎奇魔幻小镇”，感受城市文化、人文景观、影视文学。</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25011914</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25011914" target="_blank">【上海】暑期专场~79元抢上海世茂深坑秘境下午场单人票！儿童1.1米以下免票哟~（指定一天使用）</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25011617</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25011617" target="_blank">【惠州】四个月无加收，199抢万科双月湾二期2房1厅，畅玩无边际私家沙滩+平海古城+西班牙小镇，楼下就是海，零距离拥抱大海，全年可用~</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25011500</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25011500" target="_blank">【上海】59元抢原价150元赛梦微缩世界畅玩成人票，打卡全新赛梦微缩世界，超1000平方体验空间，定于北外滩的上海白玉兰广场，足不出沪体验“猎奇魔幻小镇”，感受城市文化、人文景观、影视文学。</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25011388</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25011388" target="_blank">【云浮】【299元抢购夏日避暑胜地天露山菩提精舍三人房】人均99元，送泳池/温泉+梅溪小镇+避暑栈道+佤族表演＋篝火晚会，整个暑假可用！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25011250</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25011250" target="_blank">【恩平】打破底价，69.9入住恒大泉都，免费停车+免费wifi，距广佛80分钟，5大特色分格自如切换</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25011191</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25011191" target="_blank">【扬州】仅售599元！扬州逸扬温泉度假村房+房内免费私汤享受+2大1小养生早餐+养生晚餐+精美下午茶+凤凰岛门票2张/茱萸湾门票2张二选一+欢迎水果+高尔夫推杆练习+生态垂钓+自行车骑行+手工西点DIY制作</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010744</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010744" target="_blank">【杭州】9.9元限时秒杀！杨梅任摘任吃来啦！周末自驾好去处~鲜美多汁的杨梅吃到饱！一吃就回本！刚下枝头就上舌头，杨梅就要新鲜吃！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010618</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010618" target="_blank">【惠州】暑期可用所有日期不加价，488元抢原价1088元，双月湾两房一厅，性价比之王，不怕你货比货，6.7.8月所有日期不加价！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010455</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010455" target="_blank">【东莞】暑假可用，39.9抢原价88元Q弹玩家儿童乐园一大一小亲子套票，不限时畅玩网红蹦床儿童沾沾乐~</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010450</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010450" target="_blank">【广东深圳】深圳博林天瑞喜来登酒店2大1小¥428西丽尚膳自助晚餐，地处南山西丽，地铁5号线直达</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010355</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010355" target="_blank">【“虾”搞一夏】88元=小龙虾双人套餐（3斤！）~绝对是吃了能把手指嘬瘦的美食！舌尖安慰剂，人间心理专家! 好吃但是限量500份！手慢无~</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010294</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010294" target="_blank">【广州•3店通用】全年zui低！暑期通用不加收~39.9元抢1大1小奥飞欢乐世界大本营门票~海珠/天河/金沙洲3店随你选~即日起抢购到6月23日</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010242</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010242" target="_blank">【苏州】699元起！抢原价1299元花山隐居酒店禅客房一晚+畅游花山+双早+菩萨面+晚餐+抄经体验+山趣手工体验，逃离都市喧嚣！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25010232</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25010232" target="_blank">【限时抢购】¥1199香港吃喝玩乐一价全包！双人自助早餐+晚餐美食星级度假套票~住香港帝景酒店大床房吃松茸品燕窝~免费穿梭巴士接送！还有沙滩看日落~抢购日期到6月30日</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009937</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009937" target="_blank">【深圳大鹏】海天一舍主题Party酒店一线海景房599，所有平日不加收！送早餐+现磨咖啡+免费畅玩沙滩，坐拥南澳一线海景~</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009542</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009542" target="_blank">【深圳.摄影】19.9元抢原价398元龙华摄影单人套餐~9宫格照片墙＋放大明星海报＋钱包照＋服装两套＋化妆造型等六大惊喜套餐，儿童成人古装现代均可拍！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009498</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009498" target="_blank">【无锡】限时三天抢购！999抢购无锡豪华田园东方独栋别墅三卧一晚！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009493</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009493" target="_blank">【湖州】音乐节+峡谷漂流！仅需188元夏天想要的这里都有！超强阵容曝光，28、29号明星场快乐男声李行亮，丽江小倩、纣王老胡，超多明星在这等你！一起去蜗牛山谷音乐节蹦个野迪吧！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009318</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009318" target="_blank">【深圳·大鹏】临近广东“鼓浪屿”－较场尾，399元入住深圳曼湾禾田居度假酒店，不用到厦门鼓浪屿，便可感受的烂漫与情怀，高端品质酒店，简单人生，慢调生活！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009203</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009203" target="_blank">【广州】惊险！刺激！暑假等你来战！仅39.9元起抢天鹿湖飞越丛林探险乐园单人票（B套票）~专业教练指导~周末节假日通用~即日起抢购到6月30日</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25009036</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25009036" target="_blank">【滁州】冬病夏治，温泉正当时！夏季泡温泉，好处真的太多了！仅49.9元抢门市价210元白鹭岛大门票+温泉+水果/采摘券套餐！夏季养生就来白鹭岛泡温泉吧！周末、节假日通用，不加收！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25008889</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25008889" target="_blank">爆款！仅剩最后100套！！【滁州】冬病夏治，温泉正当时！夏季泡温泉，好处真的太多了！仅49.9元抢门市价210元白鹭岛大门票+温泉套餐（赠送泳衣）！夏季养生就来白鹭岛泡温泉吧！周末、节假日通用，不加收！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25008324</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25008324" target="_blank">【无锡】限时三天抢购！699抢购无锡豪华田园东方独栋别墅双卧一晚！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25008238</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25008238" target="_blank">最后1000套，售完即止【全国通用】全国近100家热门网红民宿肆意住！只要99元！超长有效期至2020年5月份！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25008148</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25008148" target="_blank">【年卡老顾客续卡专享价】新增200套，399元2大1小顺德海立方海洋公园家庭年卡火爆预售啦！精装升级5000平米欢乐城室内水上乐园、卡丁车、轮胎主题公园（3楼）暑期盛大开业一年内无限次1-3楼通用！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25008124</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25008124" target="_blank">最后1000套，售完即止【全国通用】全国近100家热门网红民宿肆意住！只要99元！超长有效期至2020年5月份！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>25008021</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=25008021" target="_blank">【周年庆新增200套】499元2大1小顺德海立方海洋公园家庭年卡火爆预售啦！精装升级5000平米欢乐城室内水上乐园、卡丁车、轮胎主题公园（3楼）暑期盛大开业，一年内无限次1-3楼通用！</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>24964516</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=24964516" target="_blank">【深圳】39.9元抢深圳青青世界1大1小亲子套票（6.22-23），带你走进热带雨林，惊叹大自然的神奇</a>
+							</td>
+						</tr>
+						<tr>
+							<td><b>24959408</b></td>
+							<td>
+								<a href="/b2b/show_prod.jsp?info_id=24959408" target="_blank">【惠州】所有平日不加收！9月周末不加收299元抢合正东部湾海景2大2小亲子套餐，享无边际泳池+水公园+私家沙滩，观海游玩享不停~不加收日期节假日除外！</a>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+		</form>

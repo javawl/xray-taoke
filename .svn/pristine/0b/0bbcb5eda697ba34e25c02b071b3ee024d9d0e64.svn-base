@@ -1,0 +1,14 @@
+package com.xray.taoke.act.web.listener;
+
+import java.util.TimerTask;
+
+import com.xray.taoke.act.model.LinkInfo;
+
+public class DbAliveTask extends TimerTask {
+
+    @Override
+    public void run() {
+        LinkInfo.dao.queryByLinkid("1");
+    }
+
+}

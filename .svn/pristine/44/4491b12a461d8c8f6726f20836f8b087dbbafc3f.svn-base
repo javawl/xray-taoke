@@ -1,0 +1,123 @@
+var count = 1;
+var page = 1;
+var pageno = 1;
+//1为抓销量,2为抓新品
+var kind = 1;
+
+document.addEventListener('DOMContentLoaded', function() {});
+
+if(location.href.indexOf("www.haodanku.com") != -1) {
+	$(".am-avg-sm-2").each(function() {
+		$(this).children("li").eq(0).children("span").text("清空");
+		$(this).children("li").eq(0).children("span").attr("data-itemid", "");
+		$(this).children("li").eq(0).children("span").addClass("clearByMySelf");
+		$(this).children("li").eq(1).children("span").text("复制");
+		$(this).children("li").eq(1).children("span").attr("data-itemid", "");
+		$(this).children("li").eq(1).children("span").addClass("copybymyself");
+	})
+}
+
+if(location.href.indexOf("https://www.haodanku.com/index/index/nav/3/keyword") != -1) {
+
+	var arr = [];
+
+	$(".library-list").each(function() {
+		var data = {};
+		var link = $(this).children(".public-option").children("a").attr("href");
+		
+		var img = $(this).children(".public-option").children("a").children("img").attr("src");
+		if(img.indexOf("gif")!=-1){
+			img = $(this).children(".public-option").children("a").children("img").attr("data-echo");
+		}
+		
+		
+		var id = getQueryString("id", link);
+		var commodity_content_top = $(this).children(".commodity_name").children(".commodity-content-top");
+		var fq_goods_sale = $(this).children(".commodity_name").children(".commodity-content-bottom").children(".fq-goods-sale");
+
+		var juan = fq_goods_sale.children("a").children("span").eq(1).text();
+		var yuexiao = fq_goods_sale.children("span").children("span").eq(0).text();
+		yuexiao = yuexiao.trim();
+
+		var detail = commodity_content_top.children(".fq-goods-coupon").children("li");
+		var juanhou = detail.eq(0).children("strong").text();
+		var yingxiao = detail.eq(1).children("strong").text();
+		var yongjin = detail.eq(2).children("strong").text();
+		var title = commodity_content_top.children(".am-padding-bottom-sm").children("span").text();
+
+		var data = {
+			itemprice: juanhou,
+			rate: yingxiao,
+			ratemoney: yongjin,
+			itemtitle: title,
+			itemurl: link,
+			itemid: id,
+			yuexiao: yuexiao,
+			cpmoney: juan,
+			itemimg:img
+		}
+		arr.push(data);
+
+	})
+	console.log(arr);
+	var url = "http://localhost:82/taoke_admin/app/doReportItem";
+	$.ajax({
+		type: "post",
+		url: url,
+		async: true,
+		data: {
+			"arr": JSON.stringify(arr)
+		},
+		success: function(data) {
+			if(data.code == 1) {
+				window.close();
+			} else {
+				alert("抓取失败，请联系技术人员！");
+			}
+
+		},
+		error: function(arg1) {
+			alert("抓取失败，请联系技术人员！");
+		}
+	});
+
+}
+
+var copy_txt = "";
+
+$(".copybymyself").click(function() {
+
+	copy_txt += removeAllSpace($(this).attr("data-tips")) + "\n";
+	$(this).text("复制");
+
+	var clipboard = new Clipboard('.copybymyself', {
+		text: function() {
+			return copy_txt;
+		}
+	});
+
+})
+
+function removeAllSpace(str) {
+	return str.replace(/\s+/g, "");
+}
+
+$(".clearByMySelf").click(function() {
+	$(this).text("清空");
+	copy_txt = "";
+	var clipboard = new Clipboard('.clearByMySelf', {
+		text: function() {
+			return " ";
+		}
+	});
+
+})
+
+function getQueryString(name, url) {
+	var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
+	var r = url.split("?")[1].match(reg);
+	if(r != null) {
+		return unescape(r[2]);
+	}
+	return null;
+}

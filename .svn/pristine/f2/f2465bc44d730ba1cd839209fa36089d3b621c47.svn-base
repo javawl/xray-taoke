@@ -1,0 +1,14 @@
+redis.prefix=taoke
+
+sign.md5key=a7bf9738-f6fe-4226-a215-a79b2d7ad9c9
+
+tbapi.21ds.apkey=e18e3b38-0067-bc6d-9d69-fc291835615b
+tbapi.21ds.tbname=eagleyehawk
+tbapi.21ds.pid=mm_44084035_24540890_105837700025
+
+wxsns.appid=wxc378477f8686dcf0
+wxsns.appsecret=951bb96faaf7b9d59cae9f47ee7493ae
+wxsns.bindUri=http://dev.weixin.ldsuper.com/sq/auth/doBind
+
+rand.url=http://ago.ldplaza.com/sq
+auth.url=http://dev.weixin.ldsuper.com/sq

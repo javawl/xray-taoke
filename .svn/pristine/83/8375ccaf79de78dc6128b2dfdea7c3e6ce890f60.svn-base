@@ -1,0 +1,150 @@
+package com.xray.taoke.admin.service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.utils.ShortUrlUtils;
+
+import redis.clients.jedis.Tuple;
+
+public class MpInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".mpinfo.";
+    private static final String mpobj = config.get("redis.prefix") + ".mpobj.";
+    private static final String active = config.get("redis.prefix") + ".active.";
+    public static MpInfoService instance = new MpInfoService();
+
+    public static void main(String[] args) {
+        String appid = "wx3088f1bd705dfd20";
+        System.out.println(MpInfoService.instance.getMpInfo(appid));
+    }
+
+    public void setMpInfo(String appid, TkMpinfo mpinfo) {
+        String key = prefix + appid;
+        Map<String, String> cond = new HashMap<>();
+        cond.put("appid", mpinfo.getStr("appid"));
+        cond.put("name", mpinfo.getStr("name"));
+        cond.put("appsecret", mpinfo.getStr("appsecret"));
+        cond.put("token", mpinfo.getStr("token"));
+        cond.put("encodingaeskey", mpinfo.getStr("encodingaeskey"));
+        cond.put("apikey", mpinfo.getStr("apikey"));
+        cond.put("tbname", mpinfo.getStr("tbname"));
+        cond.put("pid", mpinfo.getStr("pid"));
+        cond.put("session", mpinfo.getStr("session"));
+        String seqid = mpinfo.getLong("seqid")+"";
+        String shopurl = Constant.getShopurl();
+        shopurl = mpinfo.getStr("shopurl")+shopurl+seqid;
+        String shorturl= ShortUrlUtils.instance.toShorUrl(shopurl);
+        cond.put("shopurl", shorturl);
+        cond.put("cover", mpinfo.getStr("cover"));
+        cache.hmset(key, cond);
+
+        cond = new HashMap<>();
+        cond.put("sid", mpinfo.getLong("seqid").toString());
+        cond.put("appid", mpinfo.getStr("appid"));
+
+        key = mpobj + appid;
+        cache.hmset(key, cond);
+
+        key = mpobj + mpinfo.getLong("seqid");
+        cache.hmset(key, cond);
+    }
+
+    public Map<String, String> getMpInfo(String appid) {
+        String key = prefix + appid;
+        return cache.hgetAll(key);
+    }
+
+    public Map<String, String> getMpNames() {
+        return cache.hgetAll(prefix + "names");
+    }
+
+    // 缓存公众号名称
+    public void setMpNames() {
+        String key = prefix + "names";
+        Map<String, String> map = new HashMap<String, String>();
+        for (TkMpinfo data : TkMpinfo.dao.queryAllInuse()) {
+            map.put(data.getStr("appid"), data.getStr("name"));
+        }
+        cache.hmset(key, map);
+    }
+
+    public double getRate(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "rate");
+        return StringUtil.isEmpty(val) ? 0.6 : Double.parseDouble(val);
+    }
+    
+    public double getRate(String appid, double tkmoney) {
+        if (tkmoney < 1)
+            return 0.81;
+        else if (tkmoney < 2)
+            return 0.71;
+        else if (tkmoney < 3)
+            return 0.61;
+        else if (tkmoney < 4)
+            return 0.49;
+        else if (tkmoney < 5)
+            return 0.39;
+        else if (tkmoney < 10)
+            return 0.31;
+        else
+            return 0.29;
+    }
+
+    public Set<Tuple> getAllActive(String appid) {
+        String key = active + appid;
+        return cache.zrevrangeWithScores(key, 0, -1);
+    }
+
+    public void incrActive(String appid) {
+        String key = active + appid + ".activenumber.";
+        cache.incr(key);
+    }
+
+    public void delActive(String appid) {
+        String key = active + appid + ".activenumber.";
+        cache.delete(key);
+    }
+
+    public Integer getActive(String appid) {
+        String key = active + appid + ".activenumber.";
+        String str = cache.get(key);
+        if (StringUtil.isEmpty(str))
+            return 0;
+        return Integer.valueOf(str);
+    }
+
+    public Integer getChaQuan(String appid) {
+        String key = active + appid + ".chaquan." + DateUtil.getToday();
+        String str = cache.get(key);
+        if (StringUtil.isEmpty(str))
+            return 0;
+        return Integer.valueOf(str);
+    }
+
+    public Integer getOrder(String appid) {
+        String key = active + appid + ".order." + DateUtil.getToday();
+        String str = cache.get(key);
+        if (StringUtil.isEmpty(str))
+            return 0;
+        return Integer.valueOf(str);
+    }
+
+    public void active(String appid, String openid) {
+        String key = active + appid;
+        cache.zadd(key, System.currentTimeMillis(), openid);
+    }
+
+}

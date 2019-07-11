@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>用户管理 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>用户管理</li>
+							<li class="active">用户管理</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+
+					<section class="content">
+						<!-- Your Page Content Here -->
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<form action="${cxt!}/uouser/goList">
+											<div class="row">
+												
+												<div class="col-md-2">
+													<select name="appid" class="form-control">
+														<option value="">选择公众号</option>
+														<#list mpList as item>
+															<option value="${item.appid!}" <#if appid=item.appid>selected</#if>>${item.name!}</option>
+														</#list>
+													</select>
+												</div>
+												
+												<div class="col-md-2">
+													<input name="wxname" type="text" class="form-control" value="${wxname!}" placeholder="昵称/ID" />
+												</div>
+												<div class="col-md-2">
+													<input id="page_pno" name="pno" type="hidden" value="${page.pno!}" />
+													<input id="orderby" name="orderby" type="hidden" value="${orderby!}" />
+													<button id="search" type="submit" class="btn btn-default">查询</button>
+												</div>
+												<div class="col-md-6">
+													<div class="pull-right">
+														<a onclick="doUserInfoApp()" href="javascript:;" class="btn btn-primary">更新</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr style="white-space:nowrap;">
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>注册时间</th>
+																<th>公众号</th>
+																<th>头像</th>
+																<th>昵称</th>
+																<th onclick="doOrderby('ordersucc')">下单</th>
+																<th onclick="doOrderby('qbtotal')">总额</th>
+																<th onclick="doOrderby('qbcash')">可提现</th>
+																<th onclick="doOrderby('qbconfirm')">未收货</th>
+																<th onclick="doOrderby('qbcashing')">提现</th>
+																<th>结算</th>
+																<th>状态</th>
+																<th>返点</th>
+																<th>备注</th>
+																<th>操作人</th>
+																<th>verno</th>
+																<th>操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td>${item.inputtime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</td>
+																	<td>${item.mpname!}</td>
+																	<td>
+																		<#if item.wxavatar??><img width="40px" src="${item.wxavatar!}"></#if>
+																	</td>
+																	<td>${item.wxnameUTF8!}</td>
+																	<td>${item.ordersucc!}</td>
+																	<td>${item.qbtotal?string('0.0#')}</td>
+																	<td>${item.qbcash?string('0.0#')}</td>
+																	<td>${item.qbconfirm?string('0.0#')}</td>
+																	<td>
+																		<#if item.cashstate=1>
+																			<span class="text-red">${item.qbcashing?string('0.0#')}</span>
+																			<#else>
+																				<span class="text-green">正常</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<#if item.jiestate=1>
+																			<span class="text-green">正常</span>
+																			<#else>
+																				<span class="text-red">异常</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<#if item.state=1>
+																			<span class="text-green">正常</span>
+																			<#else>
+																				<span class="text-red">不自动</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<a onclick="doEditRate('${item.seqid}','${item.rate!}','${item.ratereason!}')" href="javascript:;"><i class="fa fa-edit"></i>${item.rate!}</td>
+																	<td>${item.ratereason!}</td>
+																	<td>${item.rateopby!}</td>
+																	<td>${item.verno!}</td>
+																	<td>
+                                    <#if item.rate lt 0.7>
+                                      <a href="${cxt!}/orderinfo/goItemList?userid=${item.userid!}" target="_blank" class="text-yellow"><i class="fa fa-tag"></i>订单</a>
+																		<#else>
+                                      <a href="${cxt!}/orderinfo/goList?userid=${item.userid!}" target="_blank" class="text-yellow"><i class="fa fa-tag"></i>订单</a>
+                                    </#if>
+                                    <a href="${cxt!}/cashinfo/goList?userid=${item.userid!}" target="_blank" class="text-danger"><i class="fa fa-dollar"></i>提现</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+				var datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${refDateStr!}');
+
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#page_pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all')
+				var $checkbox = $('input[type="checkbox"].item')
+				i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+
+			function doOrderby(key) {
+				var now = '${orderby!}';
+				if(key == now) {
+					key = key + ' desc';
+				} else if(!now.startsWith(key)) {
+					key = key + ' desc';
+				}
+				$('#orderby').val(key);
+				$('#search').click();
+			}
+
+			function doEditRate(seqid, rate, ratereason) {
+				var html = '';
+				html += '<div class="box-body">';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">';
+				html += '      <label>返点</label>';
+				html += '      <input id="rate"  type="text" class="form-control"   value="' + rate + '"   placeholder="返点"   />'
+				html += '    </div>';
+				html += '    <div class="form-group">'
+				html += '      <label>返点理由</label>';
+				html += '      <input id="ratereason"  type="text" class="form-control"   value="' + ratereason + '"   placeholder="返点理由"   />'
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				layer.open({
+					closeBtn: 0,
+					title: '返点',
+					area: ['500px', ],
+					content: html,
+					btn: ['确定', '取消'],
+					yes: function() {
+						var ratereason = $("#ratereason").val();
+						if(!ratereason) {
+							layer.msg("请输入返点理由！", {
+								icon: 0
+							});
+							return;
+						}
+
+						var rate = $("#rate").val();
+						if(rate > 0.9) {
+							alert('不能大于0.9')
+							return;
+						}
+
+						ajaxGet("${cxt!}/uouser/doEditRate", {
+							seqid: seqid,
+							rate: rate,
+							ratereason: ratereason
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(JSON.stringify(rtn), {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("操作成功！", {
+								icon: 1,
+								time: 600
+							}, function() {
+								window.location.reload();
+							});
+						})
+					}
+				});
+
+			}
+
+			function doUserInfoApp() {
+				layer.confirm('确定更新用户信息？', function(i) {
+					ajaxGet("${cxt!}/app/doUserInfoApp", {}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+
+			function doProxy(seqid, state,proxyrate,proxylevel,proxycode) {
+				if(state == 1) {
+					var html = '';
+					html += '<div class="box-body">';
+					html += '  <div class="col-sm-12">';
+					html += '    <div class="form-group">';
+					html += '      <label>代理返点</label>';
+					html += '      <input id="proxyrate"  type="text" class="form-control"   value="'+proxyrate+'"   placeholder="返点"   />'
+					html += '    </div>';
+					html += '    <div class="form-group">'
+					html += '      <label>代理级别</label>';
+					html += '      <input id="proxylevel"  type="text" class="form-control"   value="'+proxylevel+'"   placeholder="级别"   />'
+					html += '    </div>';
+
+					html += '    <div class="form-group">'
+					html += '      <label>邀请码</label>';
+					html += '      <input id="invitecode"  type="text" class="form-control"   value="'+proxycode+'"   placeholder="邀请码"   />'
+					html += '    </div>';
+
+					html += '  </div>';
+					html += '</div>';
+					layer.open({
+						closeBtn: 0,
+						title: '打开代理',
+						area: ['500px', ],
+						content: html,
+						btn: ['确定', '取消'],
+						yes: function() {
+							var proxyrate = $("#proxyrate").val();
+							if(proxyrate > 0.9) {
+								layer.msg("返点不能大于0.9", {
+									icon: 0
+								});
+								return;
+							}
+
+							var proxylevel = $("#proxylevel").val();
+							if(!proxylevel) {
+								layer.msg("请输入级别", {
+									icon: 0
+								});
+								return;
+							}
+
+							var invitecode = $("#invitecode").val();
+							if(!invitecode) {
+								layer.msg("请输入邀请码", {
+									icon: 0
+								});
+								return;
+							}
+
+							ajaxGet("${cxt!}/uouser/doEditProxystate", {
+								seqid: seqid,
+								proxyrate: proxyrate,
+								proxylevel: proxylevel,
+								invitecode: invitecode,
+								state: state
+							}, function(rtn) {
+								if(rtn.code != 1) {
+									layer.msg(JSON.stringify(rtn), {
+										icon: 2
+									});
+									return;
+								}
+								layer.msg("操作成功！", {
+									icon: 1,
+									time: 600
+								}, function() {
+									window.location.reload();
+								});
+							})
+						}
+					});
+				}else{
+					layer.confirm('确定关闭该用户代理模式？', function(i) {
+					ajaxGet("${cxt!}/uouser/doEditProxystate", {
+						state:state,
+						seqid:seqid
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+				}
+
+			}
+		</script>
+	</body>
+
+</html>

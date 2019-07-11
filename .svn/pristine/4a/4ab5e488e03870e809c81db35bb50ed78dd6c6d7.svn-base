@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>搜券设置 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>搜券设置</li>
+							<li class="active">搜券设置</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<form action="${cxt!}/linkconfig/goList">
+											<div class="row">
+												<div class="col-md-2">
+													<input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+												</div>
+												<div class="col-md-10">
+													<div class="pull-right">
+														<button onclick="window.open('${cxt!}/linkconfig/goAdd');" type="button" class="btn btn-primary">新增</button>
+														<a href="javascript:;" class="btn btn-info" target="_blank" onclick="doFabu()">发布</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr>
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>公众号</th>
+																<th>pid</th>
+																<th>备注</th>
+																<th>状态</th>
+																<th width="70px">操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td>${item.mpname!}</td>
+																	<td>${item.pid!}</td>
+																	<td>${item.remark!}</td>
+																	<td>
+                                    <#if item.seqid == pkey>
+                                    <span class="text-green">绑定</span>
+                                    </#if>
+                                  </td>
+																	<td>
+																		<a href="${cxt!}/linkconfig/goEdit?seqid=${item.seqid!}" target="_blank" class="text-yellow"><i class="fa fa-edit"></i>修改</a>
+																		<a href="javascript:;" onclick="doBind('${item.seqid!}',0)" class="text-blue"><i class="fa fa-circle"></i>绑定</a>
+																		<a href="javascript:;" onclick="doDel('${item.seqid!}')" class="text-danger"><i class="fa fa-trash-o"></i>删除</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>pt>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/clipboard/clipboard.min.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+				var datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${refDateStr!}');
+
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all'),
+					$checkbox = $('input[type="checkbox"].item'),
+					i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+
+			function doFabu() {
+				layer.confirm('确定发布吗？', function(i) {
+					ajaxGet("${cxt!}/linkconfig/doFabu", {}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+
+			}
+			
+			function doBind(seqid) {
+				layer.confirm('确定绑定吗？', function(i) {
+					ajaxGet("${cxt!}/linkconfig/doBind", {
+						seqid:seqid,
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+			
+			
+				function doDel(seqid) {
+				layer.confirm('确定删除吗？', function(i) {
+					ajaxGet("${cxt!}/linkconfig/doDel", {
+						seqid:seqid,
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+			
+
+		</script>
+	</body>
+
+</html>

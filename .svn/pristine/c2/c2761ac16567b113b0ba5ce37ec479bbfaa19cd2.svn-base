@@ -1,0 +1,121 @@
+package com.xray.taoke.act.common;
+
+import java.net.URLEncoder;
+import java.text.DecimalFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.jfinal.weixin.sdk.api.SnsAccessTokenApi;
+import com.xray.act.util.HttpUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.Base64Codec;
+import com.xray.act.util.codec.MD5Codec;
+import com.xray.act.util.codec.URLCodec;
+
+public class Constant {
+    public static final Prop config = PropKit.use("config.properties");
+    public static final String db_dataSource = "db.dataSource.main";
+
+    public static final String wxsns_appid = config.get("wxsns.appid");
+    public static final String wxsns_appsecret = config.get("wxsns.appsecret");
+    public static final String wxsns_bindUri = config.get("wxsns.bindUri");
+
+    public static final String auth_picurl = config.get("auth.picurl");
+    
+    public static final int para_err = -100;
+    public static final int data_err = -101;
+    public static final int notaoke_err = -102;
+    public static final int parse_err = -103;
+
+    public static final int order_fail = 13;
+    
+    
+    public static final int jdorder_fail = 14;
+    
+    public static final int proxystate_inuse = 2;
+
+    private static final Pattern url_pattern = Pattern.compile("(http[s]?:\\/\\/([\\w-]+\\.)+[\\w-]+([\\w-./?%&*=]*))");
+    private static final Pattern itemid_pattern = Pattern.compile("id=(\\d+)");
+    private static final Pattern tkpwd_pattern = Pattern.compile("([a-zA-Z0-9]{11})");
+    private static final Pattern tradeid_pattern = Pattern.compile("^(\\d{14,})$");
+    private static final DecimalFormat num_format = new DecimalFormat("0.0#");
+
+    public static void main(String[] args) throws Exception {
+        String text = "【Ulike冰点激光脱毛仪器家用剃毛脱毛器全身腋下私处脱毛机器女士】https://m.tb.cn/h.3yTe6lf 点击链接，再选择浏览器咑閞；或復·制这段描述《UtpmbBovT1a)后到淘♂寳♀";
+        text = "12345678901234";
+        System.out.println(parseTradeid(text));
+        System.out.println(new String(Base64Codec.encode("123")));
+        text = "《UtpmbBovT1a)";
+        text = "http://t.cn/sd";
+        System.out.println(text.contains("t.cn/"));
+        text = "eyJ0a3AiOiLvv6VkcFprYkFZa1QxOe%2B%2FpSIsInBpYyI6Imh0dHBzOi8vaW1nLmFsaWNkbi5jb20vaTEvNDA0NjQyNjk0My9PMUNOMDFZUktZZ1oyMTl3T0NPUUVjZl8hITQwNDY0MjY5NDMuanBnXzMxMHgzMTAuanBnIn0%3D";
+        System.out.println(JSONObject.parseObject(new String(Base64Codec.decode(URLCodec.decode(text, "UTF-8")))));
+    }
+
+    public static String getAuthorizeURL(String state) {
+        return SnsAccessTokenApi.getAuthorizeURL(Constant.wxsns_appid, Constant.wxsns_bindUri, state, true);
+    }
+
+    public static String parseUrl(String text) {
+        Matcher m = url_pattern.matcher(text);
+        if (m.find())
+            return m.group(0);
+        return null;
+    }
+
+    public static String parseTbUrl(String content) {
+        String text = parseUrl(content);
+        if (StringUtil.isEmpty(text))
+            return null;
+        if (text.contains("taobao.com") || text.contains("tmall.com") || text.contains("tmall.hk"))
+            return text;
+        return null;
+    }
+
+    public static String parseItemid(String text) {
+        if (text.contains("taobao.com") || text.contains("tmall.com") || text.contains("tmall.hk")) {
+            Matcher m = itemid_pattern.matcher(text);
+            if (m.find())
+                return m.group(1);
+        }
+        return null;
+    }
+
+    public static String parseTkpwd(String text) {
+        if (parseTradeid(text) != null)
+            return null;
+        Matcher m = tkpwd_pattern.matcher(text);
+        if (m.find())
+            return "￥" + m.group(0) + "￥";
+        return null;
+    }
+
+    public static String parseTradeid(String text) {
+        Matcher m = tradeid_pattern.matcher(text);
+        if (m.find())
+            return m.group(0);
+        return null;
+    }
+
+    public static String formatPrice(double d) {
+        return num_format.format(d);
+    }
+
+    public static String toMediaid(String str) {
+        return "wx_" + MD5Codec.encode(str).substring(8, 24);
+    }
+    public static String toShortUrl(String url) {
+        try {
+            String sendGet = HttpUtil.sendGet("http://api.t.sina.com.cn/short_url/shorten.json?source=222700405&url_long=" + URLEncoder.encode(url, "UTF-8"));
+            JSONArray jsonArray = JSONArray.parseArray(sendGet);
+            return JSONObject.parseObject(jsonArray.get(0).toString()).getString("url_short");
+        } catch (Exception e) {
+        }
+        return "";
+    }
+
+}

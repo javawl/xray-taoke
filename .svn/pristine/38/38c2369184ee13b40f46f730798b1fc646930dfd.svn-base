@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>{{moduleName}} - ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/datepicker/datepicker3.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li><i class="fa fa-home"></i> Home</li>
+							<li class="active">{{moduleName}}</li>
+							<li class="active">列表</li>
+						</ol>
+						<h1>
+							<small></small>
+						</h1>
+					</section>
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<div class="row">
+											<!--日期-->
+											<div class="col-md-2">
+												<div class="input-group date">
+													<div class="input-group-addon">
+														<i class="fa fa-calendar"></i>
+													</div>
+													<input type="text" id="datepicker" class="form-control">
+												</div>
+											</div>
+											<!--状态-->
+											<div class="col-md-2">
+												<select id="state" class="form-control select2">
+													<option value="0">全部</option>
+													<option value="1" <#if state==1>selected="selected"</#if> >生效</option>
+													<option value="-1" <#if state==-1>selected="selected"</#if> >失效</option>
+												</select>
+											</div>
+											<!--搜索-->
+											<div class="col-md-2">
+												<input id="word" type="text" class="form-control" value="${word!}" maxlength="30" placeholder="根据关键字搜索" />
+											</div>
+											<div class="col-md-2">
+												<button id="search" class="btn btn-default">查询</button>
+											</div>
+											<div class="col-md-4">
+												<div class="pull-right">
+													<button onclick="base.openWin('${cxt!}/{{actionKey}}/goAdd');" type="button" class="btn btn-primary">新增</button>
+													<button id="deletes" type="button" class="btn btn-danger">删除</button>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr>
+																<th width="5%"><input type="checkbox" class="all minimal" /></th>
+																{{fields_th}}
+																<th>状态</th>
+																<th>创建时间</th>
+																<th width="10%">操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr>
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	{{fields_td}}
+																	<td>
+																		<#if item.state==1> <small class="label bg-green">生效</small>
+																		<#elseif item.state==-1> <small class="label bg-red">失效</small>
+																		</#if>
+																	</td>
+																	<td>${item.inputtime?number_to_date?string("yyyy-MM-dd")}</td>
+																	<td data-id="${item.seqid!}">
+																		<a href="javascript:;" onclick="base.openWin('${cxt!}/{{actionKey}}/goEdit?id='+$(this).parent().attr('data-id'));" class="text-yellow">修改</a>&nbsp;&nbsp;
+																		<a href="javascript:;" class="btn_delete text-red">删除</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+												<#if dataList.size()=0>
+	                                                <div style="text-align:center;">
+	                                                    <p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>    
+	                                                </div>
+	                                                <hr />
+                                                </#if>
+											</div>
+										</div>
+										<div>
+											<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+											<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+					<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+					<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+					<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+					<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+					<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+					<script>
+						$(document).ready(function() {
+							if($(".box-body").width() < 1000) {
+								$(".box-body").css("overflow", "auto");
+							}
+							//下拉框	
+							$(".select2").select2();
+							//日期选择	
+							var datepicker = $("#datepicker").datepicker({
+								language: "zh-CN",
+								autoclose: true,
+								format: "yyyy-mm-dd"
+							})
+							datepicker.datepicker("setDate", '${inputtimeStr!}');
+							//聚焦控件后光标停留在文本框末尾	
+							var setFocusText = $("#word");
+							utilityHandle.setFocus(setFocusText, setFocusText.val().length);
+							//查询绑定回车事件	
+							$("#word").keydown(function(e) {
+								var ev = document.all ? window.event : e;
+								if(ev.keyCode == 13) {
+									$('#search').click();
+								}
+							})
+							//查询	
+							$("#search").click(function() {
+								var date = datepicker.datepicker("getDate");
+								var inputtimeStr = "";
+								if(!isNaN(date)) {
+									inputtimeStr = date.Format("yyyy-MM-dd");
+								}
+								window.location.href = '${cxt!}/{{actionKey}}/goList?inputtimeStr=' + inputtimeStr + '&state=' + $("#state").val() + '&word=' + $('#word').val()
+							})
+							//分页	
+							$(".tcdPageCode").createPage({
+								pageCount: ${page.pcount!},
+								current: ${page.pno!},
+								backFn: function(n) {
+									location.href = "${cxt!}/{{actionKey}}/goList?inputtimeStr=${inputtimeStr!}&state=${state!}&word=${word!}&pno=" + n;
+								}
+							})
+
+							var checkList = [],
+							$checkboxAll = $('input[type="checkbox"].all'),
+							$checkbox = $('input[type="checkbox"].item'),
+							i = 0;
+							//启动icheck	
+							$(('input[type="checkbox"].minimal')).iCheck({
+								checkboxClass: 'icheckbox_minimal-blue'
+							});
+							//全选checkbox	
+							$checkboxAll.on('ifChecked', function(event) {
+								$checkbox.iCheck('check');
+								checkList = [];
+								$checkbox.each(function() {
+									if(true == $(this).is(':checked')) {
+										checkList.push($(this).val());
+									}
+								});
+							});
+							$checkboxAll.on('ifUnchecked', function(event) {
+								$checkbox.iCheck('uncheck');
+								checkList = [];
+							});
+							//单项checkbox	
+							$checkbox.on('ifChecked', function(event) {
+								checkList.push(event.target.value);
+							});
+							$checkbox.on('ifUnchecked', function(event) {
+								checkList.forEach(function(e, i) {
+									if(e == event.target.value) {
+										checkList.splice(i, 1);
+										return;
+									}
+								})
+							})
+
+							//删除	
+							$(".btn_delete").click(function() {
+								var id = $(this).parent().attr("data-id");
+								layer.confirm('确定删除吗？', {
+									btn: ['删除', '取消']
+								}, function() {
+									ajaxGet("${cxt!}/{{actionKey}}/doDelete", {
+										id: 　id
+									}, function(rtn) {
+										if(rtn.code != 1) {
+											base.showErrMsg(rtn.msg);
+											return;
+										}
+										base.showSuccMsg("删除成功！即将自动刷新...", function() {
+											location.reload();
+										})
+									})
+								});
+							})
+
+							//批量删除	
+							$("#deletes").click(function() {
+								if(checkList.length == 0) {
+									base.showWarMsg("请选择要操作的选项！");
+									return;
+								}
+								var idsStr = "";
+								checkList.forEach(function(e) {
+									idsStr += e + ",";
+								})
+								var seqid = $(this).parent().attr("data-id");
+								layer.confirm('确定删除选中的项吗？', {
+									btn: ['删除', '取消']
+								}, function() {
+									ajaxGet("${cxt!}/{{actionKey}}/doDeletes", {
+										idsStr: 　idsStr
+									}, function(rtn) {
+										if(rtn.code != 1) {
+											base.showErrMsg(rtn.msg);
+											return;
+										}
+										base.showSuccMsg("删除成功！即将自动刷新...", function() {
+											location.reload();
+										})
+									})
+								});
+							})
+						})
+					</script>
+	</body>
+
+</html>

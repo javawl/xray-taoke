@@ -1,0 +1,170 @@
+package com.xray.taoke.admin.utils;
+
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+
+import com.xray.act.util.UuidUtil;
+
+public class DownloadUtil {
+    public static void main(String[] args) {
+
+        String path = DownloadUtil.getFilePath("https://k.zol-img.com.cn/sjbbs/7692/a7691501_s.jpg");
+        changeSize(200, 200, path);
+        System.out.println(path);
+
+    }
+
+    public static boolean changeSize(int newWidth, int newHeight, String path) {
+        BufferedInputStream in = null;
+        try {
+            in = new BufferedInputStream(new FileInputStream(path));
+
+            // 字节流转图片对象
+            Image bi = ImageIO.read(in);
+            // 构建图片流
+            BufferedImage tag = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            // 绘制改变尺寸后的图
+            tag.getGraphics().drawImage(bi, 0, 0, newWidth, newHeight, null);
+            // 输出流
+            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(path));
+            // JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
+            // encoder.encode(tag);
+            ImageIO.write(tag, "jpg", out);
+            in.close();
+            out.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public static String getFilePath(String urlPath) {
+        String path = urlPath;
+        URL url = null;
+        String path_do = "";
+        // 从网络上下载一张图片
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+        // 建立一个网络链接
+        HttpURLConnection con = null;
+        try {
+            url = new URL(path);
+            String downPath = UuidUtil.getUuidByJdk(true);
+            con = (HttpURLConnection) url.openConnection();
+            inputStream = con.getInputStream();
+
+            // outputStream = new FileOutputStream(new File("D:\\" + downPath + ".jpg"));
+            /// usr/local/xray-taoke-admin/webroot/upload/codeimg/
+            String filepath = "/usr/local/xray-taoke-admin/webroot/upload/codeimg/";
+
+            outputStream = new FileOutputStream(new File(filepath + downPath + ".jpg"));
+
+            // outputStream = new FileOutputStream(
+            // new
+            // File("D://project/svn-ldpro/xray-wxmp/xray-wxmp-admin/src/main/webapp/upload/"
+            // + downPath + ".jpg"));
+
+            path_do = "/usr/local/xray-taoke-admin/webroot/upload/codeimg/" + downPath + ".jpg";
+            int n = -1;
+            byte b[] = new byte[1024];
+            while ((n = inputStream.read(b)) != -1) {
+                outputStream.write(b, 0, n);
+            }
+            outputStream.flush();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return path_do;
+
+    }
+    
+    
+    
+    
+    
+    public static String getFilePathByLanlan(String urlPath) {
+        String path = urlPath;
+        URL url = null;
+        String path_do = "";
+        // 从网络上下载一张图片
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+        // 建立一个网络链接
+        HttpURLConnection con = null;
+        try {
+            url = new URL(path);
+            String downPath = UuidUtil.getUuidByJdk(true);
+            con = (HttpURLConnection) url.openConnection();
+            inputStream = con.getInputStream();
+
+            // outputStream = new FileOutputStream(new File("D:\\" + downPath + ".jpg"));
+            /// usr/local/xray-taoke-admin/webroot/upload/codeimg/
+            String filepath = "/usr/local/xray-taoke-admin/webroot/upload/codeimg/";
+
+            outputStream = new FileOutputStream(new File(filepath + downPath + ".jpg"));
+
+            // outputStream = new FileOutputStream(
+            // new
+            // File("D://project/svn-ldpro/xray-wxmp/xray-wxmp-admin/src/main/webapp/upload/"
+            // + downPath + ".jpg"));
+
+            path_do = "/upload/codeimg/" + downPath + ".jpg";
+            int n = -1;
+            byte b[] = new byte[1024];
+            while ((n = inputStream.read(b)) != -1) {
+                outputStream.write(b, 0, n);
+            }
+            outputStream.flush();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return path_do;
+
+    }
+    
+    
+    
+    
+    
+
+}

@@ -1,0 +1,82 @@
+package com.xray.taoke.act.service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.taoke.act.model.MpUser;
+
+public class AiService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".ai.";
+
+    public static AiService instance = new AiService();
+
+    public static void main(String[] args) {
+        System.out.println(UuidUtil.getUuidByJdk(false));
+    }
+
+    public String authTitem(String appid, String openid, String itemid) {
+        String userid = MpUser.dao.queryUseridByOpenid(appid, openid);
+        if (StringUtil.isNotEmpty(userid))
+            return genTitemUrl(itemid);
+
+        // 新户
+        MpUser.dao.addByOpenid(appid, openid);
+
+        String aid = genAid();
+        String key = prefix + "titem." + aid;
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("appid", appid);
+        map.put("openid", openid);
+        map.put("itemid", itemid);
+        map.put("click", "false");
+        cache.hmset(key, map);
+        return authUrl() + "/auth/goBind?aid=" + aid + "&ba=" + (int) Math.random() * 1000;
+    }
+
+    public Map<String, String> titemMapVal(String aid) {
+        String key = prefix + "titem." + aid;
+        return cache.hgetAll(key);
+    }
+
+    public boolean titemClickVal(String aid) {
+        String key = prefix + "titem." + aid;
+        String click = cache.hget(key, "click");
+        if (Boolean.parseBoolean(click))
+            return true;
+        cache.hset(key, "click", "true");
+        return false;
+    }
+
+    public String titemUrlVal(String aid) {
+        String key = prefix + "titem." + aid;
+        String itemid = cache.hget(key, "itemid");
+        return genTitemUrl(itemid);
+    }
+
+    public String genTitemUrl(String itemid) {
+        return randUrl() + "/titem?id=" + itemid + "&au=" + (int) Math.random() * 1000;
+    }
+
+    public String genAid() {
+        String key = prefix + "aid";
+        return String.valueOf(cache.incr(key));
+    }
+
+    public String randUrl() {
+        return config.get("rand.url");
+    }
+
+    public String authUrl() {
+        return config.get("auth.url");
+    }
+
+}

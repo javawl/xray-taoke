@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="format-detection" content="telephone=on">
+		<link href="http://szqz.honeynice.com/m2c/2/style/m-reset.css" rel="stylesheet">
+		<link href="http://szqz.honeynice.com/m2c/style/global1803.css" rel="stylesheet">
+		<link href="http://szqz.honeynice.com/m2c/2/style/topic-style.css" rel="stylesheet">
+		<title>活动资讯</title>
+	</head>
+	<body class="bg w">
+
+		<div class="top-height">
+			<div class="top-fixed">
+				<!--头部导航-->
+				<header class="top">
+					<div class="main bg-purple">
+						<p class="ti icon-ti"><i class="iconfont icon-ti-hdzx"></i></p>
+					</div>
+				</header>
+				<!--头部导航EDN-->
+			</div>
+		</div>
+
+		<div class="infomation-page no-classify">
+			<div class="main-wrap">
+				<div class="ip-classify bg-purple" style="border-bottom-left-radius: 5rem;">
+					<div class="classify-tab-fixed">
+						<div class="bg-purple main">
+							<ul class="classify-tab">
+								<li class="tab-item sel" tree=""><a>全部资讯</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="list-box">
+					<ul class="list-box-cont" id="news-list">
+
+						<li class="list-item" style="height: auto;">
+							<a href="#">
+								<div class="title" style="margin-left: auto;">
+									<div class="area">【暑假特惠】99元起抢购星期六儿童成长乐园全场通玩半年卡~淘气堡、波波池，蹦床区，沙池全场畅玩~地铁1号同5号线直达！
+									</div>
+								</div>
+								<div class="date">2019-06-19 22:54</div>
+							</a>
+						</li>
+            
+            <li class="list-item" style="height: auto;">
+            	<a href="#">
+            		<div class="title" style="margin-left: auto;">
+            			<div class="area">【暑假特惠】99元起抢购星期六儿童成长乐园全场通玩半年卡~淘气堡、波波池，蹦床区，沙池全场畅玩~地铁1号同5号线直达！
+            			</div>
+            		</div>
+            		<div class="date">2019-06-19 22:54</div>
+            	</a>
+            </li>
+
+					</ul>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>

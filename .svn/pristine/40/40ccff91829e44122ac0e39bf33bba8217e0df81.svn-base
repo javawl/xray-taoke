@@ -1,0 +1,14 @@
+redis.prefix=taoke
+
+hdk.apikey=haodanv
+
+wxsns.appid=wxc378477f8686dcf0
+wxsns.appsecret=951bb96faaf7b9d59cae9f47ee7493ae
+wxsns.bindUri=http://dev.weixin.ldsuper.com/sq/auth/doBind
+
+auth.url=http://dev.weixin.ldsuper.com/sq
+auth.picurl=http://alicdn.ldpro.cn/img0/sq.jpg
+
+shorturl.mode=false
+
+

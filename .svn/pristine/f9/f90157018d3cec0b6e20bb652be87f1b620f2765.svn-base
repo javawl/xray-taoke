@@ -1,0 +1,177 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.SqlUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_tbgoods", pkName = "seqid")
+public class TbGoods extends JfModel<TbGoods> {
+    private static final long serialVersionUID = 1L;
+    public static final TbGoods dao = new TbGoods();
+
+    public TbGoods queryByItemid(String appid, String itemid) {
+        String sql = "select * from `tk_tbgoods_" + appid + "` where `itemid`=?";
+        return TbGoods.dao.findFirst(sql, itemid);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<TbGoods> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_tbgoods_" + cond.get("appid") + "` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        if (cond != null) {
+            if (StringUtil.isNotEmpty(cond.get("idList"))) {
+                sb.append(" and  `itemid` IN(" + SqlUtil.join((List<String>) cond.get("idList")) + ")");
+            }
+
+            if (StringUtil.isNotEmpty(cond.get("sale_type"))) {
+                sb.append(" and  sale_type = ").append(cond.get("sale_type"));
+            }
+
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_tbgoods_" + cond.get("appid") + "` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<TbGoods>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+        System.out.println(sql + sb.toString());
+        return dao.find(sql + sb.toString());
+    }
+
+    public List<TbGoods> queryListByType(int sale_type) {
+        String sql = "select * from `tk_tbgoods` where 1=1  and `down_type` = 0  and `itemtitle` !=''  and `sale_type` = " + sale_type + " ORDER BY orderno ASC LIMIT 0,10";
+        return dao.find(sql);
+    }
+
+    public List<TbGoods> queryNoTkpwd(String appid) {
+        String sql = "select * from `tk_tbgoods_" + appid + "` where `tkpwd` ='' and `cpstate` =1";
+        return dao.find(sql);
+    }
+
+    public void updateIndex(String appid, String itemid, String name, int index) {
+        String sql = "update `tk_tbgoods_" + appid + "` set `" + name + "`=? where `itemid`=?";
+        Db.update(sql, index, itemid);
+    }
+
+    public void updateHdkList() {
+        String sql = "update `tk_tbgoods` set `hdkssb`=`hdkssb`+100,`hdkkqb`=`hdkkqb`+100,`hdkxlb`=`hdkxlb`+100,`hdkzsb`=`hdkzsb`+100";
+        Db.update(sql);
+    }
+
+    public void updateHdkListByALL(String appid) {
+        String sql = "update `tk_tbgoods_" + appid + "` set `hdkssb`=`hdkssb`+100,`hdkkqb`=`hdkkqb`+100,`hdkxlb`=`hdkxlb`+100,`hdkzsb`=`hdkzsb`+100";
+        Db.update(sql);
+    }
+
+    public void updateOrderno() {
+        String sql = "update `tk_tbgoods` set `orderno`=`orderno`+100";
+        Db.update(sql);
+    }
+
+    public void updateGoodTkPwd(String appid, String tkpwd, String itemid) {
+        String sql = "update `tk_tbgoods_" + appid + "` set `tkpwd`=? where itemid =?";
+        Db.update(sql, tkpwd, itemid);
+    }
+
+    public void updateState(String appid, int state, String itemid) {
+        String sql = "update `tk_tbgoods_" + appid + "` set `cpstate`=? where itemid =?";
+        Db.update(sql, state, itemid);
+    }
+
+    public void updateCpurl(String appid, String cpurl, String itemid) {
+        String sql = "update `tk_tbgoods_" + appid + "` set `cpurl`=? where itemid =?";
+        Db.update(sql, cpurl, itemid);
+    }
+
+    public void insertNewGoodsByUrl(String appid, String itemtitle, double itemendprice, String itempic, String tkpwd, double tkrate, double cpmoney, long cpendtime, int cpstate, double tkprice, double tkmoney, int chaquan, String itemid) {
+        String sql = " INSERT INTO  `tk_tbgoods_" + appid + "` (`itemtitle`,`itemendprice`,`itempic`,`tkpwd`,`tkrate`,`cpmoney`,`cpendtime`,`cpstate`,`tkprice`,`tkmoney`,`chaquan`) VALUES(?,?,?,?,?,?,?,?,?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+        Db.update(sql, appid, itemtitle, itemendprice, itempic, tkpwd, tkrate, cpmoney, cpendtime, cpstate, tkprice, tkmoney, chaquan, itemid);
+    }
+
+    public void insertNewGoodsByItemId(String appid, String itemtitle, double itemprice, double itemendprice, String itempic, String shopname, String tpwd, double tkrate, double cpmoney, long cpendtime, int cpstate, double tkprice, double tkmoney, int chaquan, String itemid) {
+        String sql = " INSERT INTO  `tk_tbgoods_" + appid + "` (`itemtitle`,`itemprice`,`itemendprice`,`itempic`,`shopname`,`tpwd`,`tkrate`,`cpmoney`,`cpendtime`,`cpstate`,`tkprice`,`tkmoney`,`chaquan`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+        Db.update(sql, appid, itemtitle, itemendprice, itempic, shopname, tkrate, cpmoney, cpendtime, cpstate, tkprice, tkmoney, chaquan, itemid);
+    }
+
+    public void updateIfNotExist(String appid, double cpmoney, double tkrate, double tkmoney, String name, int index, String itemid, String itempic, String itemdesc, String itemtitle, String good_url, String couponurl, String itemshorttitle, double itemprice, String shopname, long end_time, double end_price, double tk_money, int cpstate) {
+        String sql = "";
+        sql = " INSERT INTO  `tk_tbgoods_" + appid + "` (`cpstate`,`tkprice`,`cpmoney`,`tkrate`,`tkmoney`,`itemid`,`itempic`,`itemdesc`,`itemtitle`,`cpurl`,`itemshorttitle`,`itemprice`,`shopname`,`inputtime`,`cpendtime`,`itemendprice`,`" + name + "`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+        Db.update(sql, cpstate, end_price, cpmoney, tkrate, tkmoney, itemid, itempic, itemdesc, itemtitle, couponurl, itemshorttitle, itemprice, shopname, System.currentTimeMillis(), end_time, end_price, index, itemid);
+    }
+
+    public void updateState(String itemid, int cpstate, long endtime) {
+        String sql = " INSERT INTO  `tk_tbgoods` (`itemid`,`cpendtime`,`cpstate`) VALUES(?,?,?)  ON DUPLICATE KEY UPDATE  `itemid`=? ";
+        Db.update(sql, itemid, endtime, cpstate, itemid);
+    }
+
+    public void update(String appid, String itemid) {
+        StringBuilder sb = new StringBuilder();
+        for (String name : this._getAttrNames()) {
+            sb.append(",`").append(name).append("`='").append((Object) get(name)).append("'");
+        }
+        sb.append(" where `itemid`='").append(itemid).append("'");
+        String sql = "update `tk_tbgoods_" + appid + "` set ";
+        Db.use(Constant.db_dataSource).update(sql + sb.substring(1));
+    }
+
+    public void save(String appid) {
+        StringBuilder sb = new StringBuilder();
+        for (String name : this._getAttrNames()) {
+            sb.append(",`").append(name).append("`='").append((Object) get(name)).append("'");
+        }
+        String sql = "insert into `tk_tbgoods_" + appid + "` set ";
+        Db.use(Constant.db_dataSource).update(sql + sb.substring(1));
+    }
+
+    public String getShowtitle() {
+        String title = getStr("itemshorttitle");
+        return StringUtil.isNotEmpty(title) ? title : getStr("itemtitle");
+    }
+
+    public void createGoodsByAppid(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("CREATE TABLE `tk_tbgoods_" + appid + "` (");
+        sb.append(" `seqid` BIGINT(20) NOT NULL AUTO_INCREMENT,");
+        sb.append(" `itemid` VARCHAR(64) NOT NULL DEFAULT '',");
+        sb.append(" `itempic` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '商品封面',");
+        sb.append(" `itemdesc` TEXT COMMENT '商品描述',");
+        sb.append(" `itemtitle` TEXT COMMENT '商品标题',");
+        sb.append(" `itemshorttitle` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '短标题',");
+        sb.append(" `itemprice` DOUBLE NOT NULL DEFAULT '0' COMMENT '折前',");
+        sb.append(" `itemendprice` DOUBLE NOT NULL DEFAULT '0' COMMENT '折后价',");
+        sb.append(" `shopname` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '商家名称',");
+        sb.append(" `activityid` VARCHAR(64) NOT NULL DEFAULT '',");
+
+        sb.append(" `cpurl` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '优惠券地址',");
+        sb.append(" `cpendtime` BIGINT(20) NOT NULL DEFAULT '0' COMMENT '优惠券时间',");
+        sb.append(" `cpmoney` DOUBLE NOT NULL DEFAULT '0' COMMENT '优惠券金额',");
+        sb.append(" `cpstate` TINYINT(4) NOT NULL DEFAULT '0' COMMENT '优惠券状态',");
+        sb.append(" `tkprice` double NOT NULL DEFAULT '0' COMMENT '券后价',");
+        sb.append(" `tkmoney` DOUBLE NOT NULL DEFAULT '0' COMMENT '佣金',");
+        sb.append(" `tkrate` DOUBLE NOT NULL DEFAULT '0' COMMENT '佣金比',");
+
+        sb.append(" `tkpwd` VARCHAR(30) NOT NULL DEFAULT '' COMMENT '淘口令',");
+        sb.append(" `hdkssb` INT(11) NOT NULL DEFAULT '0' COMMENT '实时榜',");
+        sb.append(" `hdkkqb` INT(11) NOT NULL DEFAULT '0' COMMENT '快抢榜',");
+        sb.append(" `hdkxlb` INT(11) NOT NULL DEFAULT '0' COMMENT '销量榜',");
+        sb.append(" `hdkzsb` INT(11) NOT NULL DEFAULT '0' COMMENT '指数榜',");
+        sb.append(" `inputtime` BIGINT(20) NOT NULL DEFAULT '0',");
+        sb.append(" PRIMARY KEY (`seqid`),");
+        sb.append(" UNIQUE KEY `idx_itemid` (`itemid`) )");
+        sb.append("ENGINE=INNODB DEFAULT CHARSET=utf8");
+        Db.update(sb.toString());
+    }
+
+}

@@ -1,0 +1,341 @@
+package com.xray.taoke.admin.service;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.exception.RtException;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.Cashinfo;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.utils.ShortUrlUtils;
+
+import redis.clients.jedis.Tuple;
+
+public class MpInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".mpinfo.";
+    private static final String active = config.get("redis.prefix") + ".active.";
+    private static final String material = config.get("redis.prefix") + ".material.";
+
+    public static MpInfoService instance = new MpInfoService();
+
+    public static void main(String[] args) {
+        String appid = "wx3088f1bd705dfd20";
+        System.out.println(MpInfoService.instance.getMpInfo(appid));
+        System.out.println(Constant.toMediaid("秘笈"));
+
+        MpInfoService.instance.active(appid, "123");
+        double score = MpInfoService.instance.getActiveByOpenid(appid, "123");
+        BigDecimal bg = new BigDecimal(score + "");
+        System.out.println(bg);
+    }
+
+    public String getSid(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "sid");
+        if (StringUtil.isEmpty(val))
+            throw new RtException(Constant.data_err, "empty sid from appid:" + appid);
+        return val;
+    }
+
+    public String getJxContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "wx_1e61011294bafd3c");
+    }
+
+    public String getTradeSucc(String appid, UoUser user, OrderInfo data) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 下 单 成 功 ┉┉┉━\n");
+        sb.append("商品名称：").append(data.getStr("itemtitle")).append("\n");
+        sb.append("订单编号：").append(data.getStr("tradeid")).append("\n");
+        sb.append("付费金额：").append(Constant.formatPrice(data.getDouble("tradeprice"))).append("\n");
+        sb.append("补贴金额：").append(Constant.formatPrice(data.getDouble("jiemoney"))).append("\n");
+        sb.append("\n");
+        sb.append("当前可提现金额：").append(Constant.formatPrice(user.getDouble("qbcash"))).append("\n");
+        sb.append("当前未收货金额：").append(Constant.formatPrice(user.getDouble("qbconfirm"))).append("\n");
+        sb.append("----------------------------------\n");
+        sb.append("确认收货后就能领取红包[红包]\n");
+        sb.append("[闪电]点链接，搜隐藏优惠券[闪电]\n").append(this.getShortUrl(appid));
+        return sb.toString();
+    }
+
+    public String getCashSucc(String appid, Cashinfo data) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 提 现 成 功 ┉┉┉━\n");
+        sb.append("到账金额：").append(Constant.formatPrice(data.getDouble("qbcash"))).append("\n");
+        sb.append("\n");
+        sb.append("金额将直接打款到零钱，亲亲注意查收~[玫瑰]\n");
+        sb.append("----------------------------------\n");
+        sb.append("[闪电]点链接，搜隐藏优惠券[闪电]\n").append(this.getShortUrl(appid));
+        return sb.toString();
+    }
+
+    public String getProxyorder(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("您的朋友下了一笔订单![玫瑰]回复【查询】查看推广奖金~");
+        return sb.toString();
+    }
+
+    public String getShopUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "shopurl");
+    }
+
+    public String getShortUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "shorturl");
+    }
+
+    public String getMjContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "wx_974905e85ff70a81");
+    }
+
+    public void setMpInfo(String appid, MpInfo mpinfo) {
+        Map<String, String> cond = new HashMap<>();
+        cond.put("sid", mpinfo.getLong("seqid").toString());
+        cond.put("appid", mpinfo.getStr("appid"));
+        cond.put("name", mpinfo.getStr("name"));
+        cond.put("appsecret", mpinfo.getStr("appsecret"));
+        cond.put("token", mpinfo.getStr("token"));
+        cond.put("encodingaeskey", mpinfo.getStr("encodingaeskey"));
+        cond.put("apikey", mpinfo.getStr("apikey"));
+        cond.put("tbname", mpinfo.getStr("tbname"));
+        cond.put("pid", mpinfo.getStr("pid"));
+        cond.put("session", mpinfo.getStr("session"));
+        cond.put("url", mpinfo.getStr("shopurl"));
+        if (StringUtil.isEmpty(mpinfo.getStr("pidex")))
+            cond.put("pidex", "");
+        else
+            cond.put("pidex", mpinfo.getStr("pidex"));
+
+        if (StringUtil.isEmpty(mpinfo.getStr("wxpayid")))
+            cond.put("wxpayid", "");
+        else
+            cond.put("wxpayid", mpinfo.getStr("wxpayid"));
+
+        String shopurl = mpinfo.getStr("shopurl") + "/tshop?sid=" + mpinfo.getLong("seqid");
+        String shorturl = ShortUrlUtils.instance.toShorUrl(shopurl);
+        cond.put("shopurl", shopurl);
+        cond.put("shorturl", shorturl);
+
+        String key = prefix + appid;
+        cache.hmset(key, cond);
+
+        key = prefix + mpinfo.getLong("seqid");
+        cache.hmset(key, cond);
+
+    }
+
+    public Map<String, String> getMpInfo(String appid) {
+        String key = prefix + appid;
+        return cache.hgetAll(key);
+    }
+
+    public Map<String, String> getMpNames() {
+        return cache.hgetAll(prefix + "names");
+    }
+
+    // 缓存公众号名称
+    public void setMpNames() {
+        String key = prefix + "names";
+        Map<String, String> map = new HashMap<String, String>();
+        for (MpInfo data : MpInfo.dao.queryAllInuse()) {
+            map.put(data.getStr("appid"), data.getStr("name"));
+        }
+        cache.hmset(key, map);
+    }
+
+    public String getUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "url");
+    }
+
+    public double getRate(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "rate");
+        return StringUtil.isEmpty(val) ? 0.6 : Double.parseDouble(val);
+    }
+
+    public Set<Tuple> getAllActive(String appid) {
+        String key = active + appid;
+        return cache.zrevrangeWithScores(key, 0, -1);
+    }
+
+    public Double getActiveByOpenid(String appid, String openid) {
+        String key = active + appid;
+        return cache.zscore(key, openid);
+    }
+
+    public Set<Tuple> getActiveByParam(String appid, int start, int end) {
+        String key = active + appid;
+        return cache.zrevrangeWithScores(key, start, end);
+    }
+
+    public int getActiveSize(String appid) {
+        String key = active + appid;
+        int count = 0;
+        long active = System.currentTimeMillis() - 172800000;
+        Set<Tuple> sets = cache.zrangeWithScores(key, 0, -1);
+        for (Tuple tuple : sets) {
+            if (tuple.getScore() > active)
+                ++count;
+        }
+        return count;
+    }
+
+    @Deprecated
+    public void addJxTips(String appid, String openid) {
+        String key = prefix + "jxtips." + appid;
+        cache.sadd(key, openid);
+    }
+
+    @Deprecated
+    public boolean isJxTips(String appid, String openid) {
+        String key = prefix + "jxtips." + appid;
+        return cache.sismember(key, openid);
+    }
+
+    public void addJxOpenid(String appid, String openid, String timekey) {
+        String key = prefix + "jxopenid." + appid + DateUtil.getToday() + timekey;
+        cache.sadd(key, openid);
+    }
+
+    public boolean isJxOpenid(String appid, String openid, String timekey) {
+        String key = prefix + "jxopenid." + appid + DateUtil.getToday() + timekey;
+        return cache.sismember(key, openid);
+    }
+
+    public void delJxByKey(String appid, String day, String timekey) {
+        String key_jx = prefix + "jxopenid." + appid + day + timekey;
+        cache.delete(key_jx);
+    }
+
+    public void addMjOpenid(String appid, String openid, long time) {
+        String key = prefix + "mjopenid." + appid;
+        cache.sadd(key, openid + "." + time);
+    }
+
+    public boolean isMjOpenid(String appid, String openid, long time) {
+        String key = prefix + "mjopenid." + appid;
+        return cache.sismember(key, openid + "." + time);
+    }
+
+    public Integer getActive(String appid) {
+        String key = active + appid + ".activenumber.";
+        String str = cache.get(key);
+        if (StringUtil.isEmpty(str))
+            return 0;
+        return Integer.valueOf(str);
+    }
+
+    public String getStatKey(String id, String name, String day) {
+        return active + id + "." + name + "." + day;
+    }
+
+    public int getUserall(String appid, String day) {
+        String key = active + appid + ".userall." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public int getUsernew(String appid, String day) {
+        String key = active + appid + ".usernew." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public int getChaquan(String appid, String day) {
+        String key = active + appid + ".chaquan." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public int getTsou(String sid, String day) {
+        String key = active + sid + ".tsou." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public int getTitem(String sid, String day) {
+        String key = active + sid + ".titem." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public int getTshop(String sid, String day) {
+        String key = active + sid + ".tshop." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public int getTlink(String sid, String day) {
+        String key = active + sid + ".tlink." + day;
+        String val = cache.get(key);
+        return val == null ? 0 : Integer.valueOf(val);
+    }
+
+    public Integer getSouQuan(String appid, String day) {
+        String key = active + appid + ".souquan." + day;
+        String str = cache.get(key);
+        if (StringUtil.isEmpty(str))
+            return 0;
+        return Integer.valueOf(str);
+    }
+
+    public Integer getOrder(String appid) {
+        String key = active + appid + ".order." + DateUtil.getToday();
+        String str = cache.get(key);
+        if (StringUtil.isEmpty(str))
+            return 0;
+        return Integer.valueOf(str);
+    }
+
+    public void active(String appid, String openid) {
+        String key = active + appid;
+        cache.zadd(key, System.currentTimeMillis(), openid);
+    }
+
+    public void addBlackJx(String appid, String openid) {
+        String key = active + "blackjx." + appid;
+        cache.sadd(key, openid);
+    }
+
+    public void delBlackJx(String appid, String openid) {
+        String key = active + "blackjx." + appid;
+        cache.srem(key, openid);
+    }
+
+    public boolean isBlackJx(String appid, String openid) {
+        String key = active + "blackjx." + appid;
+        return cache.sismember(key, openid);
+    }
+
+    public boolean isWhiteJx(String appid, String openid) {
+        String key = active + "whitejx." + appid;
+        return cache.sismember(key, openid);
+    }
+
+    public void addWhiteJx(String appid, String openid) {
+        String key = active + "whitejx." + appid;
+        cache.sadd(key, openid);
+    }
+    
+    public void setPkeyPid(String pkey, String pid) {
+        String key = prefix + "pkey";
+        cache.hset(key, pkey, pid);
+    }
+
+}

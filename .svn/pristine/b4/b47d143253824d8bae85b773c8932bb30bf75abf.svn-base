@@ -1,0 +1,173 @@
+package com.xray.taoke.jdapi;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.http.client.fluent.Request;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.URLCodec;
+import com.xray.taoke.jdapi.vo.JdItemVo;
+import com.xray.taoke.tkapi.MpInfoService;
+import com.xray.taoke.tkapi.vo.ConstTk;
+
+public class Jd21dsService {
+    private static String iteminfo = "https://api.open.21ds.cn/jd_api_v1/getjdunionitems";
+
+    private static String jdorder = "https://api.open.21ds.cn/jd_api_v1/getjdunionorders";
+
+    private static String cpurl = "https://api.open.21ds.cn/jd_api_v1/getitemcpsurl";
+
+    private static String jfjingxuan = "https://api.open.21ds.cn/jd_api_v1/jfjingxuan";
+
+    private static String giteminfo = "https://api.open.21ds.cn/jd_api_v1/gettgiteminfo";
+
+    private static Pattern p_itemid = Pattern.compile("&id=(\\d+)");
+    private static Pattern p_itemid2 = Pattern.compile("(\\d+)\\.html");
+    public static Jd21dsService instance = new Jd21dsService();
+
+    public static void main(String[] args) throws Exception {
+        String appid = "wx3088f1bd705dfd20";
+        // JSONObject jsonObject = Jd21dsService.instance.getjdorder(appid,
+        // "2019050619", 1);
+        String itemid = "3169657";
+        String materialId = "https://item.jd.com/" + itemid + ".html";
+        JdItemVo jdItemVo = JdItemService.instance.getItemVo(appid, itemid);
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = Jd21dsService.instance.getitemcpsurl(appid, materialId, jdItemVo.getCpurl());
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        String shortUrl = jsonObject.getJSONObject("data").getString("shortURL");
+        System.out.println(shortUrl);
+        // System.out.println(jsonObject);
+        // JSONObject jsonObject = Jd21dsService.instance.gettgiteminfo(appid,
+        // "15314114901");
+        // System.out.println(jsonObject.getJSONArray("data").get(0));
+        // System.out.println(com.jfinal.weixin.sdk.utils.HttpUtils.get("https://u.jd.com/mnYixB"));
+        // Jd21dsService.instance.getiteminfo(appid, "45181335092");
+
+        // Jd21dsService.instance.gettgiteminfo(appid, "45181335092");
+
+        // String materialId = "http://item.jd.com/45181335092.html";
+        // String link =
+        // "http://coupon.jd.com/ilink/couponActiveFront/front_index.action?key=4043c7409b84460fa2557b93c7cd7efc&roleId=19278813&to=leicke.jd.com";
+        // System.out.println(Jd21dsService.instance.getitemcpsurl(appid, materialId,
+        // ""));
+        // SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmm");
+        // String time = dateFormat.format(new Date(System.currentTimeMillis() -
+        // 60000));
+        // System.out.println(time);
+        // time = "201905061902";
+        // JSONObject obj = Jd21dsService.instance.getjdorder(appid, time, 1);
+        // System.out.println(obj);
+
+        // JSONObject jsonObject = Jd21dsService.instance.getjfjingxuan(appid, "13",
+        // "goodComments", "desc");
+        // System.out.println(jsonObject);
+
+    }
+
+    private String reqGet(String url) {
+        try {
+            return Request.Get(url).execute().returnContent().asString();
+        } catch (Exception e) {
+            throw new RtException(e);
+        }
+    }
+
+    public String getitemidByHtml(String url) {
+        String text = reqGet(url);
+        Matcher m = p_itemid.matcher(text);
+        if (m.find())
+            return m.group(1);
+        m = p_itemid2.matcher(text);
+        if (m.find())
+            return m.group(1);
+        return null;
+    }
+
+    public JSONObject getiteminfo(String appid, String skuIds) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(iteminfo);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&skuIds=").append(skuIds);
+        System.out.println(sb);
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject gettgiteminfo(String appid, String skuIds) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(giteminfo);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&skuids=").append(skuIds);
+        System.out.println(sb.toString());
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject getjdorder(String appid, String time, int type) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+
+        // String jdkey =
+        // "ece3b6ab1c8b87a74aa01949e4d6d1f3f12d2303eaee387344fb8e3d880b5c8f50a8320d317f2e94";
+
+        // key jd推广key,redis
+        StringBuilder sb = new StringBuilder();
+        sb.append(jdorder);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&time=").append(URLCodec.encode(time, "UTF-8"));
+        sb.append("&type=").append(type);
+        sb.append("&pageNo=").append(1);
+        sb.append("&pageSize=").append(100);
+
+        sb.append("&key=").append(map.get("jdkey"));
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject getitemcpsurl(String appid, String materialId, String couponUrl) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+        // materialId 推广商品或者推广优惠券链接
+        // unionId jd推广id,redis
+        StringBuilder sb = new StringBuilder();
+        sb.append(cpurl);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&materialId=").append(URLCodec.encode(materialId, "UTF-8"));
+        sb.append("&unionId=").append(map.get("jdid"));
+        if (!StringUtil.isEmpty(couponUrl))
+            sb.append("&couponUrl=").append(URLCodec.encode(couponUrl, "UTF-8"));
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+    public JSONObject getjfjingxuan(String appid, String eliteId, String sortName, String sort) throws Exception {
+        Map<String, String> map = MpInfoService.instance.getMpInfo(appid);
+        if (map == null || map.size() <= 0)
+            throw new RtException(ConstTk.para_err, "err para,appid:" + appid);
+        StringBuilder sb = new StringBuilder();
+        sb.append(jfjingxuan);
+        sb.append("?apkey=").append(map.get("apikey"));
+        sb.append("&eliteId=").append(eliteId);
+        sb.append("&pageIndex=").append(1);
+        sb.append("&pageSize=").append(50);
+        sb.append("&sortName=").append(sortName);
+        sb.append("&sort=").append(sort);
+        return JSONObject.parseObject(Request.Get(sb.toString()).execute().returnContent().asString());
+    }
+
+}

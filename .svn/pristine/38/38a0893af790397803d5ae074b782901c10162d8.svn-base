@@ -1,0 +1,85 @@
+package com.xray.taoke.admin.app.jd;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.taoke.jdapi.Jd21dsService;
+import com.xray.taoke.jdapi.JdItemService;
+import com.xray.taoke.jdapi.vo.JdItemVo;
+
+public class JdItemApp extends AbstractApp {
+	private static final String appid = "wx3088f1bd705dfd20";
+
+	public static void main(String[] args) {
+		new JdItemApp().start();
+	}
+
+	@Override
+	public void run() {
+		try {
+			doRun();
+			logger.info("runapp JdItemApp");
+		} catch (Exception e) {
+			logger.error("errapp JdItemApp", e);
+		}
+	}
+
+	public void doRun() {
+		int size = 0;
+
+		for (int i = 1; i <= 18; i++) {
+			size += itemlist(i);
+		}
+
+		logger.info("runapp haodanku,size:{}", size);
+	}
+
+	// JDID 200
+	public int itemlist(int cid) {
+		JSONObject obj = null;
+		try {
+			obj = Jd21dsService.instance.getjfjingxuan(appid, cid + "", "commission");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// 没有优惠券的就过滤
+		List<JdItemVo> list = new ArrayList<JdItemVo>();
+		JSONArray arr = obj.getJSONArray("data");
+		JSONArray couponList = null;
+		JSONObject couponInfo_list = null;
+		for (int i = 0; i < arr.size(); i++) {
+			couponInfo_list = arr.getJSONObject(i).getJSONObject("couponInfo");
+			couponList = couponInfo_list.getJSONArray("couponList");
+			if (couponList.size() == 0)
+				continue;
+			list.add(obj2vo(arr.getJSONObject(i)));
+		}
+		JdItemService.instance.addItemListVo(String.valueOf(cid + 200), list);
+		return list.size();
+	}
+
+	public JdItemVo obj2vo(JSONObject obj) {
+		JdItemVo data = new JdItemVo();
+		String skuId = obj.getString("skuId");
+		String skuName = obj.getString("skuName");
+		JSONObject jsonObject = obj.getJSONObject("priceInfo");
+		double itemprice = jsonObject.getDoubleValue("price");
+		String itempic = obj.getJSONObject("imageInfo").getJSONArray("imageList").getJSONObject(0).getString("url");
+
+		JSONObject couponInfo_list = obj.getJSONObject("couponInfo");
+		JSONArray couponList = couponInfo_list.getJSONArray("couponList");
+		// String link = couponList.getJSONObject(0).getString("link");
+		double discount = couponList.getJSONObject(0).getDoubleValue("discount");
+
+		data.setItemid(skuId);
+		data.setItemtitle(skuName);
+		data.setItemprice(itemprice);
+		data.setItempic(itempic);
+		data.setCpmoney(discount);
+		return data;
+	}
+
+}

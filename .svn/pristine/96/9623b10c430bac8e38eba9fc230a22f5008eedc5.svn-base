@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>登录 | ${_TITLE_!}</title>
+		<!-- Tell the browser to be responsive to screen width -->
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="shortcut icon" href="${cxt!}/addon/admin/img/favicon.ico" type="image/x-icon" />
+		<link rel="stylesheet" href="${cxt!}/addon/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/ionicons/ionicons.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/AdminLTE/css/AdminLTE.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/square/blue.css">
+		<script>
+			var cxt = '${cxt!}';
+		</script>
+		<style>
+			.login-box-body2{
+			    box-shadow: 1px 1px 2px #AAAAAA, 1px 1px 2px #AAAAAA, 1px 1px 2px #FFFFFF, inset 1px 1px 2px #FFFFFF;
+			}
+		</style>
+	</head>
+
+	<body class="hold-transition login-page" style="background: url(${cxt!}/addon/admin/img/bg-tile.gif);height: 0%;">
+		<div class="login-box">
+			<div class="login-box-body login-box-body2">
+				<div class="login-logo">
+					<a href="#"><b>${_TITLE_!}</b></a>
+				</div>
+				<p class="login-box-msg hide" style="color: red;"></p>
+				<form method="post">
+					<div class="form-group has-feedback">
+						<label>账号：</label>
+						<input type="text" maxlength="30" class="form-control" name="userid" placeholder="">
+						<span class="glyphicon glyphicon-user form-control-feedback"></span>
+					</div>
+					<div class="form-group has-feedback">
+						<label>密码：</label>
+						<input type="password" maxlength="30" class="form-control" name="password" placeholder="">
+						<span class="glyphicon glyphicon-lock form-control-feedback"></span>
+					</div><br/>
+					<div class="row">
+						<div class="col-xs-12">
+							<button id="submit" class="btn btn-primary btn-block btn-flat" type="submit">登录</button>
+						</div>
+						<div class="social-auth-links text-center">
+							<br/>
+							<br/>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div>
+				<div id="copyright" style="text-align: center;margin-top: 20px;">
+	        <p>${_COPYRIGHT_!}</p>
+	    	</div>
+			</div>
+		</div>
+		<script src="${cxt!}/addon/jQuery/jquery-2.2.3.min.js"></script>
+		<script src="${cxt!}/addon/jQuery/jquery.form.js"></script>
+		<script src="${cxt!}/addon/bootstrap/js/bootstrap.min.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/admin/js/common.js"></script>
+		<script>
+			$(function() {
+				$('input').iCheck({
+					checkboxClass: 'icheckbox_square-blue',
+					radioClass: 'iradio_square-blue',
+					increaseArea: '20%' // optional
+				});
+
+				document.onkeydown = function(e) {
+					var ev = document.all ? window.event : e;
+					if(ev.keyCode == 13) {
+						$('form').submit();
+					}
+				}
+
+				var login_state = true;
+
+				var options = {
+					target: '#submit',
+					url: "${cxt!}/admin/account/doLogin",
+					type: "POST",
+					dataType: "json",
+					timeout: 3000,
+					beforeSubmit: function() {
+						$(".login-box-msg").addClass("hide").text("");
+						if(!login_state)
+							return false;
+						login_state = false;
+						$(".btn").text("正在登录...").attr("disabled", "disabled");
+						if(!$("input[name='userid']").val()) {
+							$(".login-box-msg").removeClass("hide").text("请输入登录账号！");
+							login_state = true;
+							$(".btn").text("登录").removeAttr("disabled")
+							return false;
+						};
+						if(!$("input[name='password']").val()) {
+							$(".login-box-msg").removeClass("hide").text("请输入登录密码！");
+							login_state = true;
+							$(".btn").text("登录").removeAttr("disabled")
+							return false;
+						};
+					},
+					success: function(rtn) {
+						if(rtn.code != 1) {
+							$(".btn").text("登录").removeAttr("disabled")
+							$(".login-box-msg").removeClass("hide").text(rtn.msg);
+							login_state = true;
+							return;
+						}
+						location.href = "${cxt!}";
+					},
+					error: function() {
+						$(".btn").text("登录").removeAttr("disabled");
+						$(".login-box-msg").addClass("hide").text("");
+						login_state = true;
+						alert("登录超时，请稍后重试！");
+					}
+				}
+
+				$('form').ajaxForm(options).submit(function() {
+					return false;
+				});
+			});
+		</script>
+	</body>
+
+</html>

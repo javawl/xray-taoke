@@ -1,0 +1,175 @@
+package com.xray.taoke.admin.app;
+
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.TkStatIncome;
+import com.xray.taoke.admin.model.TkStatIncomeDay;
+import com.xray.taoke.admin.model.TkStatIncomeItem;
+import com.xray.taoke.admin.model.TkStatIncomeMonth;
+
+public class TkStatIncomeApp extends AbstractApp {
+    private String day;
+
+    public TkStatIncomeApp(String day) {
+        this.day = day;
+    }
+
+    @Override
+    public void run() {
+        try {
+            this.runOrder(day);
+            this.runDay(day);
+            this.runMonth(day);
+        } catch (Exception e) {
+            logger.error("errapp,TkStatIncomeApp,day:" + day, e);
+        }
+    }
+
+    public void runMonth(String day) {
+        TkStatIncomeMonth.dao.delByDay(day);
+
+        TkStatIncomeMonth data = null;
+        List<TkStatIncomeItem> list = TkStatIncomeItem.dao.queryListAll();
+        for (TkStatIncomeItem item : list) {
+            data = new TkStatIncomeMonth();
+            data.set("day", day);
+            data.set("itemid", item.getStr("itemid"));
+            this.day2month(data, TkStatIncomeDay.dao.queryByMonth(day, item.getStr("itemid")));
+            data.save();
+        }
+        logger.info("runapp,TkStatIncomeApp,runMonth,day:{},size:{}", day, list.size());
+    }
+
+    private void day2month(TkStatIncomeMonth data, List<TkStatIncomeDay> list) {
+        if (list.size() <= 0)
+            return;
+        data.set("conssum", list.get(0).getDouble("conssum"));
+
+        int tradeno = 0;
+        double tradeprice = 0;
+        double trademoney = 0;
+        double incomerate = 0;
+        for (TkStatIncomeDay item : list) {
+            tradeno += item.getInt("tradeno");
+            tradeprice += item.getDouble("tradeprice");
+            trademoney += item.getDouble("trademoney");
+            incomerate += item.getDouble("incomerate");
+        }
+        data.set("tradeno", tradeno);
+        data.set("tradeprice", tradeprice);
+        data.set("trademoney", trademoney);
+        data.set("incomerate", incomerate);
+    }
+
+    public void runDay(String day) {
+        List<TkStatIncomeItem> list = TkStatIncomeItem.dao.queryListAll();
+        String tkids = null;
+        TkStatIncomeDay data = null;
+        TkStatIncome income = null;
+        for (TkStatIncomeItem item : list) {
+            data = TkStatIncomeDay.dao.queryByDay(day, item.getStr("itemid"));
+
+            if (item.getInt("state") != 1) {
+                if (data != null)
+                    continue;
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(DateUtil.getDate(day, "yyyy-MM-dd"));
+                cal.add(Calendar.DAY_OF_MONTH, -1);
+                TkStatIncomeDay tmp = TkStatIncomeDay.dao.queryByDay(DateUtil.formatDate(cal.getTime(), "yyyy-MM-dd"), item.getStr("itemid"));
+                if (tmp == null)
+                    continue;
+
+                data = new TkStatIncomeDay();
+                data.set("day", day);
+                data.set("itemid", item.getStr("itemid"));
+                data.set("conssum", tmp.getDouble("conssum"));
+                data.save();
+                continue;
+            }
+
+            if (data == null) {
+                tkids = item.getStr("tkids");
+                data = new TkStatIncomeDay();
+                data.set("day", day);
+                data.set("itemid", item.getStr("itemid"));
+                data.set("tkids", tkids);
+                data.save();
+            } else {
+                tkids = data.getStr("tkids");
+            }
+
+            tkids = StringUtil.isEmpty(tkids) ? item.getStr("tkids") : tkids;
+            data.set("tkids", tkids);
+            income = TkStatIncome.dao.sumByTkids(day, tkids);
+            if (income == null || income.getInt("tradeno") == null)
+                continue;
+            this.income2day(data, income);
+            data.update();
+        }
+        logger.info("runapp,TkStatIncomeApp,runDay,day:{},size:{}", day, list.size());
+    }
+
+    private void income2day(TkStatIncomeDay data, TkStatIncome income) {
+        data.set("tradeno", income.getInt("tradeno"));
+        data.set("tradeprice", income.getDouble("tradeprice"));
+        data.set("trademoney", income.getDouble("trademoney"));
+        if (data.getDouble("conssum") > 0)
+            data.set("incomerate", income.getDouble("trademoney") / data.getDouble("conssum"));
+    }
+
+    public void runOrder(String day) {
+        TkStatIncome.dao.delByDay(day);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(DateUtil.getDate(day, "yyyy-MM-dd"));
+
+        long begintime = cal.getTimeInMillis();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        long endtime = cal.getTimeInMillis();
+
+        String tkid = null;
+        TkStatIncome data = null;
+        Map<String, TkStatIncome> map = new HashMap<String, TkStatIncome>();
+        List<OrderInfo> list = OrderInfo.dao.queryByTradetime(begintime, endtime);
+        for (OrderInfo order : list) {
+            tkid = order.getStr("appid");
+            if (StringUtil.isEmpty(tkid)) {
+                tkid = order.getStr("adzoneid");
+            }
+
+            data = map.get(tkid);
+            if (data == null) {
+                data = new TkStatIncome();
+                data.set("day", day);
+                data.set("tkid", tkid);
+                map.put(tkid, data);
+            }
+
+            switch (order.getInt("tkstatus")) {
+            case 13:
+                break;
+            default:
+                ++data.tradeno;
+                data.tradeprice += order.getDouble("tradeprice");
+                data.trademoney += order.getDouble("trademoney");
+                data.jiemoney += order.getDouble("jiemoney");
+                break;
+            }
+        }
+
+        for (String key : map.keySet()) {
+            data = map.get(key);
+            data.init();
+            data.save();
+        }
+        logger.info("runapp,TkStatIncomeApp,runOrder,day:{},size:{}", day, map.size());
+    }
+
+}

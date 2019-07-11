@@ -1,0 +1,110 @@
+package com.xray.taoke.act.web.controller;
+
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Before;
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.weixin.sdk.api.ApiConfig;
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
+import com.jfinal.weixin.sdk.api.CustomServiceApi;
+import com.jfinal.weixin.sdk.jfinal.MsgControllerAdapter;
+import com.jfinal.weixin.sdk.msg.in.InTextMsg;
+import com.jfinal.weixin.sdk.msg.in.event.InFollowEvent;
+import com.jfinal.weixin.sdk.msg.in.event.InMenuEvent;
+import com.xray.act.jfinal.weixin.MsgInterceptor;
+import com.xray.act.jfinal.weixin.MsgProvider;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.act.model.MpUser;
+import com.xray.taoke.act.service.MpInfoService;
+import com.xray.taoke.act.service.WxAccessTokenCache;
+
+@ControllerBind(controllerKey = "/wxai")
+public class WxAiController extends MsgControllerAdapter implements MsgProvider {
+    protected static Logger logger = LoggerFactory.getLogger(WxAiController.class);
+    private static WxAccessTokenCache accessTokenCache = new WxAccessTokenCache();
+
+    @Before(MsgInterceptor.class)
+    public void index() {
+        super.index();
+    }
+
+    @Override
+    public ApiConfig getApiConfig() {
+        String appid = getPara();
+        Map<String, String> cond = MpInfoService.instance.getMpInfo(appid);
+        ApiConfig ac = new ApiConfig();
+        ac.setAppId(appid);
+        ac.setAppSecret(cond.get("appsecret"));
+        ac.setToken(cond.get("token"));
+        ac.setEncodingAesKey(cond.get("encodingaeskey"));
+        ApiConfigKit.putApiConfig(ac);
+        ApiConfigKit.setThreadLocalAppId(appid);
+        ApiConfigKit.setAccessTokenCache(accessTokenCache);
+        return ac;
+    }
+
+    @Override
+    protected void processInFollowEvent(InFollowEvent inFollowEvent) {
+        String appid = getPara();
+        String openid = inFollowEvent.getFromUserName();
+        renderDefault();
+        // 取关
+        if (inFollowEvent.getEvent().equals(InFollowEvent.EVENT_INFOLLOW_UNSUBSCRIBE)) {
+            logger.info("unsubscribe,appid:{},openid:{}", appid, openid);
+            MpInfoService.instance.negative(appid, openid);
+            MpUser.dao.updateInfollowByOpenid(appid, openid);
+            return;
+        }
+
+        MpInfoService.instance.active(appid, openid);
+        MpUser.dao.addByOpenid(appid, openid);
+        // 客服
+        this.doKefu(appid, openid);
+        CustomServiceApi.sendText(openid, MpInfoService.instance.getFollowContent(appid));
+        logger.info("inFollowEvent,appid:{},openid:{}", appid, openid);
+    }
+
+    @Override
+    protected void processInMenuEvent(InMenuEvent inMenuEvent) {
+        String appid = getPara();
+        String openid = inMenuEvent.getFromUserName();
+        renderDefault();
+        // 链接不处理
+        if (!"CLICK".equals(inMenuEvent.getEvent())) {
+            return;
+        }
+        MpInfoService.instance.active(appid, openid);
+        // 客服
+        this.doKefu(appid, openid);
+        CustomServiceApi.sendText(openid, MpInfoService.instance.getFollowContent(appid));
+        logger.info("inMenuEvent,appid:{},openid:{}", appid, openid);
+    }
+
+    @Override
+    protected void processInTextMsg(InTextMsg inTextMsg) {
+        renderDefault();
+    }
+
+    private void doKefu(String appid, String openid) {
+        String kefuid = MpUser.dao.queryKefuidByOpenid(appid, openid);
+        if (StringUtil.isNotEmpty(kefuid)) {
+            CustomServiceApi.sendImage(openid, kefuid);
+        } else {
+            String content = MpInfoService.instance.getKefuContent(appid);
+            if (StringUtil.isNotEmpty(content)) {
+                JSONArray arr = JSONObject.parseObject(content).getJSONArray("data");
+                JSONObject obj = arr.getJSONObject((int) (Math.random() * arr.size()));
+                kefuid = obj.getString("mediaid");
+                MpUser.dao.updateKefuidByOpenid(appid, openid, kefuid);
+                CustomServiceApi.sendImage(openid, kefuid);
+            }
+        }
+        logger.info("doKefu,appid:{},openid:{}", appid, openid);
+    }
+
+}

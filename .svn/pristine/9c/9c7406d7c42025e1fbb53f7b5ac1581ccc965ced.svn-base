@@ -1,0 +1,80 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.mysql.cj.x.protobuf.MysqlxCrud.Order;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+
+public class OrderProxyApp extends AbstractApp {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp pidexorder", e);
+        }
+    }
+
+    public void doRun() {
+        List<OrderInfo> list = OrderInfo.dao.queryProxy();
+        logger.info("runapp OrderProxyApp,size:{}", list.size());
+        for (OrderInfo data : list) {
+            updateProxy(data);
+        }
+    }
+
+    private void updateProxy(OrderInfo data) {
+        String userid = data.getStr("userid");
+        int proxystate = data.getInt("proxystate");
+        if (StringUtil.isEmpty(userid))
+            throw new RtException("updateProxy,none userid,orderinfo,seqid:" + data.getLong("seqid"));
+        UoUser user = UoUser.dao.queryByUserId(userid);
+        if (user == null) {
+            logger.info("updateProxy,none user,userid:{}", userid);
+            return;
+        }
+        String proxyby = user.getStr("proxyby");
+        String seqid = data.getStr("seqid");
+        UoUser highUser = UoUser.dao.queryByUserId(proxyby);
+        String highuserid = highUser.getStr("userid");
+        if (proxystate == 0) {
+            // proxyby
+            if (StringUtil.isEmpty(proxyby)) {
+                OrderInfo.dao.updateState(1, "", 0, seqid);
+                logger.info("updateProxy,none proxyby,userid:{}", proxyby);
+                return;
+            }
+            // 上级代理信息
+            double proxyrate = highUser.getDouble("proxyrate");
+            double trademoney = data.getDouble("trademoney");
+            double traderate = data.getDouble("traderate");
+            double qbproxyconfirm = (proxyrate - traderate) * trademoney;
+
+            OrderInfo.dao.updateState(2, proxyby, qbproxyconfirm, seqid);
+            UoUser.dao.updateProxyConfirm(highuserid, qbproxyconfirm);
+
+            String appid = data.getStr("appid");
+            String openid = data.getStr("openid");
+            String tradeid = data.getStr("tradeid");
+            // wxApi.sendText(appid, openid, MpInfoService.instance.getTradeSucc(appid,
+            // UoUser.dao.queryByUserId(proxyby), OrderInfo.dao.queryByTradeid(tradeid)));
+        } else {
+            int tkstatus = data.getInt("tkstatus");
+            if (tkstatus != 3)
+                return;
+
+            double proxymoney = data.getDouble("proxymoney");
+            OrderInfo.dao.updateStateJie(3, seqid);
+            UoUser.dao.updateProxyJie(highuserid, proxymoney);
+
+            // wxApi.sendText(appid, openid, MpInfoService.instance.getTradeSucc(appid,
+            // UoUser.dao.queryByUserId(proxyby), OrderInfo.dao.queryByTradeid(tradeid)));
+
+        }
+
+    }
+}

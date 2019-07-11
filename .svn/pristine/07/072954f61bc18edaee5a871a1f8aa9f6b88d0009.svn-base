@@ -1,0 +1,310 @@
+package com.xray.taoke.admin.service;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Enhancer;
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.xray.act.exception.RtException;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.MD5Codec;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.model.TkMpinfo;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
+import redis.clients.jedis.Tuple;
+
+public class TkMpService {
+
+    private static Logger logger = LoggerFactory.getLogger(TkMpService.class);
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".material.";
+    private static final String mpfans = config.get("redis.prefix") + ".material.fans.";
+
+
+    // private static final String mpcustem = config.get("redis.prefix") +
+    // ".mp.custem.";
+
+    public String getFollowContent(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "replyid1");
+    }
+
+    public Map<String, String> getCustomContent(String appid) {
+        String key = prefix + appid;
+        Map<String, String> cond = new HashMap<>();
+        cond.put("replyid4", cache.hget(key, "replyid4"));
+        cond.put("replyid5", cache.hget(key, "replyid5"));
+        return cond;
+    }
+    
+    
+    
+    public static TkMpService instance = new TkMpService();
+
+
+
+    public void updateMpfans(String appid, String total) {
+        String key = mpfans + appid;
+        cache.set(key, total);
+    }
+
+    public int getFollows(String appid) {
+        String key = mpfans + appid;
+        String fans = cache.get(key);
+        if (StringUtil.isEmpty(fans))
+            return 0;
+        return Integer.parseInt(fans);
+    }
+
+    public static Map<String, Integer> getUserSize(List<String> appidList) {
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        Jedis jc = null;
+        try {
+            jc = cache.getJedisClient();
+            Pipeline pipeline = jc.pipelined();
+            Map<String, Response<String>> responses = new HashMap<String, Response<String>>(appidList.size());
+            for (String appid : appidList) {
+                String key = mpfans + appid;
+                responses.put(key, pipeline.get(key));
+            }
+            pipeline.sync();
+            for (String key : responses.keySet()) {
+                String str = responses.get(key).get();
+                int usersize = !StringUtil.isEmpty(str) ? Integer.parseInt(str) : -1;
+                map.put(key.replace(mpfans, ""), usersize);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            cache.returnResource(jc);
+        }
+        return map;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public Set getSubscribe(String appid) {
+        String key = mpfans + appid + "." + DateUtil.getToday();
+        Set<Tuple> set = cache.zrangeWithScores(key, 0, -1);
+        return set;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public Set getSubscribeByMin(String appid) {
+        String key = mpfans + appid + "." + DateUtil.getToday();
+        Set<Tuple> set = cache.zrevrangeWithScores(key, 0, 100);
+        return set;
+    }
+
+    public String daihaoLv1(String appid) {
+        String key = mpfans + appid + ".min";
+        String val = cache.get(key);
+        return val;
+    }
+
+    public String daihaoLv2(String appid) {
+        String key = mpfans + appid + ".hour";
+        String val = cache.get(key);
+        return val;
+    }
+
+    public String daihaoLv3(String appid) {
+        String key = mpfans + appid + ".day";
+        String val = cache.get(key);
+        return val;
+    }
+
+    public void deleteDaiHao(String appid) {
+        String key = mpfans + appid + ".min";
+        String key2 = mpfans + appid + ".hour";
+        String key3 = mpfans + appid + ".day";
+        cache.delete(key);
+        cache.delete(key2);
+        cache.delete(key3);
+    }
+
+    public static Map<String, Integer> getBusersize(List<String> appIdList, String time) {
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        Jedis jc = null;
+        try {
+            jc = cache.getJedisClient();
+            Pipeline pipeline = jc.pipelined();
+            Map<String, Response<String>> responses = new HashMap<String, Response<String>>(appIdList.size());
+            for (String appid : appIdList) {
+                responses.put(appid, pipeline.get(mpfans + appid + "." + time));
+            }
+            pipeline.sync();
+            for (String key : responses.keySet()) {
+                String str = responses.get(key).get();
+                int busersize = !StringUtil.isEmpty(str) ? Integer.parseInt(str) : 0;
+                map.put(key, busersize);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            cache.returnResource(jc);
+        }
+        return map;
+    }
+
+    public Map<String, String> getMaterial(String appid) {
+        if (appid == null)
+            throw new RtException("null appid");
+        String key = prefix + appid;
+        Map<String, String> map = cache.hgetAll(key);
+        return map;
+    }
+
+
+    public Map<String, String> getFollows(Set<String> keys) {
+        return cache.getBatch(mpfans, keys);
+    }
+
+    public static void getAllContent(List<String> appIdList) {
+        Jedis jc = null;
+        try {
+            jc = cache.getJedisClient();
+            Pipeline pipeline = jc.pipelined();
+            Map<String, Response<String>> responses = new HashMap<String, Response<String>>(appIdList.size());
+            for (String appid : appIdList) {
+                responses.put(appid, pipeline.hget(prefix + appid, "replyid1"));
+            }
+            pipeline.sync();
+            int count = 0;
+//            for (String key : responses.keySet()) {
+//                String str = responses.get(key).get();
+//                TkMpinfo info = TkMpinfo.dao.exists(key);
+//                if (!StringUtil.isEmpty(str))
+//                    info.set("isreply", 1);
+//                else {
+//                    info.set("isreply", -1);
+//                    count++;
+//                }
+//                info.update();
+//            }
+            logger.info("checkFollow,not have follow content ,size:{}", count);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            cache.returnResource(jc);
+        }
+    }
+
+    public void pubMaterial(TkMpinfo data) throws UnsupportedEncodingException {
+        if (data == null)
+            throw new RtException("null MpInfo");
+        String key = prefix + data.getStr("appid");
+        Map<String, String> map = cache.hgetAll(key);
+        map.put(MD5Codec.encode("关注"), doMpMaterial(data.getStr("appid"), "关注"));
+        map.put(MD5Codec.encode("转链"), doMpMaterial(data.getStr("appid"), "转链"));
+        map.put(MD5Codec.encode("订单"), doMpMaterial(data.getStr("appid"), "订单"));
+        map.put(MD5Codec.encode("提现"), doMpMaterial(data.getStr("appid"), "提现"));
+        map.put(MD5Codec.encode("客服"), doMpMaterial(data.getStr("appid"), "客服"));
+        map.put(MD5Codec.encode("早场券"), doMpMaterial(data.getStr("appid"), "早场券"));
+        map.put(MD5Codec.encode("晚场券"), doMpMaterial(data.getStr("appid"), "晚场券"));
+        map.put(MD5Codec.encode("48H提醒"), doMpMaterial(data.getStr("appid"),"48H提醒"));
+        cache.hmset(key, map);
+        logger.info("pubMaterial,appid:{}", data.getStr("appid"));
+    }
+
+    public void delMaterial(TkMpinfo data) {
+        if (data == null)
+            throw new RtException("null MpInfo");
+        String key = prefix + data.getStr("appid");
+        cache.delete(key);
+    }
+
+
+
+    @SuppressWarnings("null")
+    private String doMpMaterial(String appid, String word) throws UnsupportedEncodingException {
+        if (StringUtil.isEmpty(word))
+            return "";
+        TkMaterial ma = TkMaterial.dao.queryByAppidAndWord(word,appid);
+        if (ma == null)
+            throw new RtException("null MpMaterial,word:" + word);
+        //int click_state = ma.getInt("click_state");
+        if (ma.getInt("type") == 1) {
+            JSONObject obj = new JSONObject();
+            obj.put("type", "wx_news");
+            JSONArray array2 = new JSONArray();
+//            if (click_state == 1) {
+//                JSONArray array = JSONObject.parseArray(new String(ma.get("content"), "UTF-8"));
+//                for (Object object : array) {
+//                    JSONObject jsonObject = (JSONObject) object;
+//                    String url = (String) jsonObject.get("url");
+//                    String domains = DaiHaoService.instance.getDomains();
+//                    String[] strs = domains.split("\n");
+//                    Random rand = new Random();
+//                    int num = rand.nextInt(strs.length);
+//                    String url_pre = strs[num];
+//                    String id = MD5Codec.encode(url);
+//                    setUrl(id, url);
+//                    String s = JSONObject.toJSONString(jsonObject);
+//                    String click_url = "http://" + url_pre + "/wxmp_act/weixin/c?id=" + id;
+//                    s = s.replaceAll(url, click_url);
+//                    array2.add(JSONObject.parse(s));
+//                }
+//            } else {
+//                array2 = JSONObject.parseArray(new String(ma.get("content"), "UTF-8"));
+//            }
+            array2 = JSONObject.parseArray(new String(ma.get("content"), "UTF-8"));
+            obj.put("send_state", ma.getInt("send_state"));
+            obj.put("data", array2);
+            return obj.toJSONString();
+        }
+        if (ma.getInt("type") == 2) {
+            JSONArray arr = JSONObject.parseArray(new String(ma.get("content"), "UTF-8"));
+            for (int i = 0; i < arr.size(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                if (!"image".equals(obj.getString("type")))
+                    continue;
+                String mediaid = obj.getString("mediaid");
+                if(StringUtil.isNotEmpty(mediaid))
+                    continue;
+                WeixinApi wxApi = Enhancer.enhance(WeixinApi.class);
+                ApiResult res  = wxApi.addMaterial(appid, obj);
+                if (!res.isSucceed())
+                   throw new RtException("err addMaterialImage,appid:" + appid);
+                String media_id = res.get("media_id");
+                obj.put("content", media_id);
+                obj.put("mediaid", media_id);
+            }            
+            
+            JSONObject obj = new JSONObject();
+            obj.put("type", "wx_mixed");
+            obj.put("data", arr);
+            
+            if(word.equals("客服")) {
+                TkMaterial material = TkMaterial.dao.queryByAppidAndWord(word, appid);
+                material.set("content", arr.toJSONString());
+                material.update();
+            }
+            return obj.toJSONString();
+        }
+
+        return "";
+    }
+
+
+}

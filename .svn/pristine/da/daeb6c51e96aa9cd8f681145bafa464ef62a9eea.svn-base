@@ -1,0 +1,184 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.LinkConfig;
+import com.xray.taoke.admin.model.LinkInfo;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.service.LinkInfoService;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.admin.utils.ShortUrlUtils;
+import com.xray.taoke.tkapi.TbItemService;
+import com.xray.taoke.tkapi.vo.ConstTk;
+import com.xray.taoke.tkapi.vo.TbItemVo;
+
+@ControllerBind(controllerKey = "/linkconfig")
+public class LinkConfigController extends AbstractController {
+
+    public void goList() {
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<LinkConfig> dataList = LinkConfig.dao.queryList(getCondAll(), getPageVo("seqid desc"));
+        for (LinkConfig data : dataList) {
+            data.setMpname(map.get(data.getStr("appid")));
+        }
+        setAttr("dataList", dataList);
+        setAttr("pkey", Integer.valueOf(LinkInfoService.instance.getPkey(getUserid())));
+        render("/template/pages/linkconfig/list.html");
+    }
+
+    public void goAdd() {
+        setAttr("mpList", MpInfo.dao.queryAllLine());
+        render("/template/pages/linkconfig/form.html");
+    }
+
+    public void goEdit() {
+        setAttr("mpList", MpInfo.dao.queryAllLine());
+        setAttr("data", LinkConfig.dao.findById(getPara("seqid")));
+        render("/template/pages/linkconfig/form.html");
+    }
+
+    public void doDel() {
+        String seqid = getPara("seqid");
+        LinkConfig.dao.deleteById(seqid);
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doAdd() {
+        LinkConfig data = new LinkConfig();
+        data.set("appid", getPara("appid"));
+        data.set("sid", getPara("sid"));
+        data.set("pid", getPara("pid"));
+        data.set("remark", getPara("remark"));
+        data.set("inputtime", System.currentTimeMillis());
+        data.save();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        LinkConfig data = LinkConfig.dao.findById(getPara("seqid"));
+        data.set("appid", getPara("appid"));
+        data.set("sid", getPara("sid"));
+        data.set("pid", getPara("pid"));
+        data.set("remark", getPara("remark"));
+        data.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doFabu() {
+        List<LinkConfig> list = LinkConfig.dao.queryList(null, null);
+        for (LinkConfig data : list) {
+            MpInfoService.instance.setPkeyPid(String.valueOf(data.getLong("seqid")), data.getStr("pid"));
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doBind() {
+        LinkInfoService.instance.setPkey(getUserid(), getPara("seqid"));
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doGen() {
+        int type = getParaToInt("type", 1);
+        String remark = getPara("remark", "");
+        String userid = getUserid();
+        String pkey = LinkInfoService.instance.getPkey(userid);
+
+        LinkConfig conf = LinkConfig.dao.findById(pkey);
+        List<TbItemVo> dataList = new ArrayList<TbItemVo>();
+        Map<String, String> map = LinkInfoService.instance.getCart(getUserid());
+        for (String key : map.keySet()) {
+            dataList.add(JSONObject.parseObject(map.get(key), TbItemVo.class));
+        }
+        String lid = ConstTk.getUuid16();
+
+        TbItemService.instance.addItemListVo(lid, dataList);
+
+        String appid = conf.getStr("appid");
+        int sid = conf.getInt("sid");
+        String pid = conf.getStr("pid");
+
+        String longurl = MpInfoService.instance.getUrl(appid) + "/tlink?sid=" + sid + "&pkey=" + pkey + "&lid=" + lid;
+        String url = ShortUrlUtils.instance.domainToShorUrl(longurl, MpInfoService.instance.getUrl(appid));
+
+        if (type == 2) {
+            LinkInfo data = new LinkInfo();
+            data.set("appid", appid);
+            data.set("lid", lid);
+            data.set("sid", sid);
+            data.set("pid", pid);
+            data.set("pkey", pkey);
+            if (StringUtil.isNotEmpty(remark)) {
+                data.set("remark", remark);
+            }
+            data.set("url", url);
+            data.set("longurl", longurl);
+            data.set("size", dataList.size());
+            data.set("inputtime", System.currentTimeMillis());
+            data.set("inputby", getUser().getName());
+            data.save();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("亲，找了几款优惠券，请点击查看\n");
+        sb.append(url);
+        renderRtn(RtnFactory.newSucc(sb.toString()));
+
+    }
+
+    public void doGenCommon() {
+        int type = getParaToInt("type", 1);
+        String remark = getPara("remark", "");
+        String userid = getUserid();
+        String pkey = LinkInfoService.instance.getPkey(userid);
+
+        LinkConfig conf = LinkConfig.dao.findById(pkey);
+        List<TbItemVo> dataList = new ArrayList<TbItemVo>();
+        Set<String> set = LinkInfoService.instance.getCartByAll();
+        for (String string : set) {
+            dataList.add(JSONObject.parseObject(string, TbItemVo.class));
+        }
+        String lid = ConstTk.getUuid16();
+
+        TbItemService.instance.addItemListVo(lid, dataList);
+
+        String appid = conf.getStr("appid");
+        int sid = conf.getInt("sid");
+        String pid = conf.getStr("pid");
+
+        String longurl = MpInfoService.instance.getUrl(appid) + "/tlink?sid=" + sid + "&pkey=" + pkey + "&lid=" + lid;
+        String url = ShortUrlUtils.instance.domainToShorUrl(longurl, MpInfoService.instance.getUrl(appid));
+
+        if (type == 2) {
+            LinkInfo data = new LinkInfo();
+            data.set("appid", appid);
+            data.set("lid", lid);
+            data.set("sid", sid);
+            data.set("pid", pid);
+            data.set("pkey", pkey);
+            if (StringUtil.isNotEmpty(remark)) {
+                data.set("remark", remark);
+            }
+            data.set("url", url);
+            data.set("longurl", longurl);
+            data.set("size", dataList.size());
+            data.set("inputtime", System.currentTimeMillis());
+            data.set("inputby", getUser().getName());
+            data.save();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("亲，找了几款优惠券，请点击查看\n");
+        sb.append(url);
+        renderRtn(RtnFactory.newSucc(sb.toString()));
+
+    }
+
+}

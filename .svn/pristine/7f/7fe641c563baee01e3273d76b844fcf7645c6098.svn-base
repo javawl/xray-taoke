@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>公众号管理 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>公众号管理</li>
+							<li class="active">公众号管理</li>
+						</ol>
+						<h1><small></small></h1>
+
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<form action="${cxt!}/mpinfo/goList">
+											<div class="row">
+												<div class="col-md-3">
+													<input id="word" name="word" type="text" class="form-control" value="${word!}" placeholder="appid/名称" />
+												</div>
+
+												<div class="col-md-3">
+													<select id="state" name="state" class="form-control select2">
+														<option value="0" <#if state=="0">selected="selected"</#if>>未开始</option>
+														<option value="1" <#if state=="1">selected="selected"</#if>>状态1(真人)</option>
+														<option value="2" <#if state=="2">selected="selected"</#if>>状态2(机器)</option>
+														<option value="-1" <#if state=="-1">selected="selected"</#if>>禁用</option>
+													</select>
+
+												</div>
+
+												<div class="col-md-1">
+													<input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+													<button id="search" type="submit" class="btn btn-default">查询</button>
+												</div>
+												<div class="col-md-5">
+													<div class="pull-right">
+														<button onclick="window.open('${cxt!}/mpinfo/goAdd');" type="button" class="btn btn-primary">新增</button>
+														<a onclick="doFabus()" href="javascript:;" class="btn btn-success">发布</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr>
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>appid</th>
+																<th>公众号</th>
+																<th>shopurl</th>
+																<th>tbname</th>
+																<th>状态</th>
+																<th>管理</th>
+																<th>操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td>${item.appid!}</td>
+																	<td>
+																		
+																		<a href="http://wxadmin.liangdianpro.com/wxmp_admin/ionode/goMpLogin?appid=${item.appid!}" target="_blank" class="text-purple"><i class="fa fa-mobile"></i>${item.name!}</a>
+																		</td>
+																	<td>
+																		<a href="${item.shopurl!}/tshop?sid=${item.seqid!}" target="_blank">${item.shopurl!}/tshop?sid=${item.seqid!}</a>
+																	</td>
+																	<td>${item.tbname!}</td>
+																	<td>
+																		<a onclick="doEditState('${item.seqid}','${item.state!}')" href="javascript:;"><i class="fa fa-edit"></i>
+																			
+																			<#if item.state ==1>
+																				真人
+																				<#elseif item.state ==2>
+																					机器
+																				</#if>
+																			</td>
+
+																	<td>
+																		<#if item.state==0>
+																			<a onclick="doCreate('${item.seqid!}')" href="javascript:;" target="_blank" class="text-red"><i class="fa fa-plus"></i>创建</a>
+																			<#else>
+																				<a onclick="doDocking('${item.seqid!}','${item.appid!}','${item.token!}','${item.encodingaeskey!}','${item.appsecret!}')" href="javascript:;" target="_blank" class="text-blue">参数</a>
+																				<a href="${cxt!}/mpuser/goList?appid=${item.appid!}" target="_blank" class="text-danger">用户</a>
+																				<a href="${cxt!}/material/goList?appid=${item.appid!}" target="_blank" class="text-blue">回复</a>
+																				<a href="${cxt!}/menu/goAdd?appid=${item.appid!}" target="_blank" class="text-danger">菜单</a>
+																				<a href="${cxt!}/tkkefumsg/goAdd?type=2&appid=${item.appid!}" target="_blank" class="text-blue">客服</a>
+																				<a href="${cxt!}/tkmass/goAdd?type=2&appid=${item.appid!}" target="_blank" class="text-danger">群发</a>
+																		</#if>
+																	</td>
+																	<td>
+																		<a href="${cxt!}/mpinfo/goEdit?seqid=${item.seqid!}" target="_blank" class="text-yellow"><i class="fa fa-edit"></i>修改</a>
+																		<a onclick="doDel('${item.appid!}','${item.seqid!}')" href="javascript:;" target="_blank" class="text-red"><i class="fa fa-trash-o"></i>删除</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script>
+			var uploader;
+			var checkList = [];
+			$(document).ready(function() {
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				//查询绑定回车事件
+				$("#word").keydown(function(e) {
+					var ev = document.all ? window.event : e;
+					if(ev.keyCode == 13) {
+						$('#search').click();
+					}
+				})
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#pno').val(n);
+						$('#search').click();
+					}
+				});
+
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all');
+				var $checkbox = $('input[type="checkbox"].item');
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+
+			})
+
+			function doEditState(seqid, state) {
+				var html = '';
+				html += '<div class="box-body">';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">';
+				html += '      <label>状态</label>';
+				html += ' <select id="state2" class="form-control select2">';
+
+				html += ' <option value = "">';
+				html += ' 	请选择状态';
+				html += ' </option>';
+
+				html += ' <option value = "1">';
+				html += '真人';
+				html += ' </option>';
+				html += ' <option value = "2">';
+				html += '机器';
+				html += ' </option>';
+
+				html += ' </select>';
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				layer.open({
+					closeBtn: 0,
+					title: '状态',
+					area: ['500px', ],
+					content: html,
+					btn: ['确定', '取消'],
+					yes: function() {
+						var state = $("#state2").val();
+						if(!state) {
+							layer.msg("请选择状态！", {
+								icon: 0
+							});
+							return;
+						}
+
+						ajaxGet("${cxt!}/mpinfo/doUpdateState", {
+							seqid: seqid,
+							state: state
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(JSON.stringify(rtn), {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("操作成功！", {
+								icon: 1,
+								time: 600
+							}, function() {
+								window.location.reload();
+							});
+						})
+					}
+				});
+
+			}
+
+			function doFabus() {
+				if(checkList.length == 0) {
+					base.showWarMsg("请选择要操作的选项！");
+					return;
+				}
+				var idsStr = "";
+				checkList.forEach(function(e) {
+					idsStr += e + ",";
+				})
+				var seqid = $(this).parent().attr("data-id");
+				layer.confirm('确定发布选中的项吗？', {
+					btn: ['发布', '取消']
+				}, function() {
+					ajaxGet("${cxt!}/mpinfo/doFaBus", {
+						idsStr: 　idsStr
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							base.showErrMsg(rtn.msg);
+							return;
+						}
+						base.showSuccMsg("发布成功！即将自动刷新...", function() {
+							location.reload();
+						})
+					})
+				});
+			}
+
+			function doCreate(seqid) {
+				layer.confirm('确定创建？', function(i) {
+					ajaxGet("${cxt!}/mpinfo/doCreateByAppid", {
+						seqid: seqid
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+
+			function doDocking(seqid, url, token, encodingaeskey, appsecret) {
+				var html = '';
+				html += '<div class="box-body">';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">';
+				html += '      <label>url</label>';
+				html += '      <input id="url"  type="text" class="form-control"   value="${wxapi_url!}/' + url + '"   placeholder="url"   />'
+				html += '    </div>';
+				html += '    <div class="form-group">'
+				html += '      <label>Token</label>';
+				html += '      <input   id="Token"  type="text" class="form-control"   value="' + token + '"   placeholder="Token"   />'
+				html += '    </div>';
+				html += '    <div class="form-group">'
+				html += '      <label>EncodingAESKey</label>';
+				html += '      <input   id="EncodingAESKey"  type="text" class="form-control"   value="' + encodingaeskey + '"   placeholder="EncodingAESKey"   />'
+				html += '    </div>';
+				html += '    <div class="form-group">'
+				html += '      <label>appsecret</label>';
+				html += '      <input   id="appsecret"  type="text" class="form-control"   value="' + appsecret + '"  placeholder="appsecret"   />'
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				layer.open({
+					closeBtn: 1,
+					title: '参数',
+					area: ['500px', ],
+					content: html,
+					btn: []
+				});
+			}
+
+			function doDel(appid, seqid) {
+				layer.confirm('确定删除？', function(i) {
+					ajaxGet("${cxt!}/mpinfo/doDel", {
+						seqid: seqid,
+						appid: appid
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+		</script>
+	</body>
+
+</html>

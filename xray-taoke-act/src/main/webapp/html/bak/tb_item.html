@@ -1,0 +1,140 @@
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no, viewport-fit=cover">
+		<meta name="format-detection" content="telephone=no">
+		<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
+		<title>返${(data.jiemoney)?string("0.00")} 优惠券:${data.cpmoney!} 付费价:${data.tkprice!}</title>
+    <link rel="shortcut icon" href="http://alicdn.ldpro.cn/img0/favicon.ico" />
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_pdd_6a8b0fbe1991c3d99593.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_common_6a043919c7319d23ee61.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/goods_9bc3681ce8ef0d954ba3.css" rel="stylesheet">
+    <style>
+      .button-sp-area {
+        margin: 0 auto;
+        padding: 15px 0;
+        text-align: center;
+      }
+      .weui-btn {
+        position: relative;
+        display: inline-block;
+        margin-left: auto;
+        margin-right: auto;
+        box-sizing: border-box;
+        font-size: 18px;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        line-height: 2.55555556;
+        border-radius: 5px;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        overflow: hidden;
+        margin-top: 15px;
+        padding: 0 .25rem;
+      }
+    </style>
+	</head>
+
+	<body id="goods">
+		<div id="main">
+			<div id="goods-detail-conn">
+				<div id="kefu-msg" class="base-mask hidden" style="background-color: rgba(0, 0, 0, 0.85);">
+					<div id="kefu-msg-inner" class="group-share-main-title" style="margin: .7rem auto .7rem;">
+						<p><img src="${data.itempic!}"></p>
+					</div>
+				</div>
+        
+        <div id="tkBtn-msg" class="base-mask hidden" style="background-color: rgba(0, 0, 0, 0.85);">
+        	<div class="group-share-main-title">
+        		<p>复制成功</p>
+            <p>打开「手淘」即可下单购买</p>
+            <p>${data.tkpwd!}</p>
+        	</div>
+        </div>
+
+				<div id="banner" class="goods-banner" style="height: 3.75rem;">
+					<div class="banner-background-ele" style="display: block;"><img src="${data.itempic!}"></div>
+				</div>
+				<div class="general-goods-wrapper">
+					<section id="g-base" class="">
+						<div>
+							<div class="g-price-group">
+								<span class="g-price-desc">券后价</span>
+								<span class="g-group-price"><i>￥</i>${data.tkprice!}<del>￥${data.itemendprice!}</del></span>
+								<span class="g-coupon-amount"></span>
+              </div>
+              <#if data.cpstate=1>
+							<div class="g-earn-amount"><span class="g-earn-amount-detail">优惠券：${data.cpmoney!}元</span></div>
+              </#if>
+						</div>
+						<div class="g-name"><span>${data.itemtitle!}</span></div>
+					</section>
+					<div class="g-mall-service">
+						<div class="g-service-list"><span id="tkPwd" class="g-service-item">点击「领取下单」打开「手淘」即可下单 ${data.tkpwd!}</span></div>
+					</div>
+          
+          <div class="button-sp-area">
+          	<a href="${cxt!}/tshop?sid=${sid!}" class="weui-btn" style="background-color: #ff5776;">👉好券商城👈</a>
+            <a href="${cxt!}/tsou?sid=${sid!}" class="weui-btn" style="background-color: #38567f;">💥搜索优惠券💥</a>
+          </div>
+
+					<div class="goods-bottom-bar">
+						<div class="btn-container">
+              <#if data.cpstate=1>
+							  <button id="tkBtn" class="self-buy-btn" style="background-color: #ff791d;"><span>领券下单</span><span>${data.cpmoney!}元券</span></button>
+              <#else>
+                <button id="tkBtn" class="self-buy-btn" style="background-color: #ff791d;"><span>立即购买</span><span>返${(data.jiemoney)?string("0.00")}元</span></button>
+              </#if>
+							<button id="flBtn" class="share-ear-btn"><span>下单返利</span><span>返${(data.jiemoney)?string("0.00")}元</span></button></div>
+						<div class="iphonex-extra-height"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="http://alicdn.ldpro.cn/js0/clipboard.min.js"></script>
+		<script>
+			var clipboard = new Clipboard('#tkBtn', {
+				text: function() {
+					return document.getElementById('tkPwd').innerText;
+				}
+			});
+      
+			clipboard.on('success', function(e) {
+        var _msg = document.getElementById('tkBtn-msg');
+        _msg.className = 'base-mask';
+        
+        var _elem = document.getElementById('tkBtn');
+        var _html = _elem.innerHTML;
+        
+        _elem.style = 'background-color: #3cb371;';
+        _elem.innerHTML = '<span>复制成功</span><span>打开「手淘」下单</span>';
+        
+        setTimeout(function() {
+          _msg.className = 'base-mask hidden';
+          _elem.style = 'background-color: #ff791d;';
+          _elem.innerHTML = _html;
+        }, 2000);
+
+				e.clearSelection();
+			});
+      
+      document.getElementById('flBtn').onclick = function() {
+        document.getElementById('kefu-msg').className = 'base-mask';
+      }
+      
+      document.getElementById('kefu-msg').onclick = function() {
+        document.getElementById('kefu-msg').className = 'base-mask hidden';
+      }
+      
+      document.getElementById('kefu-msg-inner').onclick = function(event) {
+        event.stopPropagation();
+        return false;
+      }
+      
+		</script>
+
+	</body>
+</html>

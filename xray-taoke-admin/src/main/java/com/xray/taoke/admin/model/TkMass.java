@@ -1,0 +1,67 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_mass", pkName = "seqid")
+public class TkMass extends JfModel<TkMass> {
+    private static final long serialVersionUID = 1L;
+    public static final TkMass dao = new TkMass();
+
+    public List<TkMass> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_mass` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        if (cond != null) {
+            sb.append(" and `state`>=-1 ");
+            if(StringUtil.isNotEmpty(cond.get("appid"))) {
+                sb.append(" and `appid`= '").append(cond.get("appid")).append("'");
+            }
+            if (StringUtil.isNotEmpty(cond.get("date"))) {
+                sb.append(" and `booktime` >= ").append(cond.get("date")).append(" and  `booktime` <=").append(cond.get("date2"));
+            }
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_mass` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<TkMass>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+
+        return dao.find(sql + sb.toString());
+    }
+
+    
+    public TkMass queryByMediaid(String mediaid) {
+        String sql = "select * from `tk_mass` where `mediaid`=?";
+        return dao.findFirst(sql, mediaid);
+    }
+    
+    
+    public void doDels(String userid, String seqids) {
+        String sql = "update `tk_mass` set `state`=?,`edittime`=?,`editby`=? where seqid in(?)";
+        Db.use(Constant.db_dataSource).update(sql,-1, System.currentTimeMillis(), userid, seqids);
+    }
+    
+    
+    public List<TkMass> queryByWaiting(int state) {
+        String sql = "SELECT * FROM `tk_mass` WHERE `state` = ?";
+        return dao.find(sql,state);
+    }
+    public TkMass queryByTime(String appid, long betime,long endtime) {
+        String sql = "select * from `tk_mass` where 1=1  and appid = ? and booktime between ? and  ?";
+        return dao.findFirst(sql, appid, betime,endtime);
+    }
+
+}

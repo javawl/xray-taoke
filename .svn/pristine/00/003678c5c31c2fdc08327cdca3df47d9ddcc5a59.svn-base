@@ -1,0 +1,24 @@
+<html lang="zh">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+		<title>省钱好券</title>
+		<link rel="shortcut icon" href="http://alicdn.ldpro.cn/img0/favicon.ico" />
+		<link rel="stylesheet" href="http://alicdn.ldpro.cn/css0/weui.min.css">
+	</head>
+	<body ontouchstart="">
+		<div class="container" id="container">
+			<div class="page msg_success js_show">
+				<div class="page msg_success js_show">
+					<div class="weui-msg">
+						<div class="weui-msg__icon-area"><i class="weui-icon-success weui-icon_msg"></i></div>
+						<div class="weui-msg__text-area">
+							<h2 class="weui-msg__title">绑定成功</h2>
+							<p class="weui-msg__desc">返回公众号进行操作</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

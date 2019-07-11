@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>数据分析 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>数据分析</li>
+							<li class="active">每日数据</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+
+					<section class="content">
+						<!-- Your Page Content Here -->
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<form action="${cxt!}/tkstat/goDetailList">
+											<div class="row">
+												<div class="col-md-2">
+                          <div class="input-group date">
+                          	<div class="input-group-addon">
+                          		<i class="fa fa-calendar"></i>
+                          	</div>
+                          	<input id="datepicker" name="day" type="text" class="form-control">
+                          </div>
+												</div>
+												<div class="col-md-2">
+													<input id="page_pno" name="pno" type="hidden" value="${page.pno!}" />
+													<button id="search" type="submit" class="btn btn-default">查询</button>
+												</div>
+												<div class="col-md-8">
+													<div class="pull-right">
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr style="white-space:nowrap;">
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>日期</th>
+																<th>公众号</th>
+																<th>总粉</th>
+																<th>新增</th>
+																<th>活跃数</th>
+																<th>活跃率(%)</th>
+																<th>转链</th>
+																<th>精选pv</th>
+																<th>商城pv</th>
+																<th>搜索pv</th>
+																<th>商品pv</th>
+																<th>订单</th>
+																<th>金额</th>
+																<th>佣金</th>
+																<th>佣金率(%)</th>
+																<th>返利</th>
+																<th>返利率(%)</th>
+																<th>月化</th>
+																<th>月化(返)</th>
+																<th>结算订单</th>
+																<th>结算佣金</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td>${item.day!}</td>
+																	<td><a href="${cxt!}/tkstat/goDetailList?appid=${item.appid!}" target="_blank"><i class="fa fa-search"></i>${item.mpname!}</a></td>
+																	<td>${item.userall!}</td>
+																	<td class="text-red">${item.usernew!}</td>
+																	<td>${item.activeuv!}</td>
+																	<td>${(item.activerate*100)?string('0.0#')}</td>
+																	<td>${item.chaquanpv!}</td>
+																	<td>${item.tlinkpv!}</td>
+																	<td>${item.tshoppv!}</td>
+																	<td>${item.tsoupv!}</td>
+																	<td>${item.titempv!}</td>
+																	<td>${item.ordernew!}</td>
+																	<td>${item.newprice!}</td>
+																	<td><span class="label btn-danger">${item.newmoney!}</span></td>
+																	<td>${(item.newmoneyrate*100)?string('0.0#')}</td>
+																	<td class="text-red">${item.newjie?string('0.0#')}</td>
+																	<td>${(item.newjierate*100)?string('0.0#')}</td>
+                                  <td><span class="label btn-danger">${(item.arpu*30)?string('0.0#')}</span></td>
+                                  <td><span class="label btn-warning">${(item.arpu*(0.9-item.newjierate)*30)?string('0.0#')}</span></td>
+																	<td>${item.orderjie!}</td>
+																	<td>${item.jiemoney!}</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script>
+			var checkList = [];
+			var datepicker;
+			$(document).ready(function() {
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+        
+        // 时间
+        datepicker = $("#datepicker").datepicker({
+        		language: "zh-CN",
+        		autoclose: true,
+        		format: "yyyy-mm-dd"
+        })
+        datepicker.datepicker("setDate", '${day!}');
+
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${page.pcount!},
+					current: ${page.pno!},
+					backFn: function(n) {
+						$('#page_pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all')
+				var $checkbox = $('input[type="checkbox"].item')
+				i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+      
+		</script>
+	</body>
+
+</html>

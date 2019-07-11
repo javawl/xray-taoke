@@ -1,0 +1,407 @@
+package com.xray.taoke.act.service;
+
+import java.util.Map;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.exception.RtException;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.act.common.Constant;
+import com.xray.taoke.act.model.OrderInfo;
+import com.xray.taoke.act.model.UoUser;
+
+public class MpInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".mpinfo.";
+    private static final String material = config.get("redis.prefix") + ".material.";
+    private static final String active = config.get("redis.prefix") + ".active.";
+    private static final String proxy = config.get("redis.prefix") + ".proxy.";
+
+    public static MpInfoService instance = new MpInfoService();
+
+    public static void main(String[] args) {
+        // System.out.println(MpInfoService.instance.getJxContent(appid));
+        System.out.println(Constant.toMediaid("客服"));
+        System.out.println(Constant.toMediaid("查询"));
+        System.out.println(Constant.toMediaid("提现"));
+        System.out.println(Constant.toMediaid("9.9包邮"));
+        System.out.println(Constant.toMediaid("30封顶"));
+        System.out.println(Constant.toMediaid("今日上新"));
+        System.out.println(Constant.toMediaid("聚划算"));
+        System.out.println(Constant.toMediaid("教程"));
+        // System.out.println(MpInfoService.instance.getMpInfo("wx3088f1bd705dfd20"));
+        // System.out.println(cache.zrange(active + appid, 0, -1));
+        // System.out.println(MpInfoService.instance.getFollowContent("wx3088f1bd705dfd20"));
+        // System.out.println(MpInfoService.instance.getKefuContent("wx3088f1bd705dfd20"));
+    }
+
+    public String getSid(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "sid");
+        if (StringUtil.isEmpty(val))
+            throw new RtException(Constant.data_err, "empty sid from appid:" + appid);
+        return val;
+    }
+
+    public String getAppid(String sid) {
+        String key = prefix + sid;
+        String val = cache.hget(key, "appid");
+        if (StringUtil.isEmpty(val))
+            throw new RtException(Constant.data_err, "empty appid from sid:" + sid);
+        return val;
+    }
+
+    public String getAppSecret(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "appsecret");
+    }
+
+    public double getRate(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "rate");
+        return StringUtil.isEmpty(val) ? 0.6 : Double.parseDouble(val);
+    }
+
+    public String getUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "url");
+    }
+
+    public String getShopUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "shopurl");
+    }
+
+    public String getShortUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "shorturl");
+    }
+
+    public Map<String, String> getMpInfo(String appid) {
+        String key = prefix + appid;
+        Map<String, String> map = cache.hgetAll(key);
+        if (map.isEmpty())
+            throw new RtException(Constant.para_err, "empty mpinfo,appid:" + appid);
+        return map;
+    }
+
+    public String getKefuContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "wx_05682dbef5eeb0a8");
+    }
+
+    public String getJxContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "wx_1e61011294bafd3c");
+    }
+
+    public String getFollowContent(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("点击打开图片\n");
+        sb.append("          ↓\n");
+        sb.append("长按识别二维码\n");
+        sb.append("          ↓\n");
+        sb.append("添加客服免费找券");
+        return sb.toString();
+        // String key = material + appid;
+        // return cache.hget(key, "wx_8ef1af7edb8e7749");
+    }
+
+    public String getMaterialContent(String appid, String mediaid) {
+        String key = material + appid;
+        return cache.hget(key, mediaid);
+    }
+
+    public String getChaquanStart(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉ 正在为您查询优惠 ┉┉━\n");
+        sb.append("\n");
+        switch ((int) (Math.random() * 6)) {
+        case 1:
+            sb.append("[拥抱]回复\"查询\"，查看账户信息\n");
+            break;
+        case 2:
+            sb.append("[红包]回复\"提现\"，24小时内系统自动处理\n");
+            break;
+        default:
+            sb.append("[爱心]回复数字\"1\"，查看每天精选的优惠券\n");
+            break;
+        }
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        // sb.append("①点击我回复的优惠链接\n");
+        // sb.append("②一键复制回到淘宝立享优惠\n");
+        // sb.append("\n");
+        // sb.append("优惠券直接减，返利收货返[调皮]\n");
+        // sb.append("-------------------------------\n");
+        // sb.append("优惠券天天更新[礼物]\n").append(this.getShopUrl(appid));
+        return sb.toString();
+    }
+
+    private String getShopContent(String appid) {
+        return "[闪电]点链接，搜隐藏优惠券[闪电]\n" + this.getShortUrl(appid);
+    }
+
+    public String getAutoContent(String appid) {
+        String key = material + appid;
+        String val = cache.hget(key, "wx_66fd36e4588a2c91");
+        return StringUtil.isNotEmpty(val) ? val : "亲亲，需要咨询可以加客服哦";
+    }
+
+    public String getNetErrContent(String appid) {
+        return "亲亲，网络开小差了，攻城狮正在紧急抢救，请稍后再试";
+        // String key = material + appid;
+        // return cache.hget(key, "wx_1914f08d820407a2");
+    }
+
+    public String getParseErrContent(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("亲亲，宝宝无法解析这条链接[难过]\n");
+        sb.append("-------------------------------\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+        // String key = material + appid;
+        // return cache.hget(key, "wx_a3d24f595a4cd1b3");
+    }
+
+    public String getNoTaokeContent(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("抱歉，此商家很抠，没返利~\n");
+        sb.append("\n");
+        sb.append("建议亲爱的[爱心]，发\"买xx\"给我，如:买上衣，搜此类有券商品\n");
+        sb.append("-------------------------------\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+        // String key = material + appid;
+        // return cache.hget(key, "wx_a3d24f595a4cd1b3");
+    }
+
+    public String getDataErrContent(String appid) {
+        return "sorry[难过]，网络开小差了，攻城狮正在紧急抢救，请稍后再试";
+        // String key = material + appid;
+        // return cache.hget(key, "wx_efde1663649010df");
+    }
+
+    public String getTradeNotExist(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 绑 定 失 败┉┉┉━\n");
+        sb.append("[可怜]系统中无此订单\n");
+        sb.append("\n");
+        sb.append("[爱心]↓↓绑定失败原因如下↓↓[爱心]");
+        sb.append("\n");
+        sb.append("①有可能系统延迟，请稍等几分钟再试\n");
+        sb.append("②没有复制我回复的优惠信息下单\n");
+        sb.append("③使用红包或集分宝等抵扣\n");
+        sb.append("④复制链接加入购物车前未清空购物车原有商品\n");
+        sb.append("⑤使用了其他平台如：一淘");
+        return sb.toString();
+        // String key = material + appid;
+        // return cache.hget(key, "wx_9131ad0526485672");
+    }
+
+    public String getTradeSucc(String appid, UoUser user, OrderInfo data) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 绑 定 成 功 ┉┉┉━\n");
+        sb.append("商品名称：").append(data.getStr("itemtitle")).append("\n");
+        sb.append("订单编号：").append(data.getStr("tradeid")).append("\n");
+        sb.append("付费金额：").append(Constant.formatPrice(data.getDouble("tradeprice"))).append("\n");
+        sb.append("补贴金额：").append(Constant.formatPrice(data.getDouble("jiemoney"))).append("\n");
+        sb.append("\n");
+        sb.append("当前可提现金额：").append(Constant.formatPrice(user.getDouble("qbcash"))).append("\n");
+        sb.append("当前未收货金额：").append(Constant.formatPrice(user.getDouble("qbconfirm"))).append("\n");
+        sb.append("-------------------------------\n");
+        sb.append("确认收货后就能领取红包[红包]\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getTradeParentSucc(String appid, UoUser user) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 绑 定 成 功 ┉┉┉━\n");
+        sb.append("当前可提现金额：").append(Constant.formatPrice(user.getDouble("qbcash"))).append("\n");
+        sb.append("当前未收货金额：").append(Constant.formatPrice(user.getDouble("qbconfirm"))).append("\n");
+        sb.append("-------------------------------\n");
+        sb.append("确认收货后就能领取红包[红包]\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getTradeSucc(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 绑 定 成 功 ┉┉┉━\n");
+        sb.append("这笔订单已经绑定到您的账号上啦！\n");
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getTradeFail(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 绑 定 失 败  ┉┉┉━\n");
+        sb.append("订单不存在，请检查您的订单号是否有误\n");
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getCashNoMoney(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 申 请 失 败  ┉┉┉━\n");
+        sb.append("[委屈]亲亲，由于公众号平台限制，必须大于0.3园才能自动打钱哦~\n");
+        sb.append("-------------------------------\n");
+        sb.append("[拥抱]回复\"查询\"，查看账户信息\n");
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getCashing(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 申 请  成 功  ┉┉┉━\n");
+        sb.append("[微笑]亲亲，您已经申请了提现，到账后才可以再次申请哦~\n");
+        sb.append("-------------------------------\n");
+        sb.append("[拥抱]回复\"查询\"，查看账户信息\n");
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getCashSucc(String appid, UoUser user) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 申 请 成 功  ┉┉┉━\n");
+        sb.append("当前提现中金额：").append(Constant.formatPrice(user.getDouble("qbcashing"))).append("\n");
+        sb.append("\n");
+        sb.append("当前可提现金额：").append(Constant.formatPrice(user.getDouble("qbcash"))).append("\n");
+        sb.append("当前未收货金额：").append(Constant.formatPrice(user.getDouble("qbconfirm"))).append("\n");
+        sb.append("-------------------------------\n");
+        sb.append("[拥抱]回复\"查询\"，查看账户信息\n");
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getUserInfo(String appid, UoUser user) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("━┉┉┉ 会 员 信 息  ┉┉┉━\n");
+        sb.append("亲爱的会员~你好[爱心]\n");
+        sb.append("\n");
+        sb.append("累计总金额：").append(Constant.formatPrice(user.getDouble("qbtotal"))).append("\n");
+        sb.append("成功总订单：").append(user.getInt("ordersucc")).append("\n");
+        sb.append("\n");
+        sb.append("可提现金额：").append(Constant.formatPrice(user.getDouble("qbcash"))).append("\n");
+        sb.append("未收货金额：").append(Constant.formatPrice(user.getDouble("qbconfirm"))).append("\n");
+        if (user.getDouble("qbcashing") > 0) {
+            sb.append("提现中金额：").append(Constant.formatPrice(user.getDouble("qbcashing"))).append("[红包]\n");
+        }
+        if (user.getInt("proxystate") == 2) {
+            sb.append("推广人数：").append(user.getInt("proxypeople")).append("\n");
+            sb.append("可提现金额：").append(user.getDouble("qbproxycash")).append("\n");
+            sb.append("未收货金额：").append(user.getDouble("qbproxyconfirm")).append("\n");
+        }
+        sb.append("\n");
+        sb.append(getShopContent(appid));
+        return sb.toString();
+    }
+
+    public String getActiceJx(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("订阅成功![爱心]可以回复\"查询\"可查看账号信息");
+        return sb.toString();
+    }
+
+    public String getCancelJx(String appid) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("成功取消订阅！回复数字\"1\"即可重新订阅[爱心]~");
+        return sb.toString();
+    }
+
+    public void active(String appid, String openid) {
+        String key = active + appid;
+        cache.zadd(key, System.currentTimeMillis(), openid);
+    }
+
+    public void negative(String appid, String openid) {
+        String key = active + appid;
+        cache.zrem(key, openid);
+    }
+
+    public void incrChaquan(String appid, String openid) {
+        String key = active + appid + ".chaquan." + DateUtil.getToday();
+        cache.incr(key);
+    }
+
+    public void incrTsou(String sid) {
+        String key = active + sid + ".tsou." + DateUtil.getToday();
+        cache.incr(key);
+    }
+
+    public void incrTitem(String sid) {
+        String key = active + sid + ".titem." + DateUtil.getToday();
+        cache.incr(key);
+    }
+
+    public void incrTshop(String sid) {
+        String key = active + sid + ".tshop." + DateUtil.getToday();
+        cache.incr(key);
+    }
+
+    public void incrTlink(String sid) {
+        String key = active + sid + ".tlink." + DateUtil.getToday();
+        cache.incr(key);
+    }
+
+    public void addKefu(String appid, String openid) {
+        String key = active + "kefu." + appid;
+        cache.sadd(key, openid);
+    }
+
+    public void delKefu(String appid, String openid) {
+        String key = active + "kefu." + appid;
+        cache.srem(key, openid);
+    }
+
+    public boolean isKefu(String appid, String openid) {
+        String key = active + "kefu." + appid;
+        return cache.sismember(key, openid);
+    }
+
+    public void addWhiteJx(String appid, String openid) {
+        String key = active + "whitejx." + appid;
+        cache.sadd(key, openid);
+    }
+
+    public void addBlackJx(String appid, String openid) {
+        String key = active + "blackjx." + appid;
+        cache.sadd(key, openid);
+    }
+
+    public void delBlackJx(String appid, String openid) {
+        String key = active + "blackjx." + appid;
+        cache.srem(key, openid);
+    }
+
+    public boolean isBlackJx(String appid, String openid) {
+        String key = active + "blackjx." + appid;
+        return cache.sismember(key, openid);
+    }
+
+    public void addProxy(String appid, String openid, String proxycode) {
+        String key = proxy + appid;
+        cache.hset(key, openid, proxycode);
+    }
+
+    public String getProxy(String appid, String openid) {
+        String key = proxy + appid;
+        return cache.hget(key, openid);
+    }
+
+    public void delProxy(String appid, String openid) {
+        String key = proxy + appid;
+        cache.hdel(key, openid);
+    }
+}

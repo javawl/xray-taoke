@@ -1,0 +1,85 @@
+package com.xray.taoke.act.service;
+
+import java.util.Map;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.MD5Codec;
+
+public class MpInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".mpinfo.";
+    private static final String material = config.get("redis.prefix") + ".material.";
+    private static final String active = config.get("redis.prefix") + ".active.";
+
+    public static void main(String[] args) {
+        System.out.println(MD5Codec.encode("关注"));
+        System.out.println(MD5Codec.encode("客服"));
+        System.out.println(MD5Codec.encode("网络异常"));
+        System.out.println(MD5Codec.encode("无淘宝客"));
+        System.out.println(MD5Codec.encode("数据错误"));
+    }
+
+    public static MpInfoService instance = new MpInfoService();
+
+    public String getAppid(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "appid");
+    }
+
+    public String getAppSecret(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "appsecret");
+    }
+
+    public double getRate(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "rate");
+        return StringUtil.isEmpty(val) ? 0.6 : Double.parseDouble(val);
+    }
+
+    public Map<String, String> getMpInfo(String appid) {
+        String key = prefix + appid;
+        return cache.hgetAll(key);
+    }
+
+    public String getFollowContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "4c0a3ab48ef1af7edb8e77496363d457");
+    }
+
+    public String getKefuContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "e7dea7c405682dbef5eeb0a8138b8f0a");
+    }
+
+    public String getNetErrContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "44ed625b1914f08d820407a2b413dba6");
+    }
+
+    public String getNoTaokeContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "67b6aa80a3d24f595a4cd1b33d1854aa");
+    }
+
+    public String getDataErrContent(String appid) {
+        String key = material + appid;
+        return cache.hget(key, "1050991fefde1663649010df7726ce65");
+    }
+
+    public void active(String appid, String openid) {
+        String key = active + appid;
+        cache.zadd(key, System.currentTimeMillis(), openid);
+    }
+
+    public void negative(String appid, String openid) {
+        String key = active + appid;
+        cache.zrem(key, openid);
+    }
+
+}

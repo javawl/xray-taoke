@@ -1,0 +1,72 @@
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no, viewport-fit=cover">
+		<meta name="format-detection" content="telephone=no">
+		<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
+		<title>多多进宝</title>
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_pdd_6a8b0fbe1991c3d99593.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_common_6a043919c7319d23ee61.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/goods_9bc3681ce8ef0d954ba3.css" rel="stylesheet">
+	</head>
+
+	<body id="goods">
+		<div id="main">
+			<div id="goods-detail-conn" style="">
+				<div class="base-mask hidden" style="background-color: rgba(0, 0, 0, 0.85);">
+					<div class="group-share-main-title">
+						<p>扫码加客服专员</p>
+            <p><img src="./img/37b3ed4222dbbec1b3003de73ddc889e.jpeg"></p>
+					</div><!-- <span class="share-arrow"></span> -->
+				</div>
+				<div id="banner" class="goods-banner" style="height: 3.75rem;">
+					<div class="banner-background-ele" style="display: block;"><img src="./img/37b3ed4222dbbec1b3003de73ddc889e.jpeg"></div>
+				</div>
+				<div class="general-goods-wrapper">
+					<section id="g-base" class="">
+						<div>
+							<div class="g-price-group">
+                <span class="g-price-desc">券后价</span>
+                <span class="g-group-price"><i>￥</i>4.9<del>￥6.9</del></span>
+                <span class="g-coupon-amount">2元券剩余47000张</span></div>
+							<div class="g-earn-amount"><span class="g-earn-amount-detail">优惠券：5元</span></div>
+						</div>
+						<div class="g-name"><span>防滑拖鞋男女士室内家居浴室洗澡按摩厚底家用凉拖鞋夏春季一字拖</span></div><span class="g-sales">已拼15675件·2人拼单</span>
+					</section>
+					<div class="g-mall-service">
+						<div class="g-service-list"><span id="tkPwd" class="g-service-item">打开「手淘」即可「领取优惠券」并购买￥bC3nbwPxGix￥</span></div>
+					</div>
+					<div class="goods-bottom-bar">
+						<div class="btn-container">
+              <button id="tkBtn" class="self-buy-btn" style="background-color: #ff791d;"><span>领券下单</span><span>5元券</span></button>
+              <button id="flBtn" onclick="doFanli()" class="share-ear-btn"><span>获取奖金</span><span>返1.22元</span></button></div>
+						<div class="iphonex-extra-height"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+    
+    <script src="js/clipboard.min.js"></script>
+    <script>
+      var clipboard = new Clipboard('#tkBtn', {
+      		text: function () {
+      				return document.getElementById('tkPwd').innerText;
+      		}
+      });
+      
+      clipboard.on('success', function(e) {
+        document.getElementById('tkBtn').style = 'background-color: #3CB371;';
+        document.getElementById('tkBtn').innerHTML = '<span>复制成功</span><span>打开手淘即可领券</span>';
+      	e.clearSelection();
+      });
+      
+      function doFanli() {
+        
+      }
+      
+    </script>
+
+	</body>
+</html>

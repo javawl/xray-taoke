@@ -1,0 +1,93 @@
+package com.xray.taoke.admin.app;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.weixin.sdk.utils.HttpUtils;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.jdapi.JdItemService;
+import com.xray.taoke.jdapi.vo.JdItemVo;
+
+public class LinkWareJdApp extends AbstractApp {
+
+	public static void main(String[] args) throws Exception {
+		new LinkWareJdApp().run();
+	}
+
+	@Override
+	public void run() {
+		try {
+
+			String lwid = "j01";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "食品饮料"), false);// 女装
+			JdItemService.instance.setItemList(lwid, jd_list(1, "酒类"), true);// 内衣
+
+			lwid = "j00";
+			JdItemService.instance.setItemList(lwid, jd_list(1, ""), false);// 实时
+
+			lwid = "j04";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "鞋靴"), false);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "礼品箱包"), true);// 美妆
+
+			lwid = "j06";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "美妆护肤"), false);// 美妆
+
+			lwid = "j08";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "母婴"), false);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "玩具乐器"), true);// 美妆
+
+			lwid = "j10";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "家居日用"), false);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "家纺"), true);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "家庭清洁/纸品"), true);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "家具"), true);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "厨具"), true);// 美妆
+
+			lwid = "j11";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "运动户外"), false);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "服饰内衣"), true);// 美妆
+
+			lwid = "j12";
+			JdItemService.instance.setItemList(lwid, jd_list(1, "数码"), false);// 美妆
+			JdItemService.instance.setItemList(lwid, jd_list(1, "家用电器"), true);// 美妆
+
+			cache.set("LinkWareJdApp", DateUtil.now());
+			logger.info("runapp LinkWareJdApp");
+		} catch (Exception e) {
+			logger.error("errapp LinkWareJdApp", e);
+		}
+	}
+
+	public List<JdItemVo> jd_list(int page, String cname) throws Exception {
+		String url = "http://api-gw.haojingke.com/index.php/api/platform/openapi";
+		String data = "&source_type=1&type=goodslist&apikey=286fedb525ca9c79";
+		if (!StringUtil.isEmpty(cname)) {
+			data += "&cname=" + cname;
+		}
+		JSONObject obj = JSONObject.parseObject(HttpUtils.post(url, data));
+		JSONArray arr = obj.getJSONArray("data");
+		List<JdItemVo> list = new ArrayList<JdItemVo>();
+		for (int i = 0; i < arr.size(); i++) {
+			list.add(this.jd2item(arr.getJSONObject(i)));
+		}
+		return list;
+
+	}
+
+	public JdItemVo jd2item(JSONObject obj) {
+		JdItemVo data = new JdItemVo();
+		data.setItemid(obj.getString("skuId"));
+		data.setItemtitle(obj.getString("skuName"));
+		data.setItempic(obj.getString("picUrl"));
+		data.setCpmoney(obj.getDoubleValue("discount"));
+		data.setItemprice(obj.getDoubleValue("wlPrice"));
+		data.setCpurl(obj.getString("couponList"));
+		data.setTkmoney(obj.getDoubleValue("wlCommission"));
+		data.setTkrate(obj.getDoubleValue("wlCommissionShare") / 100);
+		data.setSales(obj.getIntValue("sales"));
+		return data;
+	}
+}

@@ -1,0 +1,145 @@
+package com.xray.taoke.admin.vo;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.common.Constant;
+
+public class TbGoodsVo {
+    private String itemid;
+    private String itemtitle;
+    private String itemshorttitle;
+    private double itemendprice;
+    private String itempic;
+    private int cpmoney;
+    private int cpstate;
+    private String tkpwd;
+    private double tkrate;
+    private double tkprice;
+    private double tkmoney;
+
+    private double jierate = 0;
+    private double jiemoney = 0;
+
+    public String getChaquanTitle() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("约返:").append(Constant.formatPrice(getJiemoney())).append(" ");
+        sb.append(" 优惠券:").append(cpmoney);
+        sb.append(" 付费价:").append(Constant.formatPrice(tkprice));
+        return sb.toString();
+    }
+
+    public String getShowtitle() {
+        return StringUtil.isNotEmpty(itemshorttitle) ? itemshorttitle : itemtitle;
+    }
+
+    public String getItemid() {
+        return itemid;
+    }
+
+    public void setItemid(String itemid) {
+        this.itemid = itemid;
+    }
+
+    public String getItemtitle() {
+        return itemtitle;
+    }
+
+    public void setItemtitle(String itemtitle) {
+        this.itemtitle = itemtitle;
+    }
+
+    public double getItemendprice() {
+        return itemendprice;
+    }
+
+    public void setItemendprice(double itemendprice) {
+        this.itemendprice = itemendprice;
+    }
+
+    public String getItempic() {
+        if (itempic.indexOf("430x430") <= 0)
+            return itempic + "_430x430q90.jpg";
+        return itempic;
+    }
+
+    public void setItempic(String itempic) {
+        this.itempic = itempic;
+    }
+
+    public int getCpmoney() {
+        return cpmoney;
+    }
+
+    public void setCpmoney(int cpmoney) {
+        this.cpmoney = cpmoney;
+    }
+
+    public int getCpstate() {
+        return cpstate;
+    }
+
+    public void setCpstate(int cpstate) {
+        this.cpstate = cpstate;
+    }
+
+    public String getTkpwd() {
+        return tkpwd;
+    }
+
+    public void setTkpwd(String tkpwd) {
+        this.tkpwd = tkpwd;
+    }
+
+    public double getTkrate() {
+        return tkrate;
+    }
+
+    public void setTkrate(double tkrate) {
+        this.tkrate = tkrate;
+    }
+
+    public String toJSONString() {
+        return JSONObject.toJSONString(this);
+    }
+
+    public double getTkmoney() {
+        return tkmoney;
+    }
+
+    public void setTkmoney(double tkmoney) {
+        this.tkmoney = tkmoney;
+    }
+
+    public double getTkprice() {
+        return tkprice;
+    }
+
+    public void setTkprice(double tkprice) {
+        this.tkprice = tkprice;
+    }
+
+    public String getItemshorttitle() {
+        return itemshorttitle;
+    }
+
+    public void setItemshorttitle(String itemshorttitle) {
+        this.itemshorttitle = itemshorttitle;
+    }
+
+    public double getJierate() {
+        return jierate;
+    }
+
+    public void setJierate(double jierate) {
+        if (jierate > this.jierate)
+            this.jierate = jierate;
+    }
+
+    public double getJiemoney() {
+        if (jiemoney > 0)
+            return jiemoney;
+        jiemoney = tkmoney * jierate;
+        return jiemoney;
+    }
+
+}

@@ -1,0 +1,16 @@
+package com.xray.taoke.admin.kit;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+
+public class Constant {
+    public static final Prop config = PropKit.use("config.properties");
+    public static final String db_dataSource = "db.dataSource.main";
+    
+    public static final String taoke_serverUrl = config.get("taoke.serverUrl");
+    public static final String taoke_appKey = config.get("taoke.appKey");
+    public static final String taoke_appSecret = config.get("taoke.appSecret");
+    public static final String taoke_pid = config.get("taoke.pid");
+    public static final String taoke_session = config.get("taoke.session");
+    
+}

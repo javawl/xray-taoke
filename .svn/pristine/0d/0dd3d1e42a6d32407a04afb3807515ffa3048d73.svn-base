@@ -1,0 +1,121 @@
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no, viewport-fit=cover">
+		<meta name="format-detection" content="telephone=no">
+		<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
+		<title>省钱好券,每天更新</title>
+    <link rel="shortcut icon" href="http://alicdn.ldpro.cn/img0/favicon.ico" />
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_pdd_6a8b0fbe1991c3d99593.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_common_6a043919c7319d23ee61.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/duo_subject_collection_899eb5451aa187057456.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<div id="main">
+			<div class="duo_subject_collection" id="duo_subject_collection">
+				<div class="header">
+					<div id="header-bg" class="header-bg header-bg-2"></div>
+					<div class="header-tab">
+						<div class="item active">
+							<p>省钱好券</p>
+						</div>
+					</div>
+					<div id="header-msg" class="header-msg header-msg-2"><span class="icon"></span><span id="header-icon-msg" class="icon-msg">更多宝贝</span></div>
+				</div>
+				<div class="subject-goods " id="subject-collection">
+					<div class="fixed-top-block" id="fixed-top-block">
+						<div class="iphonex-extra-height"></div>
+						<div class="block"></div>
+					</div>
+
+					<div class="subject-goods-list">
+						<div class="block-msg block-msg-2" style="visibility: hidden;"><span class="icon"></span><span class="icon-msg"></span><i></i></div>
+						<#list dataList as item>
+							<div class="unite-goods-item" onclick="goItem('${item.itemid!}')">
+								<div class="thump-img">
+									<img data-src="${item.itempic!}">
+								</div>
+								<div class="goods-detail-msg">
+									<div class="title">
+										<p>${item.showtitle!}</p>
+									</div>
+									<div class="amount"><span>原价：${item.itemendprice!}</span></div>
+									<div class="tags">
+										<div class="tag tag-earn">优惠券：${item.cpmoney!}</div>
+									</div>
+									<div class="message-index">
+										<div class="coupon-price"><span class="f-text">¥</span><span class="s-text">${item.tkprice!}</span></div>
+										<div class="share-btn subject-btn-2"><span class="earn">返&nbsp;</span><span class="earn-price-icon">¥<span>${(item.jiemoney)?string("0.00")}</span></span></div>
+									</div>
+								</div>
+							</div>
+						</#list>
+						<div class="show-more-btn">
+							<p onclick="goList();"><span>下一批</span><i></i></p>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+		<script>
+			window.onload = function() {
+				var subject_index = 0;
+				var scrollTop = window.scrollY;
+				var imgs = Array.from(document.querySelectorAll('img'));
+				var more_btn = document.getElementById('more-btn');
+
+				lazyLoad();
+				let canRun = true; //开关变量用于函数节流
+				window.addEventListener('scroll', throttle(lazyLoad, 500));
+
+				//定义懒加载函数 , 从上到下懒加载 , 从下到上也是懒加载
+				function lazyLoad() {
+					imgs.forEach((item, index) => {
+						if (scrollTop === 0 && item.dataset.src !== '' && pageY(item) < window.innerHeight + scrollTop) {
+							item.setAttribute('src', item.dataset.src)
+							item.setAttribute('data-src', '')
+						} else if (item.dataset.src !== '' && pageY(item) < window.innerHeight + scrollTop && pageY(item) > scrollTop) {
+							item.setAttribute('src', item.dataset.src)
+							item.setAttribute('data-src', '')
+						}
+					})
+				}
+        
+				function throttle(fun, delay) {
+					return function() {
+						if (!canRun) {
+							return
+						}
+						canRun = false;
+						setTimeout(() => {
+							scrollTop = window.scrollY;
+							fun(imgs);
+							canRun = true
+						}, delay)
+					}
+				}
+
+			}
+
+			function pageY(elem) {
+				return elem.offsetParent ? elem.offsetTop + pageY(elem.offsetParent) : elem.offsetTop;
+			}
+
+			function goItem(id) {
+				location.href = '${cxt!}/titem?id=' + id + '&sid=' + ${sid!} + '&eme=' + new Date().getTime();
+			}
+      
+      function goList() {
+        var page = ${page!} + 1;
+      	location.href = '${cxt!}/tlist?type=' + ${type!} + '&sid=' + ${sid!} + '&page=' + page + '&gie=' + new Date().getTime();
+      }
+      
+
+		</script>
+	</body>
+</html>

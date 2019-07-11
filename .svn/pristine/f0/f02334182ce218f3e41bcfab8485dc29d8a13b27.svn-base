@@ -1,0 +1,69 @@
+package com.xray.taoke.admin.service;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.StringUtil;
+
+public class ItemDetailService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".itemdetail.count.";
+
+    private static final String remind = config.get("redis.prefix") + ".itemdetail.remind.";
+
+    public static ItemDetailService instance = new ItemDetailService();
+
+    public int getCount(String seqid) {
+        String key = prefix + seqid;
+        String count = cache.get(key);
+        if (StringUtil.isEmpty(count))
+            return 0;
+        return Integer.parseInt(count);
+    }
+
+    public int incCount(String seqid) {
+        String key = prefix + seqid;
+        cache.incr(key);
+        String count = cache.get(key);
+        return Integer.parseInt(count);
+    }
+
+    public void delCount(String seqid) {
+        String key = prefix + seqid;
+        cache.delete(key);
+    }
+
+    public void setHaveRemind(String openid) {
+        String key = remind + openid;
+        cache.setex(key, openid, 1800);
+    }
+
+    public void setTradeid(String tradeid, String userid) {
+        String key = remind + ".tradeid." + userid;
+        cache.set(key, tradeid);
+    }
+
+    public String getTradeid(String userid) {
+        String key = remind + ".tradeid." + userid;
+        return cache.get(key);
+    }
+
+    public void delTradeid(String userid) {
+        String key = remind + ".tradeid." + userid;
+        cache.delete(key);
+    }
+
+    public String getHaveRemind(String openid) {
+        String key = remind + openid;
+        return cache.get(key);
+    }
+
+    public void delHaveRemind(String openid) {
+        String key = remind + openid;
+        cache.delete(key);
+    }
+
+}

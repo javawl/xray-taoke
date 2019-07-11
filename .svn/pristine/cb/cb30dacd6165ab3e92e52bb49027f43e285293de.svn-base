@@ -1,0 +1,128 @@
+package com.xray.taoke.admin.app;
+
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.List;
+
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.MpUser;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.admin.service.MpUserService;
+import com.xray.taoke.admin.utils.WxTmplmsgNewUtil;
+
+public class OrderJieApp extends AbstractApp implements Runnable {
+
+	@Override
+	public void run() {
+		try {
+			doRun();
+		} catch (Exception e) {
+			logger.error("errapp jieorder", e);
+		}
+	}
+
+	public void doRun() throws Exception {
+		UoUser user = null;
+		List<OrderInfo> list = OrderInfo.dao.queryDiffState(10);
+		logger.info("runapp jieorder,size:{}", list.size());
+
+		String userid = null;
+		String tradeid = null;
+		int tkstatus = 0;
+		double jiemoney = 0;
+		double qbcash = 0;
+		double qbconfirm = 0;
+
+		int verno = 0;
+
+		String appid = null;
+
+		for (OrderInfo data : list) {
+			userid = data.getStr("userid");
+			tradeid = data.getStr("tradeid");
+			tkstatus = data.getInt("tkstatus");
+
+			user = UoUser.dao.queryByUserId(userid);
+			verno = user.getInt("verno");
+			qbcash = user.getDouble("qbcash");
+			qbconfirm = user.getDouble("qbconfirm");
+
+			appid = data.getStr("appid");
+
+			switch (tkstatus) {
+			case 3:
+				jiemoney = data.getDouble("jiemoney");
+				OrderInfo.dao.updateJie(tradeid, verno);
+				UoUser.dao.updateJie(userid, jiemoney, verno);
+				logger.info("runapp,tkstatus:3,tradeid:{},qbcash:{},qbconfirm:{}", tradeid, qbcash, qbconfirm);
+
+				sendOrderJieTMG(appid, userid, jiemoney, data);
+
+				break;
+			case 13:
+				jiemoney = data.getDouble("jiemoney");
+				OrderInfo.dao.updateInvalid(tradeid, verno);
+				UoUser.dao.updateInvalid(userid, jiemoney, verno);
+				logger.info("runapp,tkstatus13,tradeid:{},qbcash:{},qbconfirm:{}", tradeid, qbcash, qbconfirm);
+				break;
+			case 14:
+				OrderInfo.dao.updateState(tradeid, 14);
+				logger.info("runapp,tkstatus:12,tradeid:{},qbcash:{},qbconfirm:{}", tradeid, qbcash, qbconfirm);
+				break;
+			default:
+				break;
+			}
+		}
+		OrderInfo.dao.updateEmpty();
+	}
+
+	private void sendOrderJieTMG(String appid, String userid, double jiemoney, OrderInfo data) {
+		String template_id = MpInfoService.instance.getMpInfo(appid).get("templateid");
+		if (StringUtil.isEmpty(template_id)) {
+			logger.error("runapp,OrderJieApp,no this template_id,appid:{}", appid);
+			return;
+		}
+
+		MpUser mpUser = MpUser.dao.queryByUserid(appid, userid);
+		if (mpUser == null) {
+			logger.error("runapp,OrderJieApp,no this user,appid:{},userid:{}", appid, userid);
+			return;
+		}
+
+		String openid = mpUser.getStr("openid");
+		long sys_time = System.currentTimeMillis();
+		double value = MpInfoService.instance.getActiveByOpenid(appid, openid);
+		BigDecimal bg = new BigDecimal(value + "");
+		ApiResult apiResult = null;
+		if ((sys_time - 172800000) < bg.longValue()) {
+			// 活跃
+			apiResult = wxApi.sendText(appid, openid, getConfirmSucc(appid, data, jiemoney));
+		} else {
+			String name = mpUser.getWxnameUTF8();
+			// 发模板消息
+			apiResult = WxTmplmsgNewUtil.sendTMG(appid, openid, template_id, name, jiemoney, data.getStr("itemtitle"));
+		}
+		if (apiResult.getErrorCode() != 0) {
+			logger.info("runapp,OrderJieApp,sendTextFail,appid:{},openid:{}", appid, openid);
+			return;
+		}
+		MpUserService.instance.addUserid(userid);
+	}
+
+	public String getConfirmSucc(String appid, OrderInfo data, double cashnum) {
+		DecimalFormat num_format = new DecimalFormat("0.0#");
+		StringBuffer sb = new StringBuffer();
+		sb.append("━┉┉┉ 收 货 成 功 ┉┉┉━\n");
+		sb.append("商品名称：").append(data.getStr("itemtitle")).append("\n");
+		sb.append("订单编号：").append(data.getStr("tradeid")).append("\n");
+		sb.append("付费金额：").append(num_format.format(data.getDouble("tradeprice"))).append("\n");
+		sb.append("补贴金额：").append(num_format.format(data.getDouble("jiemoney"))).append("\n");
+		sb.append("-------------------------------\n");
+		sb.append("回复【查询】查看账号信息");
+		return sb.toString();
+	}
+
+}

@@ -1,0 +1,100 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.filechooser.FileSystemView;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Enhancer;
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.model.UoUser;
+import com.xray.taoke.admin.service.MpInfoService;
+import com.xray.taoke.admin.service.WeixinApi;
+import com.xray.taoke.admin.utils.QrCodeUtil;
+
+@ControllerBind(controllerKey = "/uouser")
+public class UoUserController extends AbstractController {
+    static WeixinApi wxApi = Enhancer.enhance(WeixinApi.class);
+
+    public void goList() {
+        String orderby = getPara("orderby", "`seqid` desc");
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+        getCond(cond, "wxname", "");
+        setAttr("orderby", orderby);
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<UoUser> dataList = UoUser.dao.queryList(cond, getPageVo(orderby));
+        for (UoUser data : dataList) {
+            data.setMpname(map.get(data.getStr("bindappid")));
+        }
+
+        setAttr("dataList", dataList);
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        render("/template/pages/uouser/list.html");
+    }
+
+    public void goProxyList() {
+        Map<String, Object> cond = getCondAll();
+        getCond(cond, "appid", "");
+        getCond(cond, "wxname", "");
+        getCond(cond, "proxystate", "");
+        Map<String, String> map = MpInfoService.instance.getMpNames();
+        List<UoUser> dataList = UoUser.dao.queryList(cond, getPageVo("`seqid` desc"));
+        for (UoUser data : dataList) {
+            data.setMpname(map.get(data.getStr("bindappid")));
+        }
+        setAttr("dataList", dataList);
+        setAttr("mpList", MpInfo.dao.queryAllInuse());
+        render("/template/pages/uouser/proxy_list.html");
+    }
+
+    public void doEditRate() {
+        UoUser.dao.updateRate(getParaToLong("seqid"), Double.parseDouble(getPara("rate")), getPara("ratereason"), getUser().getName());
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEditProxystate() {
+        long seqid = getParaToLong("seqid");
+        int state = getParaToInt("state");
+        UoUser uoUser = UoUser.dao.findById(seqid);
+        if (state == 2) {
+            if (!StringUtil.isEmpty(uoUser.getStr("proxycode"))) {
+                renderRtn(RtnFactory.succ);
+                return;
+            }
+
+            double proxyrate = Double.parseDouble(getPara("proxyrate"));
+            String proxycode = getPara("invitecode");
+
+            String appid = uoUser.getStr("bindappid");
+            String url = wxApi.CreateQrcode(appid, proxycode);
+            String path = FileSystemView.getFileSystemView().getHomeDirectory() + File.separator + "testQrcode";
+            String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".jpg";
+            url = QrCodeUtil.createQrCode(url, path, fileName);
+            ApiResult apiResult = wxApi.uploadImg(appid, url);
+            String json = apiResult.getJson();
+            JSONObject jsonObject = JSONObject.parseObject(json);
+            String media_id = jsonObject.getString("media_id");
+            uoUser.set("proxystate", state);
+            uoUser.set("proxyrate", proxyrate);
+            uoUser.set("proxycode", proxycode);
+            uoUser.set("proxyqrid", media_id);
+            uoUser.update();
+
+        } else if (state == 3) {
+            uoUser.set("proxystate", state);
+            uoUser.update();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+}

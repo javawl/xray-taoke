@@ -1,0 +1,263 @@
+package com.xray.taoke.admin.service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.KeyStore;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.util.EntityUtils;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Before;
+import com.jfinal.kit.PathKit;
+import com.jfinal.weixin.sdk.api.AccessTokenApi;
+import com.jfinal.weixin.sdk.api.ApiConfig;
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.jfinal.weixin.sdk.api.CustomServiceApi;
+import com.jfinal.weixin.sdk.api.CustomServiceApi.Articles;
+import com.jfinal.weixin.sdk.api.MediaApi;
+import com.jfinal.weixin.sdk.api.MediaApi.MediaType;
+import com.jfinal.weixin.sdk.api.MenuApi;
+import com.jfinal.weixin.sdk.api.UserApi;
+import com.jfinal.weixin.sdk.kit.PaymentKit;
+import com.xray.act.jfinal.weixin.ApiInterceptor;
+import com.xray.act.jfinal.weixin.ApiProvider;
+import com.xray.act.service.AbstractService;
+import com.xray.taoke.admin.common.Constant;
+
+public class WeixinApi extends AbstractService implements ApiProvider {
+    public static final String webroot_path = PathKit.getWebRootPath().replaceAll("\\\\", "/");
+    private static WxAccessTokenCache accessTokenCache = new WxAccessTokenCache();
+    private static String transformer_url = "https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers";
+    private static CloseableHttpClient httpClient;// HTTP请求器
+    private static int socketTimeout = 10000;// 连接超时时间，默认10秒
+    private static int connectTimeout = 30000;// 传输超时时间，默认30秒
+    private static RequestConfig requestConfig;// 请求器的配置
+
+    @Override
+    public ApiConfig getApiConfig(String appid) {
+        Map<String, String> cond = MpInfoService.instance.getMpInfo(appid);
+        ApiConfig ac = new ApiConfig();
+        ac.setAppId(appid);
+        ac.setAppSecret(cond.get("appsecret"));
+        ac.setToken(cond.get("token"));
+        ac.setEncodingAesKey(cond.get("encodingaeskey"));
+        ApiConfigKit.putApiConfig(ac);
+        ApiConfigKit.setThreadLocalAppId(appid);
+        ApiConfigKit.setAccessTokenCache(accessTokenCache);
+        return ac;
+    }
+
+    @Before(ApiInterceptor.class)
+    public ApiResult geteMenu(String appid) {
+        ApiResult res = MenuApi.getMenu();
+        return res;
+    }
+
+    private JSONObject processMenu(JSONObject src, boolean isMuitl) {
+        JSONObject obj = new JSONObject();
+        obj.put("name", src.getString("name"));
+        if (isMuitl)
+            return obj;
+
+        obj.put("type", src.getString("type"));
+        if ("click".equals(src.getString("type"))) {
+            obj.put("key", src.getString("content"));
+        } else if ("view".equals(src.getString("type"))) {
+            obj.put("url", src.getString("content"));
+        }
+        return obj;
+    }
+
+    @Before(ApiInterceptor.class)
+    public ApiResult createMenu(String appid, String content) {
+        JSONArray src = JSONObject.parseArray(content);
+
+        JSONArray butArr = new JSONArray();
+        for (int i = 0; i < src.size(); i++) {
+            JSONObject obj = src.getJSONObject(i);
+            JSONArray arr = obj.getJSONArray("subList");
+
+            if (arr.size() <= 0) {
+                butArr.add(processMenu(obj, false));
+                continue;
+            }
+
+            JSONArray subArr = new JSONArray();
+            for (int j = 0; j < arr.size(); j++) {
+                subArr.add(processMenu(arr.getJSONObject(i), false));
+            }
+            JSONObject but = processMenu(obj, true);
+            but.put("sub_button", subArr);
+            butArr.add(but);
+        }
+
+        JSONObject butObj = new JSONObject();
+        butObj.put("button", butArr);
+        System.out.println(AccessTokenApi.getAccessTokenStr());
+        ApiResult res = MenuApi.createMenu(butObj.toJSONString());
+        if (!res.isSucceed()) {
+            logger.error("err createMenu,appid:{},code:{},msg:{}", appid, res.getErrorCode(), res.getErrorMsg());
+        } else {
+            logger.info("createMenu,appid:{}", appid);
+        }
+        return res;
+    }
+
+    @Before(ApiInterceptor.class)
+    public ApiResult addMaterial(String appid, JSONObject obj) {
+        String url = obj.getString("content");
+        String path = Constant.getImgUrl() + System.currentTimeMillis() + ".png";
+        downloadPicture(url, path);
+        File file = new File(path);
+        ApiResult res = MediaApi.addMaterial(file, MediaType.IMAGE);
+        return res;
+    }
+
+    private static void downloadPicture(String urlList, String path) {
+        URL url = null;
+        try {
+            url = new URL(urlList);
+            DataInputStream dataInputStream = new DataInputStream(url.openStream());
+
+            FileOutputStream fileOutputStream = new FileOutputStream(new File(path));
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while ((length = dataInputStream.read(buffer)) > 0) {
+                output.write(buffer, 0, length);
+            }
+            fileOutputStream.write(output.toByteArray());
+            dataInputStream.close();
+            fileOutputStream.close();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Before(ApiInterceptor.class)
+    public ApiResult queryByOpenid(String appid, String openid) {
+        ApiResult res = UserApi.getUserInfo(openid);
+        return res;
+    }
+
+    @Before(ApiInterceptor.class)
+    public ApiResult sendText(String appid, String openid, String content) {
+        ApiResult res = CustomServiceApi.sendText(openid, content);
+        return res;
+    }
+
+    public void transfers(String appid, String openid, String amount, String ip) {
+        // 商戶ID
+        String mch_id = Constant.getMchid("");
+        // 证书路径
+        String certPath = Constant.getPath("");
+        try {
+            initCert(mch_id, certPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("mch_appid", appid);
+        params.put("mchid", mch_id);
+        params.put("openid", openid);
+        params.put("nonce_str", System.currentTimeMillis() + "");
+        params.put("amount", amount);
+        params.put("partner_trade_no", getOrderIdByTime());
+        params.put("check_name", "NO_CHECK");
+        params.put("spbill_create_ip", ip);
+        params.put("desc", "返利红包");
+        String paternerKey = Constant.getApiPay("");
+        String sign = PaymentKit.createSign(params, paternerKey);
+        params.put("sign", sign);
+
+        HttpPost httpPost = new HttpPost(transformer_url);
+        StringEntity postEntity = new StringEntity(PaymentKit.toXml(params), "UTF-8");
+
+        httpPost.addHeader("Content-Type", "text/xml");
+        httpPost.setEntity(postEntity);
+        requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout).setConnectTimeout(connectTimeout).build();
+        // 设置请求器的配置
+        httpPost.setConfig(requestConfig);
+        String result = "";
+        try {
+            HttpResponse response = null;
+            try {
+                response = httpClient.execute(httpPost);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            HttpEntity entity = response.getEntity();
+            try {
+                result = EntityUtils.toString(entity, "UTF-8");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } finally {
+            httpPost.abort();
+        }
+        System.out.println(result);
+    }
+
+    public static String getOrderIdByTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+        String newDate = sdf.format(new Date());
+        String result = "";
+        Random random = new Random();
+        for (int i = 0; i < 3; i++) {
+            result += random.nextInt(10);
+        }
+        return newDate + result;
+    }
+
+    private static void initCert(String mchId, String certPath) throws Exception {
+        String key = mchId;
+        String path = certPath;
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        FileInputStream instream = new FileInputStream(new File(path));
+        try {
+            keyStore.load(instream, key.toCharArray());
+        } finally {
+            instream.close();
+        }
+        SSLContext sslcontext = SSLContexts.custom().loadKeyMaterial(keyStore, key.toCharArray()).build();
+        @SuppressWarnings("deprecation")
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext, new String[] { "TLSv1" }, null, SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+        httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+    }
+
+    @Before(ApiInterceptor.class)
+    public ApiResult sendKeFu(String appid, String openid, List<Articles> list) {
+        ApiResult res = CustomServiceApi.sendNews(openid, list);
+        return res;
+    }
+
+}

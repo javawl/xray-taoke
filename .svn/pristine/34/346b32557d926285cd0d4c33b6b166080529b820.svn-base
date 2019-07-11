@@ -1,0 +1,87 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.admin.model.UoUser;
+
+public class OrderProxyApp extends AbstractApp {
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp pidexorder", e);
+        }
+    }
+
+    public void doRun() {
+        List<OrderInfo> list = OrderInfo.dao.queryProxy();
+        logger.info("runapp OrderProxyApp,size:{}", list.size());
+        for (OrderInfo data : list) {
+            updateProxy(data);
+        }
+    }
+
+    private void updateProxy(OrderInfo data) {
+        String userid = data.getStr("userid");
+
+        UoUser user = UoUser.dao.queryByUserId(userid);
+        if (user == null) {
+            logger.error("errapp,updateProxy,none user,userid:{}", userid);
+            return;
+        }
+        String proxyby = user.getStr("proxyby");
+        if (StringUtil.isEmpty(proxyby)) {
+            OrderInfo.dao.updateProxyState(data.getStr("tradeid"), -1);
+            return;
+        }
+        
+        UoUser uoUser = UoUser.dao.queryByUserId(proxyby);
+        double proxyrate = uoUser.getDouble("proxyrate");
+        
+        double proxymoney = data.getDouble("proxymoney");
+        double traderate = data.getDouble("traderate");
+        double trademoney = data.getDouble("trademoney");
+        
+        
+        double order_proxymoney = (proxyrate-traderate)*trademoney;
+        String tradeid = data.getStr("tradeid");
+        
+        switch (data.getInt("tkstatus")) {
+        case 3:
+        	if(proxymoney!=0) {
+        		UoUser.dao.updateProxyJie(userid, order_proxymoney,order_proxymoney);
+        	}else {
+        		OrderInfo.dao.updateProxyrate(proxyrate, order_proxymoney, 3, tradeid);
+        		UoUser.dao.updateProxyJie(userid, order_proxymoney,0);
+        	}
+            // 有值   扣掉未收货金额 加可提现金额
+            // 无值  加可提现金额
+            break;
+
+        case 12:
+            // TODO 加未收货金额
+        	if(proxymoney!=0)
+        		return;
+        	OrderInfo.dao.updateProxyrate(proxyrate, order_proxymoney, 12, tradeid);
+        	UoUser.dao.updateProxyPay(userid, order_proxymoney);
+        	//wxApi.sendText(appid, openid, MpInfoService.instance.getTradeSucc(appid,UoUser.dao.queryByUserId(proxyby), OrderInfo.dao.queryByTradeid(tradeid)));
+            break;
+
+        case 13:
+         	if(proxymoney!=0)
+        		return;
+            // TODO 扣掉未收货金额
+        	OrderInfo.dao.updateProxyrate(proxyrate, order_proxymoney, 13, tradeid);
+        	UoUser.dao.updateProxyShiXiao(userid, order_proxymoney);
+            break;
+
+        default:
+            break;
+        }
+
+    }
+}

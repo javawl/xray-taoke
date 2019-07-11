@@ -1,0 +1,160 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<meta content="yes" name="apple-mobile-web-app-capable">
+		<meta content="black" name="apple-mobile-web-app-status-bar-style">
+		<meta content="telephone=no" name="format-detection">
+		<meta content="email=no" name="format-detection">
+		<title>搜隐藏优惠券</title>
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/react_common_ac60368b18be5881bffa.css" rel="stylesheet">
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/duo_cms_mall_04ac71915602372edc45.css" rel="stylesheet">
+    <style>
+      .tab-item {width:0.29rem;margin-left:0.16rem}
+    </style>
+	</head>
+
+	<body id="duo-cms-mall">
+		<div id="main">
+			<div class="earn-money-container">
+				<div class="new-bottom-bar">
+					<span class="gaussian-blur"></span>
+					<div class="iphonex-extra-height"></div>
+				</div>
+				<div class="cms-top-v2">
+					<div class="search-view-btn-v2">
+						<div onclick="$('#sq-search-view').show();return false;" class="search-text-conn"><span></span>
+							<p>${keyword!'搜索商品'}</p>
+						</div>
+					</div>
+					<div id="top-tabs-container-v2">
+					</div>
+					<div id="sq-base-mask" onclick="hideCateList();" class="hidden base-mask">
+						<div id="sq-mask-tab-box" class="mask-tab-box">
+							<div class="title"><span>全部分类</span><span onclick="hideCateList()"></span></div>
+						</div>
+					</div>
+				</div>
+
+				<div id="goods-list-container">
+
+					<li>
+						<div id="sq-item-list" class="react-base-list-wrapper">
+						</div>
+					</li>
+				</div>
+        
+        <div id="sq-search-view" class="search-view-conn" style="display: none;"><div class="search-view-input-conn"><div class=" search-input-conn"><form action="${cxt!}/tsou"><input id="sq-keyword" name="keyword" type="search" placeholder="搜索全部" value=""><input type="hidden" name="sid" value="${sid!}"></form><div onclick="$('#sq-search-view').hide();" class="clear-icon" role="button"></div></div><button onclick="doSou('');" class="search-btn">搜索</button></div><div class="history-board"><div class="search-main-view"><div class="search-recent-title-view">热门搜索</div><div class="search-recent-list-view"><span onclick="doSou('女装');" role="button" class="recent-history-list">女装</span><span onclick="doSou('手机');"  role="button" class="recent-history-list">手机</span><span onclick="doSou('连衣裙');"  role="button" class="recent-history-list">连衣裙</span><span onclick="doSou('拖鞋');"  role="button" class="recent-history-list">拖鞋</span><span onclick="doSou('女鞋');"  role="button" class="recent-history-list">女鞋</span><span onclick="doSou('口红');"  role="button" class="recent-history-list">口红</span><span onclick="doSou('男装');"  role="button" class="recent-history-list">男装</span><span onclick="doSou('零食');"  role="button" class="recent-history-list">零食</span><span onclick="doSou('童装');"  role="button" class="recent-history-list">童装</span><span onclick="doSou('袜子');"  role="button" class="recent-history-list">袜子</span></div></div></div></div>
+			</div>
+		</div>
+    
+    <div>
+      <style>
+        .pin-spinner-2{display:none;position:fixed;width:.66rem;height:.66rem;top:35%;margin:0 auto;left:0;right:0;z-index:999999999}.ps-inner-box{width:100%;height:100%}.ps-rotate-img{width:.25rem;height:.25rem;margin:auto;left:0;right:0;top:0;bottom:0;animation:rotateImg 2.5s linear infinite;-webkit-animation:rotateImg 2.5s linear infinite;z-index:9999999999;position:absolute}.ps-rotate-msg{width:100%;font-size:.15rem;text-align:center;color:#fff;position:relative;bottom:0;display:none}.ps-background{display:none;position:absolute;width:100%;height:100%;opacity:.7;background-color:#000;border-radius:.09rem}.pin-spinner-2{display:block;top:50%;margin-top:-.66rem;width:.66rem;height:.66rem}.pin-spinner-2.hasMessageText{margin-top:-.82rem;width:1rem;height:1rem}.hasMessageText .ps-rotate-img{bottom:.43rem;top:.18rem;width:.36rem;height:.36rem}.hasMessageText .ps-rotate-msg{display:block;bottom:.32rem}@keyframes rotateImg{0%{transform:rotateZ(0deg)}50%{transform:rotateZ(180deg)}100%{transform:rotateZ(360deg)}}@-webkit-keyframes rotateImg{0%{-webkit-transform:rotateZ(0deg)}50%{-webkit-transform:rotateZ(180deg)}100%{-webkit-transform:rotateZ(360deg)}}@media only screen and (device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3){.pin-spinner-2{margin-top:-.82rem}}
+      </style>
+      <div id="pin-spinner" class="pin-spinner-2">
+        <div id="ps-background" class="ps-background" style="display: block;"></div>
+        <div class="ps-inner-box">
+            <img id="imgInit" class="ps-rotate-img" src="data:image/png;base64,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">
+        </div>
+        <div id="msgInit" class="ps-rotate-msg"></div>
+      </div>
+    </div>
+    
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+		<script>
+      var page = 1;
+      var canLoad = true;
+      var canRun = true;
+      
+      function showCateList() {
+        $('#sq-base-mask').addClass('show');
+        $('#sq-base-mask').removeClass('hidden');
+        $('#sq-mask-tab-box').addClass('show');
+      }
+      function hideCateList() {
+        $('#sq-base-mask').removeClass('show');
+        $('#sq-base-mask').addClass('hidden');
+        $('#sq-mask-tab-box').removeClass('show');
+      }
+      function getItemList(append) {
+        $('#pin-spinner').show();
+        $.ajax({
+          url: '${cxt!}/linkitem/goListByProxy?page='+page,
+          success: function(rtn) {
+            ++page;
+            $('#pin-spinner').hide();
+            if(append) {
+              if(rtn == '') {
+                canLoad = false;
+              } else {
+                $('#sq-item-list').append(rtn);
+              }
+            } else {
+              canLoad = true;
+              $('#sq-item-list').html(rtn);
+              $('html , body').animate({scrollTop: 0},'slow');
+            }
+          }
+        })
+      }
+      
+      $(function() {
+        $('.tab-item').click(function() {
+          $('.tab-item').removeClass('active');
+          $(this).toggleClass('active');
+          
+          lid = $(this).attr('data-lid');
+          page = 1;
+          getItemList(false);
+        })
+        $('.item').click(function() {
+        	page = 1;
+        	getItemList(false);
+        })
+        $('.variety-item').click(function() {
+        	page = 1;
+        	getItemList(false);
+        })
+        
+        $(window).scroll(throttle(loadItemList, 1000));
+        getItemList(false);
+      })
+      
+      function loadItemList() {
+        if(!canLoad) return;
+        if (($(window).height() + $(window).scrollTop() + 200) >= $(document).height()) {
+          getItemList(true);
+        }
+      }
+      function throttle(fun, delay) {
+      	return function() {
+      		if (!canRun) {
+      			return
+      		}
+      		canRun = false;
+      		setTimeout(function () {
+      			scrollTop = window.scrollY;
+      			fun();
+      			canRun = true
+      		}, delay)
+      	}
+      }
+      function goItem(tid,seqid) {
+        <#if pkey??>
+        location.href='${cxt!}/linkitem/goTobjAct?seqid='+seqid+'&tid='+tid+'&pkey=${pkey!}&xt='+new Date().getTime();
+        <#else>
+        location.href='${cxt!}/linkitem/goTobjAct?seqid='+seqid+'&tid='+tid+'&xt='+new Date().getTime();
+        </#if>
+      }
+      function doSou(keyword) {
+        if(keyword == '') 
+          keyword = $('#sq-keyword').val();
+        if(keyword == '') 
+          return;
+      	location.href='${cxt!}/linkitem/golinkByHDK?keyword='+keyword+'&yc='+new Date().getTime()+"&pkey=${pkey!}";
+      }
+		</script>
+
+	</body>
+</html>

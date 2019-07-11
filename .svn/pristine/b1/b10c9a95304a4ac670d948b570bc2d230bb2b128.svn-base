@@ -1,0 +1,56 @@
+package com.xray.taoke.admin.app;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.Cashinfo;
+import com.xray.taoke.admin.service.CashService;
+
+public class NewCashRemindApp extends AbstractApp implements Runnable {
+    private List<Cashinfo> list;
+
+    public NewCashRemindApp(List<Cashinfo> list) {
+        this.list = list;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun(list);
+        } catch (Exception e) {
+            logger.error("errapp NewCashRemindApp,list,size:{}" + list.size(), e);
+        }
+    }
+
+    public void doRun(List<Cashinfo> list) throws Exception {
+        String name = "xuruibo";
+        String openid = com.xray.taoke.admin.common.Constant.getOpenid(name);
+        if (list.size() == 0) {
+            logger.info("NewCashRemindApp,pepCashMsg,list.size:0");
+            CashService.instance.delHaveRemind(openid);
+            return;
+        }
+        String today = DateUtil.getToday();
+        long sys_time = System.currentTimeMillis();
+        SimpleDateFormat formate = new SimpleDateFormat("yyyy-mm-dd HH:ss:mm");
+        today = today + " 08:00:00";
+        long time = formate.parse(today).getTime();
+        if (sys_time <= time)
+            return;
+        String str = CashService.instance.getHaveRemind(openid);
+        if (StringUtil.isNotEmpty(str))
+            return;
+
+        String url = "http://wxadmin.liangdianpro.com/wxmp_admin/ionode/doCashTmg?size=" + list.size();
+        String data = com.jfinal.weixin.sdk.utils.HttpUtils.get(url);
+        int code = JSONObject.parseObject(data).getIntValue("code");
+        if (code == -1)
+            return;
+        CashService.instance.setHaveRemind(openid);
+
+    }
+
+}

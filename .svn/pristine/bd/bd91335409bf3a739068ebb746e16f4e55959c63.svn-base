@@ -1,0 +1,140 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<meta content="yes" name="apple-mobile-web-app-capable">
+		<meta content="black" name="apple-mobile-web-app-status-bar-style">
+		<meta content="telephone=no" name="format-detection">
+		<meta content="email=no" name="format-detection">
+		<title>搜优惠券</title>
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/react_common_ac60368b18be5881bffa.css" rel="stylesheet">
+		<link href="https://cdn.yangkeduo.com/avg_assets/css/duo_cms_mall_04ac71915602372edc45.css" rel="stylesheet">
+    <style>
+      .tab-item {margin-left:0.16rem}
+    </style>
+	</head>
+
+	<body id="duo-cms-mall">
+		<div id="main">
+			<div class="earn-money-container">
+				<div class="new-bottom-bar">
+					<span class="gaussian-blur"></span>
+					<div class="iphonex-extra-height"></div>
+				</div>
+				<div class="cms-top-v2">
+					<div class="search-view-btn-v2">
+						<div onclick="$('#sq-search-view').show();return false;" class="search-text-conn"><span></span>
+							<p style="color: #000000;">${word!'搜优惠券，如：榨汁机'}</p>
+						</div>
+					</div>
+          <div id="top-tabs-container-v2" style="padding-right: 0;">
+          	<div class="top-tabs-scroll"><span data-lwid="i42" class="tab-item">9.9包邮</span><span data-lwid="i43" class="tab-item">30封顶</span><span data-lwid="i44" class="tab-item">聚划算</span><span data-lwid="i45" class="tab-item">淘抢购</span><span data-lwid="i48" class="tab-item">超大牌</span><span data-lwid="i47" class="tab-item">预告单</span></div>
+          </div>
+				</div>
+
+				<div id="goods-list-container">
+					<li>
+						<div id="sq-item-list" class="react-base-list-wrapper">
+						</div>
+					</li>
+				</div>
+        <div id="sq-search-view" class="search-view-conn" style="display: none;"><div class="search-view-input-conn"><div class="search-input-conn"><input id="sq-keyword" name="word" type="search" placeholder="搜优惠券" value="${word!}"><div onclick="$('#sq-search-view').hide();" class="clear-icon" role="button"></div></div><button onclick="doSearch();" class="search-btn">搜索</button></div><div class="history-board"><div class="search-main-view"><div class="search-recent-title-view">热门搜索</div><div class="search-recent-list-view"><#list wordList as item><span onclick="doSearch('${item.keyword!}');" class="recent-history-list">${item.keyword!}</span></#list></div></div></div></div>
+        
+        <p id="token" style="display: none;"></p>
+      </div>
+		</div>
+    
+    <style>
+      .w-error-popup-white{ width: 100%; height: 100%; z-index: 999; position: fixed; left: 0; top:0;}
+      .w-error-popup-white .w-error-back{ width: 100%; height: 100%; background-color: rgba(0,0,0,.8); position:fixed;  z-index: 1000; left: 0; top:0;}
+      .w-error-popup-white .w-error-inner{ background-color: #fff; width: 90%; top: 30%; left: 50%; margin-left: -45%; text-align: center; border-radius: 20px; padding:  0; z-index: 1001; position: relative;}
+      .w-error-popup-white .w-error-inner h4{ font-size: 20px; color: #333; padding: 16px 0; margin: 0 32px; border-bottom: 1px solid #e5e9ec; font-weight: normal; }
+      .w-error-popup-white .w-error-inner .w-error-content{ color: #333; font-size: 16px; line-height: 15px; padding: 32px; height: 270px; overflow-y:auto; overflow-x:hidden; text-align: left;  }
+    </style>
+    <div id="w-alert-popup-white" onclick="$('#w-alert-popup-white').hide();" style="display: none;" class="w-error-popup-white">
+      <div class="w-error-back"></div>
+      <div class="w-error-inner">
+        <div class="w-error-content" style="height: auto; font-size: 20px;text-align: center;">
+        </div>
+      </div>
+    </div>
+    
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/clipboard.js/1.7.1/clipboard.min.js"></script>
+		<script>
+      var pno = 1;
+      var lwid = '${lwid!}';
+      var canLoad = true;
+      var canRun = true;
+      
+      $(function() {
+      	$(window).scroll(throttle(loadItemList, 1000));
+      	getItemList(false);
+        
+        $('.tab-item').click(function() {
+        	lwid = $(this).attr('data-lwid');
+        	console.log(lwid);
+        	pno = 1;
+          canLoad = true;
+          canRun = true;
+        	getItemList(false);
+        });
+      })
+      
+      function goItem(itemid) {
+      	  <#if pkey??>
+        location.href='${cxt!}/linkitem/goTobjAct?itemid='+itemid+'&pkey=${pkey!}&xt='+new Date().getTime()+"&lid="+lwid;;
+        <#else>
+        location.href='${cxt!}/linkitem/goTobjAct?itemid='+itemid+'&xt='+new Date().getTime()+"&lid="+lwid;;
+        </#if>
+      }
+      
+      function doSearch(word) {
+        var word = word ? word : $('#sq-keyword').val();
+        window.location.href='${cxt!}/linkitem/golink?pkey=${pkey!}&word='+word+"&lid="+lwid;
+      }
+      
+      function getItemList(append) {
+        $.ajax({
+          url: '${cxt!}/linkitem/goListByProxy?lwid='+lwid+'&pkey=${pkey!}&pno='+pno,
+          success: function(rtn) {
+            ++pno;
+            if(append) {
+              if(rtn == '') {
+                canLoad = false;
+              } else {
+                $('#sq-item-list').append(rtn);
+              }
+            } else {
+              canLoad = true;
+              $('#sq-item-list').html(rtn);
+              $('html , body').animate({scrollTop: 0},'slow');
+            }
+          }
+        })
+      }
+      
+      function loadItemList() {
+        if(!canLoad) return;
+        if (($(window).height() + $(window).scrollTop() + 200) >= $(document).height()) {
+          getItemList(true);
+        }
+      }
+      
+      function throttle(fun, delay) {
+      	return function() {
+      		if (!canRun) {
+      			return
+      		}
+      		canRun = false;
+      		setTimeout(function () {
+      			scrollTop = window.scrollY;
+      			fun();
+      			canRun = true
+      		}, delay)
+      	}
+      }
+      
+		</script>
+	</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">		<meta name="format-detection" content="telephone=on">
+		<link href="http://szqz.honeynice.com/m2c/2/style/m-reset.css" rel="stylesheet">
+		<link href="http://szqz.honeynice.com/m2c/style/global1803.css" rel="stylesheet">
+		<link href="http://szqz.honeynice.com/m2c/2/style/topic-style.css" rel="stylesheet">
+		<title>活动资讯</title>
+	</head>
+  <style>
+   .twoline {
+     text-overflow: -o-ellipsis-lastline;overflow: hidden;text-overflow: ellipsis;display: -webkit-box;-webkit-line-clamp: 2;line-clamp: 2;-webkit-box-orient: vertical;
+   }
+  </style>	
+	<body class="bg w">
+
+		<div class="top-height">
+			<div class="top-fixed">
+				<!--头部导航-->
+				<header class="top">
+					<div class="main bg-purple">
+						<p class="ti icon-ti"><i class="iconfont icon-ti-hdzx"></i></p>
+					</div>
+				</header>
+				<!--头部导航EDN-->
+			</div>
+		</div>
+
+		<div class="infomation-page no-classify">
+			<div class="main-wrap">
+				<div class="ip-classify bg-purple" style="border-bottom-left-radius: 5rem;">
+					<div class="classify-tab-fixed">
+						<div class="bg-purple main">
+							<ul class="classify-tab">
+								<li class="tab-item sel" tree=""><a>全部资讯</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="list-box">
+					<ul class="list-box-cont" id="news-list">
+
+					</ul>
+				</div>
+			</div>
+		</div>
+
+	</body>
+	    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+      var pno = 1;
+      var canLoad = true;
+      var canRun = true;
+      
+      $(function() {
+      	$(window).scroll(throttle(loadItemList, 1000));
+      	getItemList(false);
+        
+        $('.tab-item').click(function() {
+        	lwid = $(this).attr('data-lwid');
+        	pno = 1;
+          canLoad = true;
+          canRun = true;
+        	getItemList(false);
+        });
+      })
+      
+      
+      
+      function getItemList(append) {
+        $.ajax({
+          url: '${cxt!}/lvList?pno='+pno,
+          success: function(rtn) {
+            ++pno;
+            if(append) {
+              if(rtn == '') {
+                canLoad = false;
+              } else {
+                $('#news-list').append(rtn);
+              }
+            } else {
+              canLoad = true;
+              $('#news-list').html(rtn);
+              $('html , body').animate({scrollTop: 0},'slow');
+            }
+          }
+        })
+      }
+      
+      function loadItemList() {
+        if(!canLoad) return;
+        if (($(window).height() + $(window).scrollTop() + 200) >= $(document).height()) {
+          getItemList(true);
+        }
+      }
+      
+      function throttle(fun, delay) {
+      	return function() {
+      		if (!canRun) {
+      			return
+      		}
+      		canRun = false;
+      		setTimeout(function () {
+      			scrollTop = window.scrollY;
+      			fun();
+      			canRun = true
+      		}, delay)
+      	}
+      }
+      
+		</script>
+</html>

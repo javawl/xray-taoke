@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>淘宝搜券 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>淘宝搜券</li>
+							<li class="active">淘宝搜券</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+
+										<form action="${cxt!}/linkinfo/goSouquan">
+											<div class="row">
+												<div class="col-md-2">
+													<input name="word" id="word" type="text" class="form-control" value="${word!}" placeholder="关键字" />
+												</div>
+
+												<div class="col-md-4">
+													<input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+													<input id="orderby" name="orderby" type="hidden" value="${orderby!}" />
+													<button id="search" type="submit" style="display: none;" class="btn btn-default">查询</button>
+													<a href="javascript:;" class="btn btn-primary" target="_blank" onclick="doHaoDanku()">好单库</a>
+													<a href="javascript:;" class="btn btn-danger" target="_blank" onclick="doAliMama()">阿里妈妈</a>
+													<a href="javascript:;" class="btn btn-warning" target="_blank" onclick="showChaquan()">查券</a>
+													<a href="javascript:;" class="btn btn-default" target="_blank" onclick="doReset()">清空</a>
+												</div>
+
+												<div class="col-md-6">
+													<div class="pull-right">
+
+														<a href="javascript:;" class="btn btn-default" target="_blank" onclick="doGen()">一键生成</a>
+
+														<a href="${cxt!}/linkinfo/goCart" target="_blank" class="btn btn-warning"><i class="fa fa-shopping-cart"></i><span id="cart_size">(${cart_size!'0'})</span></a>
+														<a href="${cxt!}/linkconfig/goList" class="btn btn-primary" target="_blank">设置</a>
+														<a href="${cxt!}/linkinfo/goList" class="btn btn-default" target="_blank">记录</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-6">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<#list dataList1 as item>
+																<tr>
+																	<td><img class="cart_shop" data-id="${item.itemid!}" src="${item.itempic!}_220x220.jpg" width="120px"></td>
+																	<td>
+																		<a href="https://item.taobao.com/item.htm?id=${item.itemid!}" target="_blank">${item.itemtitle!}</a>
+																		<br />
+																		<span>【券后】</span>
+																		<span>${item.tkprice!}</span>
+																		<span>【原价】</span>
+																		<span>${item.itemprice!}</span>
+																		<br />
+																		<span>【销量】</span>
+																		<#if item.itemsale lt 1000>
+																			<span class="text-green">${item.itemsale!}</span>
+																			<#else>
+																				<span class="text-red">${item.itemsale!}</span>
+																		</#if>
+																		<br />
+																		<span>【券值】</span>
+																		<#if item.cpmoney lt 30>
+																			<span class="text-green">${item.cpmoney!}</span>
+																			<#else>
+																				<span class="text-red">${item.cpmoney!}</span>
+																		</#if>
+																		<br />
+																		<span>【佣金】</span>
+																		<#if item.tkmoney lt 4>
+																			<span class="text-green">${item.tkmoney?string('0.0#')}</span>
+																			<#else>
+																				<span class="text-red">${item.tkmoney?string('0.0#')}</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<a href="javascript:;" class="btn btn-default" onclick="doUpdate('${item.itemid!}')" data-id='${item.itemid!}'>更新</a>
+																		<br/>
+																		<a href="javascript:;" style="margin-top: 5px;" class="btn btn-default" onclick="doChaquan2('${item.itempic!}_220x220.jpg','https://item.taobao.com/item.htm?id=${item.itemid!}')" data-id='${item.itemid!}'>转链</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+
+												<div class="col-sm-6">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<#list dataList2 as item>
+																<tr>
+																	<td><img class="cart_shop" data-id="${item.itemid!}" src="${item.itempic!}_220x220.jpg" width="120px"></td>
+																	<td>
+																		<a href="https://item.taobao.com/item.htm?id=${item.itemid!}" target="_blank">${item.itemtitle!}</a>
+																		<br />
+																		<span>【券后】</span>
+																		<span>${item.tkprice!}</span>
+																		<span>【原价】</span>
+																		<span>${item.itemprice!}</span>
+																		<br />
+																		<span>【销量】</span>
+																		<#if item.itemsale lt 1000>
+																			<span class="text-green">${item.itemsale!}</span>
+																			<#else>
+																				<span class="text-red">${item.itemsale!}</span>
+																		</#if>
+																		<br />
+																		<span>【券值】</span>
+																		<#if item.cpmoney lt 30>
+																			<span class="text-green">${item.cpmoney!}</span>
+																			<#else>
+																				<span class="text-red">${item.cpmoney!}</span>
+																		</#if>
+																		<br />
+																		<span>【佣金】</span>
+																		<#if item.tkmoney lt 4>
+																			<span class="text-green">${item.tkmoney?string('0.0#')}</span>
+																			<#else>
+																				<span class="text-red">${item.tkmoney?string('0.0#')}</span>
+																		</#if>
+																	</td>
+																	<td>
+																		<a href="javascript:;" class="btn btn-default" onclick="doUpdate('${item.itemid!}')" data-id='${item.itemid!}'>更新</a>
+																		<br/>
+																		<a href="javascript:;" style="margin-top: 5px;" class="btn btn-default" onclick="doChaquan2('${item.itempic!}_220x220.jpg','https://item.taobao.com/item.htm?id=${item.itemid!}')" data-id='${item.itemid!}'>转链</a>
+																	</td>
+
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList1.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到数据！</p>
+												</div>
+												<hr />
+											</#if>
+											<#if (page.pcount>0)>
+												<div>
+													<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+													<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+												</div>
+											</#if>
+
+										</div>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>pt>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/clipboard/clipboard.min.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+
+				var have_word = localStorage.getItem("word");
+				if(have_word != null) {
+					$("#word").val(have_word);
+				}
+
+				$(".cart_shop").click(function() {
+					var itemid = $(this).attr("data-id");
+					ajaxGet("${cxt!}/linkinfo/doAddCart", {
+						itemid: itemid
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						$("#cart_size").text("(" + rtn.data + ")");
+					})
+				})
+
+				var datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${refDateStr!}');
+
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#pno').val(n);
+						$('#search').click();
+					}
+				});
+
+				//分页
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all'),
+					$checkbox = $('input[type="checkbox"].item'),
+					i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+
+			function doHaoDanku() {
+				var word = $("#word").val();
+				localStorage.setItem("word", word);
+
+				if(!word) {
+					layer.msg("请输入要抓取的关键词 ！", {
+						icon: 0
+					});
+					return;
+				}
+				window.open("https://www.haodanku.com/index/all_index?keyword=" + encodeURIComponent(word));
+			}
+
+			function doAliMama() {
+				var word = $("#word").val();
+				localStorage.setItem("word", word);
+				if(!word) {
+					layer.msg("请输入要抓取的关键词 ！", {
+						icon: 0
+					});
+					return;
+				}
+
+				var timestamp = (new Date()).getTime();
+				window.open("https://pub.alimama.com/promo/search/index.htm?q=" + encodeURIComponent(word) + "&_t=" + timestamp + "&toPage=1&dpyhq=1&yxjh=1&queryType=0&sortType=7");
+			}
+
+			function doReset() {
+				layer.confirm('确定删除吗？', {
+					btn: ['全部', '选品库']
+				}, function(i) {
+					ajaxGet("${cxt!}/linkinfo/doReset", {
+						type: 2
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				}, function(i) {
+					ajaxGet("${cxt!}/linkinfo/doReset", {
+						type: 1
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+
+			function doUpdate(itemid) {
+				ajaxGet("${cxt!}/linkinfo/doUpdateByItemId", {
+					itemid: itemid
+				}, function(rtn) {
+					if(rtn.code != 1) {
+						layer.msg(JSON.stringify(rtn), {
+							icon: 2
+						});
+						return;
+					}
+					layer.msg("操作成功！", {
+						icon: 1,
+						time: 600
+					}, function() {
+						window.location.reload();
+					});
+				})
+
+			}
+      
+      function showChaquan() {
+      	var html = '';
+      	html += '<div class="box-body" id="chaquan">';
+      	html += '  <div class="col-sm-12">';
+      	html += '    <div class="form-group">'
+      	html += '      <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="src_url"    placeholder="输入需要转链的链接"   ></textarea>'
+      	html += '    </div>';
+      	html += '    <div class="form-group">'
+      	html += '      <button onclick="doChaquan()" class="btn btn-primary">转链</button>'
+      	html += '    </div>';
+      	html += '  </div>';
+      	html += '  <div class="col-sm-12">';
+      	html += '    <div class="form-group">'
+      	html += '      <textarea id="chaquan_result" rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  placeholder=""   ></textarea>'
+      	html += '    </div>';
+      	html += '  </div>';
+      	html += '</div>';
+      	layer.open({
+      		title: '查券',
+      		area: ['500px', ],
+      		content: html,
+      		btn: []
+      	});
+      }
+
+			function doChaquan() {
+				var src_url = $("#src_url").val();
+				if(src_url == '') {
+					layer.msg('请输入链接或者淘口令');
+					return;
+				}
+				ajaxPost("${cxt!}/linkinfo/doChaquan", {
+					appid: $("#appid").val(),
+					src_url: src_url
+				}, function(rtn) {
+					if(rtn.code != 1) {
+						layer.msg(rtn.msg, {
+							icon: 2
+						});
+						return;
+					}
+					$("#chaquan_result").text(rtn.data);
+				})
+			}
+
+			function doChaquan2(itempic, itemdetail) {
+				var html = '';
+				html += '<div class="box-body" id="chaquan">';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">'
+				html += '      <img  src =' + itempic + ' style ="height:200px"  ></img>'
+				html += '    </div>';
+				html += '  </div>';
+				html += '  <div class="col-sm-12">';
+				html += '    <div class="form-group">'
+				html += '      <textarea id="chaquan_result" rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  placeholder=""   ></textarea>'
+				html += '    </div>';
+				html += '  </div>';
+				html += '</div>';
+				layer.open({
+					title: '查券',
+					area: ['500px', ],
+					content: html,
+					btn: [],
+					success: function() {
+
+						ajaxPost("${cxt!}/linkinfo/doChaquan", {
+							src_url: itemdetail
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							$("#chaquan_result").text(rtn.data);
+						})
+
+					}
+				});
+			}
+
+			function doGen() {
+
+				ajaxGet("${cxt!}/linkconfig/doGen", {
+					type: 2
+				}, function(rtn) {
+					if(rtn.code != 1) {
+						layer.msg(JSON.stringify(rtn), {
+							icon: 2
+						});
+						return;
+					}
+
+					var html = '';
+					html += '<div class="box-body" id="chaquan">';
+					html += '  <div class="col-sm-12">';
+					html += '    <div class="form-group">'
+					html += '      <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  placeholder=""   >' + rtn.data + '</textarea>'
+					html += '    </div>';
+					html += '  </div>';
+					html += '</div>';
+					layer.open({
+						title: '生成',
+						area: ['500px', ],
+						content: html,
+						btn: []
+					});
+
+				})
+
+			}
+		</script>
+	</body>
+
+</html>

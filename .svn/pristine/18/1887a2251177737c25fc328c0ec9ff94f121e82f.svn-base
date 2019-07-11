@@ -1,0 +1,104 @@
+package com.xray.taoke.admin.vo;
+
+public class TkCashinfoVo {
+    private long seqid;
+    private long cashtime;
+    private String appid;
+    private String openid;
+    private String userid;
+    private double cashnum;
+    private int state;
+    private long inputtime;
+    private String name;
+    private String wxavatar;
+    private String wxname;
+
+    public String getWxavatar() {
+        return wxavatar;
+    }
+
+    public void setWxavatar(String wxavatar) {
+        this.wxavatar = wxavatar;
+    }
+
+    public String getWxname() {
+        return wxname;
+    }
+
+    public void setWxname(String wxname) {
+        this.wxname = wxname;
+    }
+
+    public long getCashtime() {
+        return cashtime;
+    }
+
+    public void setCashtime(long cashtime) {
+        this.cashtime = cashtime;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getSeqid() {
+        return seqid;
+    }
+
+    public void setSeqid(long seqid) {
+        this.seqid = seqid;
+    }
+
+    public String getAppid() {
+        return appid;
+    }
+
+    public void setAppid(String appid) {
+        this.appid = appid;
+    }
+
+    public String getOpenid() {
+        return openid;
+    }
+
+    public void setOpenid(String openid) {
+        this.openid = openid;
+    }
+
+    public String getUserid() {
+        return userid;
+    }
+
+    public void setUserid(String userid) {
+        this.userid = userid;
+    }
+
+    public double getCashnum() {
+        return cashnum;
+    }
+
+    public void setCashnum(double cashnum) {
+        this.cashnum = cashnum;
+    }
+
+    public int getState() {
+        return state;
+    }
+
+    public void setState(int state) {
+        this.state = state;
+    }
+
+    public long getInputtime() {
+        return inputtime;
+    }
+
+    public void setInputtime(long inputtime) {
+        this.inputtime = inputtime;
+    }
+
+}

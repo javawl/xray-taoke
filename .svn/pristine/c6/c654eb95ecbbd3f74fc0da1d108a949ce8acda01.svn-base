@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>订单管理 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>订单管理</li>
+							<li class="active">订单管理</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+
+					<section class="content">
+						<!-- Your Page Content Here -->
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+
+									<div class="box-header">
+										<div class="row">
+											<!--搜索-->
+											
+											<div class="col-md-2">
+                        <div class="input-group date">
+													<div class="input-group-addon">
+														<i class="fa fa-calendar"></i>
+													</div>
+													<input type="text" id="datepicker" name="refDateStr" class="form-control">
+												</div>
+                      </div>
+                      <div class="col-md-2">
+                      	<select id="tkstatus" class="select2 form-control">
+                      		<option value=0>订单状态</option>
+                      		<option value=3>结算</option>
+                      		<option value=12>付款</option>
+                      		<option value=13>失效</option>
+                      		<option value=14>成功</option>
+                      	</select>
+                      </div>
+                      <div class="col-md-2">
+                        <input id="tradeid" type="text" class="form-control" value="${tradeid!}" placeholder="订单编号" />
+                      </div>
+											
+											<div class="col-md-2">
+												<input id="page_pno" type="hidden" value="${page.pno!}" />
+												<button id="search" class="btn btn-default">查询</button>
+											</div>
+											<div class="col-md-4">
+												<div class="pull-right">
+													<button class="btn-info btn doCopy">同步</button>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="box-body" style="overflow-x: auto;">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr style="white-space:nowrap;">
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>订单时间</th>
+																<th>订单号</th>
+																<th>昵称</th>
+																<th>头像</th>
+																<th>标题</th>
+																<th>付款</th>
+																<th>佣金</th>
+																<th>佣金比</th>
+								                                <th>结算</th>
+								                                <th>结算比</th>
+																<th>状态</th>
+																<th>返点</th>
+																<th>返点比</th>
+																<th width="160px">操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td>${item.tradetime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</td>
+																	<td>${item.tradeid!}</td>
+																	<td>${item.wxnameutf8!}</td>
+																	<td><#if item.wxavatar??><img width="40px" src="${item.wxavatar!}"></#if></td>
+																	<td><a href="https://item.taobao.com/item.htm?id=${item.itemid!}" target="_blank">${item.itemtitle!}</td>
+																	<td>${item.payprice!}</td>
+																	<td>${item.tkmoney!}</td>
+																	<td>${item.tkrate!}</td>
+									                                  <td>${item.tkmoney!}</td>
+									                                  <td>${item.tkrate!}</td>
+																	<td>
+																	<#if item.tkstatus ==3>
+																		<span class="text-green">结算</span>
+																	<#elseif item.tkstatus ==12>
+																		<span class="text-yellow">付款</span>
+																	<#elseif item.tkstatus ==13>
+																		<span class="text-red">失效</span>
+																	<#elseif item.tkstatus ==14>
+																		<span class="text-green">成功</span>
+																	</#if>
+																	</td>
+																	<td>${item.jiemoney!}</td>
+																	<td>${item.jierate!}</td>
+																	<td>
+                                    <a href="${cxt!}/tkuouser/goList?userid=${item.userid!}" target="_blank" class="text-primary"><i class="fa fa-user"></i>用户</a>
+                                    <a href="${cxt!}/tkcashinfo/goList?userid=${item.userid!}" target="_blank" class="text-yellow"><i class="fa fa-tag"></i>订单</a>
+                                    <a href="${cxt!}/tkcashinfo/goList?userid=${item.userid!}" target="_blank" class="text-danger"><i class="fa fa-dollar"></i>提现</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到符合条件的数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script>
+			var checkList = [];
+			$(document).ready(function() {
+				
+				 var datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${refDateStr!}');
+				
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				//查询绑定回车事件
+				$("#menuid").keydown(function(e) {
+					var ev = document.all ? window.event : e;
+					if(ev.keyCode == 13) {
+						$('#search').click();
+					}
+				})
+				//查询  
+				$("#search").click(function() {
+					var date = datepicker.datepicker("getDate");
+								var inputtimeStr = "";
+								if(!isNaN(date)) {
+									inputtimeStr = date.Format("yyyy-MM-dd");
+					}
+					window.location.href = '${cxt!}/tkorderinfo/goList?tradeid=' + $('#tradeid').val() + '&pno=' + $('#page_pno').val()+"&tkstatus="+$("#tkstatus").val()+"&refDateStr="+inputtimeStr;
+				})
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#page_pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all')
+				var $checkbox = $('input[type="checkbox"].item')
+				i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+	
+			$(".doCopy").click(function(){
+				
+				
+				
+			})
+	
+	
+	
+			})
+
+			function doDel(seqid) {
+				layer.confirm('确定删除？', function(i) {
+					ajaxGet("${cxt!}/tkorderinfo/doDel", {
+						seqid: seqid
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(JSON.stringify(rtn), {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("操作成功！", {
+							icon: 1,
+							time: 600
+						}, function() {
+							window.location.reload();
+						});
+					})
+				})
+			}
+		</script>
+	</body>
+
+</html>

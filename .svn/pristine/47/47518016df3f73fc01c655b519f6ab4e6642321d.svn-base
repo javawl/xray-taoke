@@ -1,0 +1,138 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.jfinal.aop.Clear;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.app.HaodankuApp;
+import com.xray.taoke.admin.app.OrderJieSuanApp;
+import com.xray.taoke.admin.app.OrderJieSuanMonthApp;
+import com.xray.taoke.admin.app.OrderQueryApp;
+import com.xray.taoke.admin.app.UserInfoApp;
+import com.xray.taoke.admin.model.TkMpinfo;
+
+@Clear
+@ControllerBind(controllerKey = "/app")
+public class AppController extends AbstractController {
+
+    /**
+     * 好单库榜单同步 10min
+     */
+    public void doHaodankuApp() {
+        new HaodankuApp().start();
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 用户信息更新 2min
+     */
+    public void doUserInfoApp() {
+        List<String> list = TkMpinfo.dao.queryAppidInuse();
+        for (String appid : list) {
+            new UserInfoApp(appid).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 新订单同步 3sec
+     */
+    public void OrderAddApp() {
+        Set<String> coll = new HashSet<String>();
+        List<TkMpinfo> list = TkMpinfo.dao.queryTbnameInuse();
+        for (TkMpinfo data : list) {
+            if (coll.contains(data.getStr("tbname")))
+                continue;
+            new UserInfoApp(data.getStr("appid")).start();
+            coll.add(data.getStr("tbname"));
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /*
+     * 统计活跃用户脚本
+     * 
+     */
+    @Clear
+    public void doCountTotal() {
+        renderRtn(RtnFactory.succ);
+    }
+
+    /*
+     * 统计活跃用户脚本（每日一次）
+     * 
+     */
+    @Clear
+    public void doCountTotalByDay() {
+        renderRtn(RtnFactory.succ);
+    }
+
+    /*
+     * 检查订单成功脚本
+     * 
+     */
+    @Clear
+    public void doCheckOrder() {
+        List<TkMpinfo> list_mpinfo = TkMpinfo.dao.queryList(null, null);
+        for (TkMpinfo tkMpinfo : list_mpinfo) {
+            String appid = tkMpinfo.getStr("appid");
+            OrderQueryApp orderApp = new OrderQueryApp(appid, 1);
+            Thread t = new Thread(orderApp);
+            t.start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /*
+     * 检查订单过期脚本
+     * 
+     */
+    @Clear
+    public void doCheckOverDue() {
+        List<TkMpinfo> list_mpinfo = TkMpinfo.dao.queryList(null, null);
+        for (TkMpinfo tkMpinfo : list_mpinfo) {
+            String appid = tkMpinfo.getStr("appid");
+            OrderQueryApp orderApp = new OrderQueryApp(appid, 2);
+            Thread t = new Thread(orderApp);
+            t.start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /*
+     * 检查订单结算(5天内)脚本
+     * 
+     */
+    @Clear
+    public void doCheckJieSuan() {
+        List<TkMpinfo> list_mpinfo = TkMpinfo.dao.queryList(null, null);
+        for (TkMpinfo tkMpinfo : list_mpinfo) {
+            String appid = tkMpinfo.getStr("appid");
+            OrderJieSuanApp orderApp = new OrderJieSuanApp(appid);
+            Thread t = new Thread(orderApp);
+            t.start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /*
+     * 检查订单结算(30天到5天前)脚本
+     * 
+     */
+    @Clear
+    public void doCheckJieSuanMonth() {
+        List<TkMpinfo> list_mpinfo = TkMpinfo.dao.queryList(null, null);
+        for (TkMpinfo tkMpinfo : list_mpinfo) {
+            String appid = tkMpinfo.getStr("appid");
+            OrderJieSuanMonthApp orderApp = new OrderJieSuanMonthApp(appid);
+            Thread t = new Thread(orderApp);
+            t.start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+}

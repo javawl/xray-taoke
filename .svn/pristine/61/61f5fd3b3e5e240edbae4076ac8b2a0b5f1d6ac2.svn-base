@@ -1,0 +1,186 @@
+//package com.xray.taoke.admin.app;
+//
+//import java.util.Calendar;
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.Map;
+//
+//import com.xray.act.util.DateUtil;
+//import com.xray.act.util.StringUtil;
+//import com.xray.taoke.admin.model.MpUser;
+//import com.xray.taoke.admin.model.OrderInfo;
+//import com.xray.taoke.admin.model.TkStatDetail;
+//import com.xray.taoke.admin.service.MpInfoService;
+//
+//import redis.clients.jedis.Jedis;
+//import redis.clients.jedis.Pipeline;
+//import redis.clients.jedis.Response;
+//
+//public class TkStatDailyApp extends AbstractApp {
+//    private List<String> list;
+//    private String day;
+//
+//    public TkStatDailyApp(List<String> list, String day) {
+//        this.list = list;
+//        this.day = day;
+//    }
+//
+//    @Override
+//    public void run() {
+//        try {
+//            doRun();
+//        } catch (Exception e) {
+//            logger.error("errapp,stat daily,day:" + day, e);
+//        }
+//    }
+//
+//    public void doRun() {
+//        doCountUser();
+//        doCountOrder();
+//    }
+//
+//    public static void runStatByDay(String appid, String day) {
+//        // 历史数据不能改
+//        if (!DateUtil.getToday().equals(day))
+//            return;
+//
+//        Calendar cal = Calendar.getInstance();
+//        cal.setTime(DateUtil.getDate(day, "yyyy-MM-dd"));
+//        long begintime = cal.getTimeInMillis();
+//        cal.add(Calendar.DAY_OF_MONTH, 1);
+//        long endtime = cal.getTimeInMillis();
+//
+//        String key = MpInfoService.instance.getStatKey(appid, "userall", day);
+//        cache.set(key, String.valueOf(MpUser.dao.countUserall(appid, endtime)));
+//
+//        key = MpInfoService.instance.getStatKey(appid, "usernew", day);
+//        cache.set(key, String.valueOf(MpUser.dao.countUsernew(appid, begintime, endtime)));
+//
+//        key = MpInfoService.instance.getStatKey(appid, "activeuv", day);
+//        cache.set(key, String.valueOf(MpInfoService.instance.getActiveSize(appid)));
+//    }
+//
+//    private void doCountUser() {
+//        String sid = MpInfoService.instance.getSid(appid);
+//        TkStatDetail data = TkStatDetail.dao.queryByAppid(day, appid);
+//        if (data == null) {
+//            data = new TkStatDetail();
+//            data.set("day", day);
+//            data.set("appid", appid);
+//            this.setUserData(data, sid);
+//            data.save();
+//        } else {
+//            this.setUserData(data, sid);
+//            data.update();
+//        }
+//        logger.info("runapp,stat doCountUser,appid:{},day:{}", appid, day);
+//    }
+//
+//    private void doCountOrder() {
+//        TkStatDetail data = TkStatDetail.dao.queryByAppid(day, appid);
+//
+//        Calendar cal = Calendar.getInstance();
+//        cal.setTime(DateUtil.getDate(day, "yyyy-MM-dd"));
+//        long begintime = cal.getTimeInMillis();
+//        cal.add(Calendar.DAY_OF_MONTH, 1);
+//        long endtime = cal.getTimeInMillis();
+//
+//        OrderInfo newOrder = OrderInfo.dao.countNewOrder(appid, begintime, endtime);
+//        if (newOrder.getInt("ordernew") > 0) {
+//            data.set("ordernew", newOrder.getInt("ordernew"));
+//            data.set("newprice", newOrder.getDouble("newprice"));
+//            data.set("newmoney", newOrder.getDouble("newmoney"));
+//            data.set("newmoneyrate", newOrder.getDouble("newmoneyrate"));
+//            data.set("newjie", newOrder.getDouble("newjie"));
+//        }
+//
+//        OrderInfo xbindOrder = OrderInfo.dao.countXBindOrder(appid, begintime, endtime);
+//        if (xbindOrder.getInt("orderxbind") > 0) {
+//            data.set("orderxbind", xbindOrder.getInt("orderxbind"));
+//            data.set("xbindprice", xbindOrder.getDouble("xbindprice"));
+//            data.set("xbindmoney", xbindOrder.getDouble("xbindmoney"));
+//        }
+//
+//        OrderInfo jieOrder = OrderInfo.dao.countJieOrder(appid, begintime, endtime);
+//        if (jieOrder.getInt("orderjie") > 0) {
+//            data.set("orderjie", jieOrder.getInt("orderjie"));
+//            data.set("jieprice", jieOrder.getDouble("jieprice"));
+//            data.set("jiemoney", jieOrder.getDouble("jiemoney"));
+//        }
+//
+//        if (data.getDouble("newprice") > 0)
+//            data.set("newmoneyrate", data.getDouble("newmoney") / data.getDouble("newprice"));
+//
+//        // double money = data.getDouble("newmoney") - data.getDouble("xbindmoney");
+//        double money = data.getDouble("newmoney");
+//        if (money > 0)
+//            data.set("newjierate", data.getDouble("newjie") / money);
+//
+//        if (data.getInt("userall") > 0) {
+//            data.set("arpu", data.getDouble("newmoney") / data.getInt("userall"));
+//            data.set("arpujie", data.getDouble("arpu") * (1 - data.getDouble("newjierate")));
+//        }
+//
+//        data.update();
+//        logger.info("runapp,stat doCountOrder,appid:{},day:{}", appid, day);
+//    }
+//
+//    private void setUserData(TkStatDetail data, String sid) {
+//        Jedis jedis = cache.getJedisClient();
+//        try {
+//            Map<String, Response<String>> resp = new HashMap<String, Response<String>>();
+//            Pipeline p = jedis.pipelined();
+//            resp.put("userall", p.get(MpInfoService.instance.getStatKey(appid, "userall", day)));
+//            resp.put("usernew", p.get(MpInfoService.instance.getStatKey(appid, "usernew", day)));
+//            resp.put("activeuv", p.get(MpInfoService.instance.getStatKey(appid, "activeuv", day)));
+//            resp.put("chaquanpv", p.get(MpInfoService.instance.getStatKey(appid, "chaquan", day)));
+//
+//            resp.put("tsoupv", p.get(MpInfoService.instance.getStatKey(sid, "tsou", day)));
+//            resp.put("titempv", p.get(MpInfoService.instance.getStatKey(sid, "titem", day)));
+//            resp.put("tshoppv", p.get(MpInfoService.instance.getStatKey(sid, "tshop", day)));
+//            resp.put("tlinkpv", p.get(MpInfoService.instance.getStatKey(sid, "tlink", day)));
+//            p.sync();
+//
+//            this.setVal(data, "userall", resp);
+//            this.setVal(data, "usernew", resp);
+//            this.setVal(data, "activeuv", resp);
+//            this.setVal(data, "chaquanpv", resp);
+//            this.setVal(data, "tsoupv", resp);
+//            this.setVal(data, "titempv", resp);
+//            this.setVal(data, "tshoppv", resp);
+//            this.setVal(data, "tlinkpv", resp);
+//
+//            if (data.getInt("userall") > 0)
+//                data.set("activerate", 1.0 * data.getInt("activeuv") / data.getInt("userall"));
+//        } finally {
+//            cache.returnResource(jedis);
+//        }
+//    }
+//
+//    private void setVal(TkStatDetail data, String key, Map<String, Response<String>> resp) {
+//        String val = resp.get(key).get();
+//        if (StringUtil.isNotEmpty(val))
+//            data.set(key, Integer.valueOf(val));
+//    }
+//
+//    // public static void fix() {
+//    // String appid = "wx8dd7601283019269";
+//    //
+//    // String day = "2019-04-11";
+//    // String key = MpInfoService.instance.getStatKey(appid, "userall", day);
+//    // cache.set(key, "96");
+//    // key = MpInfoService.instance.getStatKey(appid, "usernew", day);
+//    // cache.set(key, "81");
+//    // key = MpInfoService.instance.getStatKey(appid, "activeuv", day);
+//    // cache.set(key, "96");
+//    //
+//    // day = "2019-04-12";
+//    // key = MpInfoService.instance.getStatKey(appid, "userall", day);
+//    // cache.set(key, "108");
+//    // key = MpInfoService.instance.getStatKey(appid, "usernew", day);
+//    // cache.set(key, "13");
+//    // key = MpInfoService.instance.getStatKey(appid, "activeuv", day);
+//    // cache.set(key, "101");
+//    // }
+//
+//}

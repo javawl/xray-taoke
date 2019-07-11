@@ -1,0 +1,240 @@
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no, viewport-fit=cover">
+		<meta name="format-detection" content="telephone=no">
+		<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
+		<title>省钱好券,每天更新</title>
+    <link rel="shortcut icon" href="http://alicdn.ldpro.cn/img0/favicon.ico" />
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_pdd_6a8b0fbe1991c3d99593.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/react_common_6a043919c7319d23ee61.css" rel="stylesheet">
+		<link href="https://cdn.pin18pin.com/lvg_assets/css/duo_subject_collection_899eb5451aa187057456.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<div id="main">
+			<div class="duo_subject_collection" id="duo_subject_collection">
+				<div class="header">
+					<div id="header-bg" class="header-bg header-bg-2"></div>
+					<div class="header-tab">
+						<div class="item active">
+							<p>实时榜</p>
+						</div>
+						<div class="item false">
+							<p>快抢榜</p>
+						</div>
+						<div class="item false">
+							<p>今日榜</p>
+						</div>
+						<div class="item false">
+							<p>好货榜</p>
+						</div>
+					</div>
+					<div id="header-msg" class="header-msg header-msg-2"><span class="icon"></span><span id="header-icon-msg" class="icon-msg">实时榜</span></div>
+				</div>
+				<div class="subject-goods " id="subject-collection">
+					<div class="fixed-top-block" id="fixed-top-block">
+						<div class="iphonex-extra-height"></div>
+						<div class="block"></div>
+					</div>
+
+					<div class="subject-goods-list">
+						<div class="block-msg block-msg-2" style="visibility: hidden;"><span class="icon"></span><span class="icon-msg">实时榜</span><i></i></div>
+						<#list dataList1 as item>
+							<div class="unite-goods-item" onclick="goItem('${item.itemid!}')">
+								<div class="thump-img">
+									<img data-src="${item.itempic!}">
+								</div>
+								<div class="goods-detail-msg">
+									<div class="title">
+										<p>${item.itemtitle!}</p>
+									</div>
+									<div class="amount"><span>原价：${item.itemendprice!}</span></div>
+									<div class="tags">
+										<div class="tag tag-earn">优惠券：${item.cpmoney!}</div>
+									</div>
+									<div class="message-index">
+										<div class="coupon-price"><span class="f-text">¥</span><span class="s-text">${item.tkprice!}</span></div>
+										<div class="share-btn subject-btn-2"><span class="earn">返&nbsp;</span><span class="earn-price-icon">¥<span>${(item.jiemoney)?string("0.00")}</span></span></div>
+									</div>
+								</div>
+							</div>
+						</#list>
+						<div class="show-more-btn">
+							<p onclick="goList(0);"><span>查看更多</span><i></i></p>
+						</div>
+					</div>
+
+					<div class="subject-goods-list">
+						<div class="block-msg block-msg-0" style="visibility: visible;"><span class="icon"></span><span class="icon-msg">快抢榜</span><i></i></div>
+						<#list dataList2 as item>
+							<div class="unite-goods-item" onclick="goItem('${item.itemid!}')">
+								<div class="thump-img">
+									<img data-src="${item.itempic!}">
+								</div>
+								<div class="goods-detail-msg">
+									<div class="title">
+										<p>${item.itemtitle!}</p>
+									</div>
+									<div class="amount"><span>原价：${item.itemendprice!}</span></div>
+									<div class="tags">
+										<div class="tag tag-earn">优惠券：${item.cpmoney!}</div>
+									</div>
+									<div class="message-index">
+										<div class="coupon-price"><span class="f-text">¥</span><span class="s-text">${item.tkprice!}</span></div>
+										<div class="share-btn subject-btn-0"><span class="earn">返&nbsp;</span><span class="earn-price-icon">¥<span>${(item.jiemoney)?string("0.00")}</span></span></div>
+									</div>
+								</div>
+							</div>
+						</#list>
+						<div class="show-more-btn">
+							<p onclick="goList(1);"><span>查看更多</span><i></i></p>
+						</div>
+					</div>
+
+					<div class="subject-goods-list">
+						<div class="block-msg block-msg-4" style="visibility: visible;"><span class="icon"></span><span class="icon-msg">今日爆单</span><i></i></div>
+						<#list dataList3 as item>
+							<div class="unite-goods-item" onclick="goItem('${item.itemid!}')">
+								<div class="thump-img">
+									<img data-src="${item.itempic!}">
+								</div>
+								<div class="goods-detail-msg">
+									<div class="title">
+										<p>${item.itemtitle!}</p>
+									</div>
+									<div class="amount"><span>原价：${item.itemendprice!}</span></div>
+									<div class="tags">
+										<div class="tag tag-earn">优惠券：${item.cpmoney!}</div>
+									</div>
+									<div class="message-index">
+										<div class="coupon-price"><span class="f-text">¥</span><span class="s-text">${item.tkprice!}</span></div>
+										<div class="share-btn subject-btn-4"><span class="earn">返&nbsp;</span><span class="earn-price-icon">¥<span>${(item.jiemoney)?string("0.00")}</span></span></div>
+									</div>
+								</div>
+							</div>
+						</#list>
+						<div class="show-more-btn">
+							<p onclick="goList(2);"><span>查看更多</span><i></i></p>
+						</div>
+					</div>
+
+					<div class="subject-goods-list">
+						<div class="block-msg block-msg-1" style="visibility: visible;"><span class="icon"></span><span class="icon-msg">好货热单</span><i></i></div>
+						<#list dataList4 as item>
+							<div class="unite-goods-item" onclick="goItem('${item.itemid!}')">
+								<div class="thump-img">
+									<img data-src="${item.itempic!}">
+								</div>
+								<div class="goods-detail-msg">
+									<div class="title">
+										<p>${item.itemtitle!}</p>
+									</div>
+									<div class="amount"><span>原价：${item.itemendprice!}</span></div>
+									<div class="tags">
+										<div class="tag tag-earn">优惠券：${item.cpmoney!}</div>
+									</div>
+									<div class="message-index">
+										<div class="coupon-price"><span class="f-text">¥</span><span class="s-text">${item.tkprice!}</span></div>
+										<div class="share-btn subject-btn-1"><span class="earn">返&nbsp;</span><span class="earn-price-icon">¥<span>${(item.jiemoney)?string("0.00")}</span></span></div>
+									</div>
+								</div>
+							</div>
+						</#list>
+						<div class="show-more-btn">
+							<p onclick="goList(3);"><span>查看更多</span><i></i></p>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<script>
+      var subjects = Array.from(document.getElementsByClassName('subject-goods-list'));
+      var subjects_css = [2, 0, 4, 1];
+      var subject1_top = pageY(subjects[0]);
+      
+      var items = Array.from(document.getElementsByClassName('item'));
+      items.forEach((item, index) => {
+      	item.onclick = function() {
+      		document.body.scrollTop = pageY(subjects[index]) - subject1_top + 10;
+      		switchTab(index);
+      	}
+      });
+      
+			window.onload = function() {
+        var subject_index = 0;
+				var scrollTop = window.scrollY;
+				var imgs = Array.from(document.querySelectorAll('img'));
+				lazyLoad();
+				let canRun = true; //开关变量用于函数节流
+				window.addEventListener('scroll', throttle(lazyLoad, 500));
+
+				//定义懒加载函数 , 从上到下懒加载 , 从下到上也是懒加载
+				function lazyLoad() {
+					imgs.forEach((item, index) => {
+						if (scrollTop === 0 && item.dataset.src !== '' && pageY(item) < window.innerHeight + scrollTop) {
+              item.setAttribute('src', item.dataset.src)
+							item.setAttribute('data-src', '')
+						} else if (item.dataset.src !== '' && pageY(item) < window.innerHeight + scrollTop && pageY(item) > scrollTop) {
+							item.setAttribute('src', item.dataset.src)
+							item.setAttribute('data-src', '')
+						}
+					})
+          subjects.forEach((item, index) => {
+            if (scrollTop > pageY(item) - subject1_top * 2) {
+              subject_index = index;
+            }
+          })
+          switchTab(subject_index);
+				}
+
+				function throttle(fun, delay) {
+					return function() {
+						if (!canRun) {
+							return
+						}
+						canRun = false;
+						setTimeout(() => {
+							scrollTop = window.scrollY;
+							fun(imgs);
+							canRun = true
+						}, delay)
+					}
+				}
+
+			}
+      
+      function pageY(elem) {
+      	return elem.offsetParent ? elem.offsetTop + pageY(elem.offsetParent) : elem.offsetTop;
+      }
+
+      var header_bg = document.getElementById('header-bg');
+      var header_msg = document.getElementById('header-msg');
+      var header_icon_msg = document.getElementById('header-icon-msg');
+			function switchTab(idx) {
+        items.forEach((item, index) => {
+          if (idx == index) {
+            item.className = 'item active';
+          } else {
+            item.className = 'item false';
+          }
+        })
+        header_bg.className = 'header-bg header-bg-' + subjects_css[idx];
+        header_msg.className = 'header-msg header-msg-' + subjects_css[idx];
+        header_icon_msg.innerHTML = items[idx].innerHTML;
+			}
+      
+			function goItem(id) {
+				location.href = '${cxt!}/titem?id=' + id + '&sid=' + ${sid!} + '&wtg=' + new Date().getTime();
+			}
+      
+      function goList(type) {
+      	location.href = '${cxt!}/tlist?type=' + type + '&sid=' + ${sid!} + '&nee=' + new Date().getTime();
+      }
+
+		</script>
+	</body>
+</html>

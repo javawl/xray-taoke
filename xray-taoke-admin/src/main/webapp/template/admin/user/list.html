@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>系统设置 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/datepicker/datepicker3.css">
+		<#include "../../inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "../../inc/header.html">
+				<div class="content-wrapper">
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li><i class="fa fa-home"></i>主页</li>
+							<li class="active">用户管理</li>
+							<li class="active">列表</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<div class="row">
+											<!--日期-->
+											<div class="col-md-2">
+												<select id="state" class="form-control">
+													<option value="0">——全部——</option>
+													<option value="1" <#if state==1>selected="selected"</#if> >生效</option>
+													<option value="2" <#if state==2>selected="selected"</#if> >失效</option>
+												</select>
+											</div>
+											<!--分组-->
+											<div class="col-md-3">
+												<input id="word" type="text" class="form-control" value="${word!}" maxlength="30" placeholder="输入账号或姓名进行查询" />
+											</div>
+											<div class="col-md-2">
+												<button id="search" class="btn btn-default">查询</button>
+											</div>
+											<div class="col-md-5">
+												<div class="pull-right">
+													<button onclick="base.openWin('${cxt!}/admin/user/goAdd');" type="button" class="btn btn-primary">新增</button>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+														    <tr>
+                                                                <th>账号</th>
+                                                                <th>姓名</th>
+                                                                <th>状态</th>
+                                                                <th>创建时间</th>
+                                                                <th width="10%">操作</th>
+                                                            </tr>
+															<#list dataList as item>
+																<tr>
+																	<td>
+																		<a href="${cxt!}/admin/user/goSelect?userid=${item.userid}">${item.userid!}</a>
+																	</td>
+																	<td>
+																		${item.name!}
+																	</td>
+																	<td>
+																		<#if item.state==11>
+																			<small class="label bg-blue">超级管理员</small>
+																		<#elseif item.state==1>
+																			<small class="label bg-green">生效</small>
+																		<#elseif item.state==-1>
+																			<small class="label bg-red">失效</small>
+																		</#if>
+																	</td>
+																	<td>${item.inputtime?number_to_date?string("yyyy-MM-dd")}</td>
+																	<td data-id="${item.seqid!}">
+																		<a href="#" onclick="base.openWin('${cxt!}/admin/user/goEdit?id=${item.seqid!}')" class="text text-yellow">修改</a>
+																		<a href="#" class="btn_delete text text-red">删除</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding:0;"></div>
+												<span class="pull-right">总共&nbsp;${page.count}&nbsp;条&nbsp;</span>
+											</div>
+										</div>
+									</div>
+								</div>
+					</section>
+					</div>
+					<#include "../../inc/footer.html">
+				</div>
+				<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+				<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+				<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+				<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+				<script>
+					$(document).ready(function() {
+						if($(".box-body").width() < 800) {
+							$(".box-body").css("overflow", "auto");
+						}
+						var setFocusText = $("#word");
+						utilityHandle.setFocus(setFocusText, setFocusText.val().length);
+						//查询绑定回车事件	
+						$("#word").keydown(function(e) {
+								var ev = document.all ? window.event : e;
+								if(ev.keyCode == 13) {
+									$('#search').click();
+								}
+							})
+							//下拉框	
+						$(".select2").select2();
+
+						$("#search").click(function() {
+								window.location.href = '${cxt!}/admin/user/goList?word=' + $('#word').val() + '&state=' + $("#state").val()
+							})
+							//分页	
+						$(".tcdPageCode").createPage({
+							pageCount: ${page.pcount!},
+							current: ${page.pno!},
+							backFn: function(n) {
+								location.href = "${cxt!}/admin/user/goList?inputtimeStr=${inputtimeStr!}&state=${state!}&word=${word!}&pno=" + n;
+							}
+						});
+						
+						//删除	
+						$(".btn_delete").click(function() {
+							var id = $(this).parent().attr("data-id");
+							layer.confirm('确定删除吗？', {
+								btn: ['删除', '取消']
+							}, function() {
+								ajaxGet("${cxt!}/admin/user/doDelete", {
+									id: 　id
+								}, function(rtn) {
+									if(rtn.code != 1) {
+										layer.msg(rtn.msg, {
+											icon: 2
+										});
+										return;
+									}
+									layer.msg('删除成功！即将自动刷新...', {
+										time: 500,
+										icon: 1
+									}, function() {
+										location.reload();
+									});
+								})
+							});
+						})
+					})
+				</script>
+	</body>
+
+</html>

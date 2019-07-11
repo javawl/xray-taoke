@@ -1,0 +1,220 @@
+package com.xray.taoke.admin.utils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.admin.model.TkTbGoods;
+import com.xray.taoke.admin.model.TkLinkGoods;
+import com.xray.taoke.admin.web.controller.TkGoodController;
+
+public class ExtractHttpUtils {
+    
+    
+    public static String getHttpByText(String text,int type) {
+        Pattern pattern = Pattern.compile("((http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)|((www.)|[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            if(type==1) {
+                buffer.append(matcher.group());
+            }else {
+                if(matcher.group().contains("item.taobao.com")) {
+                    buffer.append(matcher.group());
+                }
+            }
+        }
+        return buffer.toString();
+    }
+    
+    
+    
+    
+    public static Map<String, String> getIMGByText(String text, int type) {
+        Pattern pattern = Pattern.compile("((http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)|((www.)|[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        String img = "";
+        Map<String, String> cond = new HashMap<>();
+        String juan = "";
+        String detail_url = "";
+        while (matcher.find()) {
+            if (type == 2) {
+                if (matcher.group().contains("item.taobao.com")) {
+                    buffer.append(matcher.group());
+                }
+            } else {
+                if (matcher.group().startsWith("http://img.haodanku.com")) {
+                    img = matcher.group();
+                } else if (matcher.group().contains("uland.taobao.com")) {
+                    juan = matcher.group();
+                } else if (matcher.group().contains("detail.tmall.com")) {
+                    detail_url = matcher.group(0);
+                }
+            }
+        }
+        cond.put("img", img);
+        cond.put("juan", juan);
+        cond.put("detail", detail_url);
+        return cond;
+    }
+
+    // public static String getJUANByText(String text, int type) {
+    // Pattern pattern =
+    // Pattern.compile("((http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)|((www.)|[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)");
+    // Matcher matcher = pattern.matcher(text);
+    // StringBuffer buffer = new StringBuffer();
+    // String juan = "";
+    // while (matcher.find()) {
+    // if (type == 2) {
+    // if (matcher.group().contains("item.taobao.com")) {
+    // buffer.append(matcher.group());
+    // }
+    // } else {
+    // if (matcher.group().contains("uland.taobao.com")) {
+    // juan = matcher.group();
+    // return juan;
+    // }
+    // }
+    // }
+    // return juan;
+    // }
+    //
+    // public static String getDetailUrlByText(String text, int type) {
+    // Pattern pattern =
+    // Pattern.compile("((http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)|((www.)|[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?)");
+    // Matcher matcher = pattern.matcher(text);
+    // StringBuffer buffer = new StringBuffer();
+    // String url = "";
+    // while (matcher.find()) {
+    // if (type == 2) {
+    // if (matcher.group().contains("item.taobao.com")) {
+    // buffer.append(matcher.group());
+    // }
+    // } else {
+    // if (matcher.group().contains("detail.tmall.com")) {
+    // url = matcher.group();
+    // }
+    // }
+    // }
+    // return url;
+    // }
+
+    public static String getTitleByText(String text) {
+        Pattern pattern = Pattern.compile("<br/>(.*?)<br/>");
+        Matcher matcher = pattern.matcher(text);
+        String s = "";
+        while (matcher.find()) {
+            s = matcher.group(1).replaceAll("<br/>", "");
+        }
+        return s;
+    }
+
+    public static String getDetailByTxt(String txt) {
+        int index = txt.lastIndexOf("<br>");
+        String detail = txt.substring(index + 4, txt.length() - 1);
+        return detail;
+    }
+
+    public static String getHttpsByImg(String text) {
+
+        Pattern pattern = Pattern.compile("(src|SRC)=(\"|\')(.*?)(\"|\')");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            buffer.append(matcher.group(3));
+        }
+        String src_url = buffer.toString();
+        return src_url;
+    }
+
+    public static void common(String strs, String id) {
+
+        String[] goods_str = strs.split("\n");
+        List<String> list = new ArrayList<>();
+        List<String> list2 = new ArrayList<>();
+        List<Map<String, String>> list_cond = new ArrayList<>();
+        for (int i = 0; i < goods_str.length; i++) {
+            if (StringUtil.isEmpty(goods_str[i]))
+                continue;
+            Map<String, String> cond = getIMGByText(goods_str[i], 1);
+            list_cond.add(cond);
+            list.add(getTitleByText(goods_str[i]));
+            list2.add(getDetailByTxt(goods_str[i]));
+        }
+        for (int i = 0; i < list.size(); i++) {
+            String title = list.get(i);
+            String deatil = list2.get(i);
+            Map<String, String> cond2 = list_cond.get(i);
+            String img = cond2.get("img");
+            String juan = cond2.get("juan");
+            String detail_url = cond2.get("detail");
+
+            if (detail_url.indexOf("<br>") != -1) {
+                detail_url = detail_url.substring(0, detail_url.indexOf("<br>"));
+            }
+
+            String[] item_prices = title.split("<br>");
+            double itemprice = 0.0;
+            double itemendprice = 0.0;
+            double cou_price = 0.0;
+            String itemshorttitle = "";
+            if (item_prices.length != 0) {
+                String item_pricestr = item_prices[1];
+                itemshorttitle = item_prices[0];
+                int i1 = item_pricestr.indexOf("原价");
+                int j1 = item_pricestr.indexOf("元");
+                int i2 = item_pricestr.indexOf("【");
+                int j2 = item_pricestr.indexOf("】");
+
+                itemprice = Double.valueOf(item_pricestr.substring(i1 + 2, j1));
+                itemendprice = Double.valueOf(item_pricestr.substring(i2 + 1, j2 - 1));
+                cou_price = itemprice- itemendprice;
+            }
+
+            String itemid = ParamUtils.getParam(detail_url, "id");
+            TkTbGoods goods = new TkTbGoods();
+            goods.set("itempic", img);
+            goods.set("itemdesc", deatil);
+            goods.set("itemtitle", title);
+            goods.set("good_url", detail_url);
+            if (juan.indexOf("<br>") != -1) {
+                juan = juan.substring(0, juan.indexOf("<br>"));
+            }
+            String activityId = ParamUtils.getParam(juan, "activityId");
+            goods.set("itemid", itemid);
+            goods.set("couponurl", juan);
+            goods.set("itemshorttitle", itemshorttitle);
+            goods.set("itemprice", itemprice);
+            goods.set("itemendprice", itemendprice);
+            goods.set("activityid", activityId);
+            goods.set("source", 1);
+            goods.set("couponprice", cou_price);
+            goods.set("inputtime", System.currentTimeMillis());
+            Prop config = PropKit.use("config.properties");
+            String iem_detail =  config.get("item_detail");
+            iem_detail = iem_detail+itemid;
+            
+            Map<String,Object> cond = TkGoodController.getGoodByItemid(iem_detail);
+            double tkrates = (double) cond.get("tkrates");
+            double tkmoney = (double) cond.get("tkmoney");
+            goods.set("tkrates", tkrates);
+            goods.set("tkmoney", tkmoney);
+            goods.save();
+            
+
+            TkLinkGoods tkLinkGoods = new TkLinkGoods();
+            tkLinkGoods.set("link_id", id);
+            tkLinkGoods.set("goods_id", goods.getLong("seqid"));
+            tkLinkGoods.save();
+        }
+
+    }
+
+}

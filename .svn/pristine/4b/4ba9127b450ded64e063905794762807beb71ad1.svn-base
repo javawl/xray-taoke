@@ -1,0 +1,63 @@
+package com.xray.taoke.act.web.controller;
+
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.jfinal.JfController;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.act.model.TbGoods;
+import com.xray.taoke.act.service.MpInfoService;
+
+@ControllerBind(controllerKey = "/")
+public class IndexController extends JfController {
+    protected static Logger logger = LoggerFactory.getLogger(IndexController.class);
+
+    public void index() {
+        renderError(403);
+    }
+    
+    public void titem() {
+        setAttr("rate", MpInfoService.instance.getRate(getPara()));
+        setAttr("data", TbGoods.dao.findFirst("select * from `tk_tbgoods` where `itemid`=?", getPara("id")));
+        render("/html/tb_item.html");
+    }
+
+    public void tshop() {
+        Map<String, String> cond =  null;//TbGoodsService.instance.getGoodsBySaleType();
+        String fast_rush_0 = cond.get("fast_rush_0");
+        String real_time_1 = cond.get("real_time_1");
+        String today_2 = cond.get("today_2");
+        String output4 = cond.get("output4");
+        if(!StringUtil.isEmpty(fast_rush_0)) 
+            setAttr("dataList1", JSONArray.parseArray(fast_rush_0));
+        else
+            setAttr("dataList1", TbGoods.dao.find("select * from `tk_tbgoods` where `down_type`=0 and `sale_type`=1 order by `orderno` limit 10"));
+        
+        if(!StringUtil.isEmpty(real_time_1))
+            setAttr("dataList2", JSONArray.parseArray(real_time_1));
+        else
+            setAttr("dataList2", TbGoods.dao.find("select * from `tk_tbgoods` where `down_type`=0 and `sale_type`=0 order by `orderno` limit 10"));
+        
+        if(!StringUtil.isEmpty(today_2))
+            setAttr("dataList3", JSONArray.parseArray(today_2));
+        else
+            setAttr("dataList3", TbGoods.dao.find("select * from `tk_tbgoods` where `down_type`=0 and `sale_type`=2 order by `orderno` limit 10"));
+        
+        if(!StringUtil.isEmpty(output4)) 
+            setAttr("dataList4",JSONArray.parseArray(output4));
+        else
+            setAttr("dataList4", TbGoods.dao.find("select * from `tk_tbgoods` where `down_type`=0 and `sale_type`=4 order by `orderno` limit 10"));
+        
+        render("/html/tb_shop.html");
+    }
+
+    public void tb_list() {
+        setAttr("dataList", TbGoods.dao.find("select * from `tk_tbgoods` order by `seqid` desc limit 10"));
+        render("/html/idx_list.html");
+    }
+
+}

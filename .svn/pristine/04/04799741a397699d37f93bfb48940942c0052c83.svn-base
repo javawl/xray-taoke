@@ -1,0 +1,240 @@
+package com.xray.taoke.admin.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.DateUtil;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.model.TbGoods;
+import com.xray.taoke.admin.vo.TbGoodsVo;
+
+public class TbGoodsService {
+    private static Logger logger = LoggerFactory.getLogger(TbGoodsService.class);
+
+    public static TbGoodsService instance = new TbGoodsService();
+
+    private static Pattern p_itemid = Pattern.compile("item.htm\\?id=(\\d+)");
+
+    public static void main(String[] args) throws Exception {
+        // String appid = "wx3088f1bd705dfd20";
+        // String url = "https://m.tb.cn/h.3B43F8N?sm=f3df9e";
+        // System.out.println(Tk21dsService.instance.getiteminfoByHtml(url));
+        // System.out.println(TbGoodsService.instance.chaquanByUrl(appid, url));
+
+        String text = "<imgclass=''src='http://img.haodanku.com/0_589481771410_1553584151.jpg_600'style='width:50px;'><br/>抖音爆款红石榴鲜妍美白防护喷雾<br>原价55.8元，券后价【5.8元】<br/>领券：http://uland.taobao.com/quan/detail?sellerId=294507855&activityId=0e5a9c80834b45138dc2b47cc827ae2b<br>下单：https://detail.tmall.com/item.htm?id=589481771410<br>【历史低价！爆款返场！抖音网红推荐】符合多种肤质，轻松变网红！一款能同时满足防晒+补水+保湿+美白提亮+定妆的喷雾，只需一分钟，做精致的猪猪女孩~\n" + "<imgclass=''src='http://img.haodanku.com/0_560315534686_1554183377.jpg_600'style='width:50px;'><br/>笨笨狗旗舰店夹心能量棒54支装<br>原价22.8元，券后价【12.8元】<br/>领券：https://uland.taobao.com/quan/detail?sellerId=2651174814&activityId=d1cf9040fb524257a665c304bd1922d4<br>下单：https://detail.tmall.com/item.htm?id=560315534686<br>【第二件9.9，第三件6元】经典热卖零食，九种粗粮精制，六种口味，54支独立小包，干净卫生，香浓夹心，酥脆可口，不怕不够吃，尽情享受儿时的味道！！\n" + "<imgclass=''src='http://img.haodanku.com/0_527011579947_1553581057.jpg_600'style='width:50px;'><br/>皎洁电蚊香电蚊香液3+1器四件套<br>原价21.9元，券后价【6.9元】<br/>领券：http://uland.taobao.com/quan/detail?sellerId=2041105374&activityId=49635b157d6547a4968bc389202f630f<br>下单：https://detail.tmall.com/item.htm?id=527011579947<br>【超值3+1=4件套】皎洁大品牌，母婴儿童全家专用，15分钟快速驱蚊，沃尔玛·永辉超市售价29.9元，今日秒杀6.9元，电蚊香关乎家人健康，请勿购买劣质产品，请认准大品牌，皎洁值得信赖！\n";
+        System.out.println(TbGoodsService.instance.parseItemidByHdk(text));
+    }
+
+    public TbGoodsVo chaquanByUrl(String appid, String url) throws Exception {
+        JSONObject obj = Tk21dsService.instance.getiteminfoByHtml(url);
+        // 有记录，返回
+        String itemid = obj.getString("itemid");
+        TbGoods data = TbGoods.dao.queryByItemid(appid, itemid);
+        if (data != null)
+            return data.buildVo(TbGoodsVo.class);
+        // 基本信息
+        data = new TbGoods();
+        data.set("itemid", itemid);
+        data.set("itemtitle", obj.getString("title"));
+        data.set("itemendprice", obj.getDouble("priceL"));
+        data.set("itempic", obj.getString("pic"));
+
+        obj = Tk21dsService.instance.getitemgyurl(appid, itemid);
+        if (obj.getInteger("code") == 15)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.data_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        // 高佣信息
+        obj = obj.getJSONObject("result").getJSONObject("data");
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+            data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        } else {
+            data.set("tkprice", data.getDouble("itemendprice"));
+        }
+
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.set("inputtime", System.currentTimeMillis());
+        data.save(appid);
+        logger.info("add chaquan tbgoods,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+    public TbGoodsVo chaquanByTpwdcode(String appid, String tpwdcode) throws Exception {
+        // 高佣信息
+        JSONObject obj = Tk21dsService.instance.getitemgyurlbytpwd(appid, tpwdcode);
+        if (obj.getInteger("code") == 15)
+            throw new RtException(Constant.notaoke_err, "err notaoke getitemgyurlbytpwd,tpwdcode:" + tpwdcode + ",json:" + obj.toJSONString());
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurlbytpwd,tpwdcode:" + tpwdcode + ",json:" + obj.toJSONString());
+        obj = obj.getJSONObject("result").getJSONObject("data");
+
+        // 有记录，返回
+        TbGoods data = TbGoods.dao.queryByItemid(appid, obj.getString("item_id"));
+        if (data != null)
+            return data.buildVo(TbGoodsVo.class);
+        data = new TbGoods();
+
+        String itemid = obj.getString("item_id");
+        data.set("itemid", itemid);
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+        }
+
+        // 基本信息
+        obj = Tk21dsService.instance.getiteminfo(appid, obj.getString("item_id"));
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getiteminfo,itemid:" + itemid + ",json:" + obj.toJSONString());
+        obj = obj.getJSONObject("data").getJSONObject("n_tbk_item");
+
+        data.set("itemtitle", obj.getString("title"));
+        data.set("itemprice", obj.getDouble("reserve_price"));
+        data.set("itemendprice", obj.getDouble("zk_final_price"));
+        data.set("itempic", obj.getJSONObject("small_images").getJSONArray("string").get(0));
+        data.set("shopname", obj.getString("nick"));
+
+        // 计算
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        } else {
+            data.set("tkprice", data.getDouble("itemendprice"));
+        }
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.save(appid);
+        logger.info("add chaquanByTpwdcode,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+    public TbGoodsVo chaquanByItemid(String appid, String itemid) throws Exception {
+        // 有记录，返回
+        TbGoods data = TbGoods.dao.queryByItemid(appid, itemid);
+        if (data != null)
+            return data.buildVo(TbGoodsVo.class);
+        data = new TbGoods();
+
+        // 基本信息
+        JSONObject obj = Tk21dsService.instance.getiteminfo(appid, itemid);
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getiteminfo,item:" + itemid + ",json:" + obj.toJSONString());
+        obj = obj.getJSONObject("data").getJSONObject("n_tbk_item");
+
+        data.set("itemtitle", obj.getString("title"));
+        data.set("itemprice", obj.getDouble("reserve_price"));
+        data.set("itemendprice", obj.getDouble("zk_final_price"));
+        data.set("itempic", obj.getJSONObject("small_images").getJSONArray("string").get(0));
+        data.set("shopname", obj.getString("nick"));
+
+        // 高佣信息
+        obj = Tk21dsService.instance.getitemgyurl(appid, itemid);
+        if (obj.getInteger("code") == 15)
+            throw new RtException(Constant.notaoke_err, "err notaoke getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        obj = obj.getJSONObject("result").getJSONObject("data");
+
+        data.set("itemid", itemid);
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+            data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        } else {
+            data.set("tkprice", data.getDouble("itemendprice"));
+        }
+
+        // 计算
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.save(appid);
+        logger.info("add chaquan tbgoods,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+    public TbGoodsVo zhaoquanByItemid(String appid, TbGoods data) throws Exception {
+        String itemid = data.getStr("itemid");
+        // 有记录，返回
+        TbGoods mdata = TbGoods.dao.queryByItemid(appid, itemid);
+        if (mdata != null)
+            return mdata.buildVo(TbGoodsVo.class);
+
+        // 高佣信息
+        JSONObject obj = Tk21dsService.instance.getitemgyurl(appid, itemid);
+        if (obj.getInteger("code") == 15)
+            throw new RtException(Constant.notaoke_err, "err notaoke getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        obj = obj.getJSONObject("result").getJSONObject("data");
+
+        data.set("itemid", itemid);
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+            data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        } else {
+            data.set("tkprice", data.getDouble("itemendprice"));
+        }
+
+        // 计算
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.save(appid);
+        logger.info("add zhaoquan tbgoods,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+    public TbGoodsVo gaoyongByItemid(String appid, TbGoods data) throws Exception {
+        String itemid = data.getStr("itemid");
+        // 高佣信息
+        JSONObject obj = Tk21dsService.instance.getitemgyurl(appid, itemid);
+        if (obj.getInteger("code") == 15)
+            throw new RtException(Constant.notaoke_err, "err notaoke getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        if (obj.getInteger("code") != 200)
+            throw new RtException(Constant.notaoke_err, "err code getitemgyurl,item:" + itemid + ",json:" + obj.toJSONString());
+        obj = obj.getJSONObject("result").getJSONObject("data");
+
+        data.set("tkpwd", obj.getString("tpwd"));
+        data.set("tkrate", obj.getDouble("max_commission_rate") / 100);
+        if (obj.getBooleanValue("has_coupon")) {
+            data.set("cpmoney", obj.getDouble("youhuiquan"));
+            data.set("cpendtime", DateUtil.getDate(obj.getString("coupon_end_time") + " 23:59:59").getTime());
+            data.set("cpstate", 1);
+            data.set("tkprice", data.getDouble("itemendprice") - data.getDouble("cpmoney"));
+        } else {
+            data.set("tkprice", data.getDouble("itemendprice"));
+        }
+
+        // 计算
+        data.set("tkmoney", data.getDouble("tkprice") * data.getDouble("tkrate"));
+        data.update(appid, itemid);
+        logger.info("add zhaoquan tbgoods,itemid:{}", itemid);
+        return data.buildVo(TbGoodsVo.class);
+    }
+
+    public List<String> parseItemidByHdk(String text) {
+        List<String> list = new ArrayList<String>();
+        Matcher m = p_itemid.matcher(text);
+        while (m.find()) {
+            list.add(m.group(1));
+        }
+        return list;
+    }
+
+}

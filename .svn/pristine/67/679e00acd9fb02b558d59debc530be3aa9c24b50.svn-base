@@ -1,0 +1,66 @@
+package com.xray.taoke.act.common;
+
+import java.text.DecimalFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.jfinal.weixin.sdk.api.SnsAccessTokenApi;
+import com.xray.act.util.codec.MD5Codec;
+
+public class Constant {
+    public static final Prop config = PropKit.use("config.properties");
+    public static final String db_dataSource = "db.dataSource.main";
+
+    public static final String sign_md5key = config.get("sign.md5key");
+
+    public static final String wxsns_appid = config.get("wxsns.appid");
+    public static final String wxsns_appsecret = config.get("wxsns.appsecret");
+    public static final String wxsns_bindUri = config.get("wxsns.bindUri");
+
+    public static final int data_err = -101;
+    public static final int notaoke_err = -102;
+
+    private static final Pattern url_pattern = Pattern.compile("(http[s]?:\\/\\/([\\w-]+\\.)+[\\w-]+([\\w-./?%&*=]*))");
+    private static final DecimalFormat df = new DecimalFormat("#.00");
+    
+    public static void main(String[] args) {
+        String text = "【Ulike冰点激光脱毛仪器家用剃毛脱毛器全身腋下私处脱毛机器女士】https://m.tb.cn/h.3yTe6lf 点击链接，再选择浏览器咑閞；或復·制这段描述￥N1KmbxQSOLP￥后到淘♂寳♀";
+        System.out.println(parseUrl(text));
+    }
+
+    public static String getAuthorizeURL(String state) {
+        return SnsAccessTokenApi.getAuthorizeURL(Constant.wxsns_appid, Constant.wxsns_bindUri, state, true);
+    }
+
+    public static String sign(String... vals) {
+        StringBuilder sb = new StringBuilder();
+        for (String val : vals) {
+            sb.append(val);
+        }
+        sb.append(sign_md5key);
+        return MD5Codec.encode(sb.toString());
+    }
+
+    public static boolean checkSign(String sign, String... vals) {
+        StringBuilder sb = new StringBuilder();
+        for (String val : vals) {
+            sb.append(val);
+        }
+        sb.append(sign_md5key);
+        return sign(vals).equals(sign);
+    }
+
+    public static String parseUrl(String text) {
+        Matcher m = url_pattern.matcher(text);
+        if (m.find())
+            return m.group(0);
+        return null;
+    }
+
+    public static String formatPrice(double d) {
+        return df.format(d);
+    }
+
+}

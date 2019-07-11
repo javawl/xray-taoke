@@ -1,0 +1,83 @@
+//package com.xray.taoke.admin.web.controller;
+//
+//import java.io.UnsupportedEncodingException;
+//import java.util.List;
+//import java.util.Map;
+//
+//import com.alibaba.fastjson.JSONObject;
+//import com.jfinal.ext.route.ControllerBind;
+//import com.jfinal.kit.Prop;
+//import com.jfinal.kit.PropKit;
+//import com.xray.act.util.StringUtil;
+//import com.xray.act.web.vo.PageVo;
+//import com.xray.admin.web.controller.AbstractController;
+//import com.xray.taoke.admin.model.TKKefuMsg;
+//import com.xray.taoke.admin.model.TbGoods;
+//import com.xray.taoke.admin.model.TkMaterial;
+//
+//@ControllerBind(controllerKey = "/tkturnlink")
+//public class TkTurnLinkController extends AbstractController {
+//    public static final Prop config = PropKit.use("config.properties");
+//
+//    public void goList() {
+//
+//        PageVo page = new PageVo(getParaToInt("pno", 1));
+//        page.setOrderby("`seqid` asc");
+//        setAttr("page", page);
+//
+//        Map<String, Object> cond = getCondAll();
+//        List<TbGoods> dataList = TbGoods.dao.queryList(cond, page);
+//        setAttr("dataList", dataList);
+//
+//        logger.debug("dataList,size:{}", dataList.size());
+//
+//        render("/template/pages/tk_goods/list.html");
+//    }
+//
+//    public void goAdd() {
+//        String type = getPara("type", "1");
+//        String appid = getPara("appid");
+//        if (StringUtil.isNotEmpty(appid)) {
+//            setAttr("appid", appid);
+//            setAttr("action", getPara("action"));
+//
+//            TkMaterial data = new TkMaterial();
+//            data.set("name", getPara("name"));
+//            setAttr("data", data);
+//        }
+//        setAttr("send_state", 1);
+//        render("/template/pages/tk_goods/form" + type + ".html");
+//    }
+//
+//    public void goEdit() throws UnsupportedEncodingException {
+//        String seqid = getPara("seqid");
+//        String type = getPara("type");
+//        int send_state = 1;
+//        TKKefuMsg data = TKKefuMsg.dao.findById(seqid);
+//        if (data == null) {
+//            data = TKKefuMsg.dao.queryByMediaid(getPara("mediaid"));
+//            type = data.getStr("type");
+//            send_state = data.getInt("send_state");
+//        }
+//        setAttr("send_state", send_state);
+//        setAttr("data", data);
+//        setAttr("contentList", JSONObject.parseArray(new String(data.get("content"), "UTF-8")));
+//        render("/template/pages/tk_goods/form" + type + ".html");
+//    }
+//
+////    public void doAdd() {
+////        String id = MD5Codec.encode(MD5Codec.encode(Long.toString(System.currentTimeMillis())));
+////        TkLink link = new TkLink();
+////        link.set("link_id", id);
+////        link.save();
+////        String goods = getPara("goods");
+////        ExtractHttpUtils.common(goods, id);
+////        renderRtn(RtnFactory.succ);
+////    }
+//
+//
+//    
+//    
+//    
+//    
+//}

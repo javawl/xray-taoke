@@ -1,0 +1,33 @@
+package com.xray.taoke.act.service;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+
+public class LinkInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".linkinfo.";
+
+    public static LinkInfoService instance = new LinkInfoService();
+
+    public String decodeUrl(String id) {
+        String key = prefix + "url." + id;
+        return cache.get(key);
+    }
+
+    public String encodeUrl(String url) {
+        String id = "g" + cache.incr(prefix + "url.uuid");
+        String key = prefix + "url." + id;
+        cache.set(key, url);
+        return id;
+    }
+
+    public String getView(String id) {
+        String key = prefix + "view";
+        return cache.hget(key, id);
+    }
+
+}

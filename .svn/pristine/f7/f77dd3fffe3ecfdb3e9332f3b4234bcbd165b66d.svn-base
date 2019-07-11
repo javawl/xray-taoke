@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>系统设置 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<#include "../../inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "../../inc/header.html">
+				<div class="content-wrapper">
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>
+								<a href="javascript:history.back();"><i class="fa fa-chevron-left"></i>返回</a>
+							</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<section class="content">
+						<div class="box box-primary">
+							<div class="box-header">
+								<div class="sequence_list am-text-sm">
+									<div class="box-tools">
+									</div>
+								</div>
+							</div>
+							<div class="box-body">
+								<div class="row">
+									<input id="seqid" value="<#if data??>${data.seqid!}<#else>0</#if>" style="display: none;">
+									<div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>角色ID</label>
+                                            <input id="roleid" type="text" class="form-control" placeholder="请输入角色ID" value="<#if data??>${data.roleid!}</#if>">
+                                        </div>
+                                    </div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label>角色名称</label>
+											<input id="name" type="text" class="form-control" placeholder="请输入角色名" value="<#if data??>${data.name!}</#if>">
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="box-footer">
+								<div class="btn-group">
+									<button type="button" id="submit" class="btn btn-primary">提交</button>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "../../inc/footer.html">
+		</div>
+		<script>
+			$(document).ready(function() {
+				//提交	
+				$("#submit").click(function() {
+                    var seqid = $("#seqid").val();
+					var roleid = $("#roleid").val();
+					var name = $("#name").val();
+					if(!roleid) {
+                        layer.msg("请输入角色ID！", {
+                            icon: 0
+                        });
+                        return;
+                    }
+					if(!name) {
+						layer.msg("请输入角色名！", {
+							icon: 0
+						});
+						return;
+					}
+
+					var ajaxUrl = "${cxt!}/admin/role/doAdd"
+					if(seqid > 0) {
+						ajaxUrl = "${cxt!}/admin/role/doEditName";
+					}
+					ajaxGet(ajaxUrl, {
+						roleid: roleid,
+						name: name
+
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							layer.msg(rtn.msg, {
+								icon: 2
+							});
+							return;
+						}
+						layer.msg("提交成功！即将返回列表...", {
+							time: 500,
+							icon: 1
+						}, function() {
+							location.href = "${cxt!}/admin/role/goList";
+						});
+					})
+				})
+
+			})
+		</script>
+	</body>
+
+</html>

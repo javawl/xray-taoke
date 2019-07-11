@@ -1,0 +1,96 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
+
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.upload.UploadFile;
+import com.jfinal.weixin.sdk.utils.JsonUtils;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.DateUtil;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+
+@ControllerBind(controllerKey = "/sysext")
+public class SysExtController extends AbstractController {
+
+    public void getCache() {
+        String key = getPara("key");
+        switch (getParaToInt("type")) {
+        case 1:
+            renderText(JsonUtils.toJson(RedisServiceFactory.getDefaulInstance().hgetAll(key)));
+            return;
+        default:
+            renderText(JsonUtils.toJson(RedisServiceFactory.getDefaulInstance().get(key)));
+            return;
+        }
+    }
+
+//    public void doUploadCdn() {
+//        String dir = DateUtil.getToday().replaceAll("-", "");
+//        UploadFile uf = getFile("file", dir);
+//        if (uf == null) {
+//            logger.error("err,file is null");
+//            renderRtn(RtnFactory.newFail("上传文件为空"));
+//            return;
+//        }
+//
+//        File file = uf.getFile();
+//        String key = dir + "/" + file.getName();
+//        AliyunOssKit.getDefault().upload(key, file);
+//        logger.info("upload file:{}", key);
+//        renderRtn(RtnFactory.newSucc(Constant.config.get("alicdn.prefix") + key));
+//    }
+
+    public void doUpload() {
+        String dir = DateUtil.getToday().replaceAll("-", "");
+        UploadFile uf = getFile("file", dir);
+        if (uf == null) {
+            logger.error("err,file is null");
+            renderRtn(RtnFactory.newFail("上传文件为空"));
+            return;
+        }
+        File file = uf.getFile();
+        String path = "/upload/" + dir + "/" + file.getName();
+        logger.info("upload file:{}", path);
+        renderRtn(RtnFactory.newSucc(path));
+    }
+
+    public void doWximgBridge() {
+        String url = getPara("url");
+        if (StringUtil.isEmpty(url)) {
+            renderRtn(RtnFactory.newFail("参数错误！"));
+            return;
+        }
+        try {
+            // 伪装头请求图片链接
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon;)");
+            conn.setRequestProperty("Accept-Encoding", "gzip");
+            conn.setRequestProperty("referer", "http://www.qq.com");
+            conn.setRequestProperty("cookie", "http://www.qq.com");
+            conn.setRequestProperty("Content-Type", "image/jpg");
+            InputStream inputStream = conn.getInputStream();
+            // 将inputStream转换为BufferedImage
+            BufferedImage bufferedImage = ImageIO.read(inputStream);
+            // 输出bufferedImage至view
+            HttpServletResponse response = getResponse();
+            response.setContentType("image/jpeg");
+            response.getOutputStream();
+            response.flushBuffer();
+            ImageIO.write(bufferedImage, "JPEG", response.getOutputStream());
+            inputStream.close();
+            renderNull();
+        } catch (Exception e) {
+            renderRtn(RtnFactory.exception);
+        }
+    }
+
+}

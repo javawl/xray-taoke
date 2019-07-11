@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>发布管理 | ${_TITLE_!}</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+    <link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+    <link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+    <#include "/template/inc/inc.html">
+  </head>
+
+  <body class="hold-transition skin-blue sidebar-mini">
+    <div class="wrapper">
+      <#include "/template/inc/header.html">
+        <div class="content-wrapper">
+          <section class="content-header">
+          	<ol class="breadcrumb" style="left: 10px;">
+          		<li>发布管理</li>
+          		<li>发布管理</li>
+          		<li class="active">修改</li>
+          	</ol>
+          	<h1><small></small></h1>
+          </section>
+					
+					<section class="content">
+            <div class="box box-primary">
+              <div class="box-header">
+                <div class="sequence_list am-text-sm">
+                  <div class="box-tools"></div>
+                </div>
+              </div>
+              <div class="box-body">
+                <div class="row">
+                  <input id="seqid" value="<#if data??>${data.seqid!}</#if>" style="display: none;">
+                  <div class='col-md-6'>
+                    <div class='row'>
+                    	<div class='col-sm-12 form-group'>
+                    		<label>公众号名称</label>
+                    			<select id="appid" name="appid" class="form-control">
+														<option value="">请选择公众号</option>
+														<#list mpList as item>
+															<option value="${item.appid!}"  data-id="${item.seqid!}"  <#if data??&&data.appid=item.appid>selected</#if>>${item.name!}</option>
+														</#list>
+													</select>
+                    	</div>
+                    </div>
+                  </div>
+                  <div class='col-md-6'>
+                    <div class='row'>
+                    	<div class='col-sm-12 form-group'>
+                    		<label>pid</label>
+                    		<input id='pid' type='text' class='form-control' placeholder='请输入pid' value='<#if data??>${data.pid!}</#if>'>
+                    	</div>
+                    </div>
+                  </div>
+                     
+                  <div class='col-md-6'>
+                    <div class='row'>
+                    	<div class='col-sm-12 form-group'>
+                    		<label>备注</label>
+                    		<input id='remark' type='text' class='form-control' placeholder='请输入备注' value='<#if data??>${data.remark!}</#if>'>
+                    	</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="box-footer">
+                <div class="btn-group">
+                  <button type="button" id="submit" class="btn btn-primary">提交</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+        <#include "/template/inc/footer.html">
+    </div>
+    <script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+    <script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+      <script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+    <script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>
+    <script>
+      var datepicker;
+      $(document).ready(function() {
+        $(".select2").select2();
+        
+        
+        
+        //提交  
+        $("#submit").click(function() {
+          var seqid = $("#seqid").val();
+          var appid = $("#appid").val();
+          if (!appid) {
+            base.showWarMsg('请选择appid');
+            return;
+          }
+          var sid = $("#appid option:selected").attr("data-id");
+          
+          var name = $("#appid option:selected").text();
+          
+          var pid = $("#pid").val();
+          if (!pid) {
+            base.showWarMsg('请输入pid');
+            return;
+          }
+          
+          var remark = $("#remark").val();
+
+          
+          var ajaxUrl = "${cxt!}/linkconfig/doAdd"
+          if (seqid) {
+            ajaxUrl = "${cxt!}/linkconfig/doEdit";
+          }
+          ajaxGet(ajaxUrl, {
+            seqid: seqid,
+            appid: appid,
+            sid: sid,
+            pid: pid,
+            name:name,
+            remark:remark
+          }, function(rtn) {
+            if (rtn.code != 1) {
+              base.showErrMsg(rtn.msg);
+              return;
+            }
+            if (seqid) {
+              base.showSuccMsg("提交成功！");
+            } else {
+              base.showSuccMsg("提交成功！即将关闭列表...", function() {
+                window.close();
+                //base.backWin();
+              });
+            }
+          })
+        })
+
+      })
+      
+      
+      
+    
+      
+      
+    </script>
+  </body>
+
+</html>

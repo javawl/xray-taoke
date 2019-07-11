@@ -1,0 +1,202 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.Map;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.exception.RtException;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.UuidUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.kit.ExcelKit;
+import com.xray.taoke.admin.model.TkMaterial;
+import com.xray.taoke.admin.model.TkMpinfo;
+import com.xray.taoke.admin.service.TkMpService;
+import com.xray.taoke.admin.utils.EmojiUtil;
+
+@ControllerBind(controllerKey = "/material")
+public class TkMaterialController extends AbstractController {
+
+    public void goList() {
+         Map<String, Object> cond = getCondAll();
+        // getCond(cond, "mediaid");
+        String appid = getPara("appid","");
+        setAttr("appid", appid);
+        if(!StringUtil.isEmpty(appid)) 
+            cond.put("appid", appid);
+        PageVo page = new PageVo(getParaToInt("pno", 1));
+        page.setOrderby("`seqid` desc");
+        setAttr("page", page);
+        List<TkMaterial> dataList = TkMaterial.dao.queryList(getCondAll(), page);
+        setAttr("dataList", dataList);
+        logger.debug("dataList,size:{}", dataList.size());
+        render("/template/pages/tk_material/list.html");
+    }
+
+    public void goAdd() {
+        String type = getPara("type", "1");
+        String orid = getPara("orid");
+        if (StringUtil.isNotEmpty(orid)) {
+            setAttr("orid", orid);
+            setAttr("action", getPara("action"));
+
+            TkMaterial data = new TkMaterial();
+            data.set("name", getPara("name"));
+            setAttr("data", data);
+        }
+        setAttr("send_state", 1);
+        render("/template/pages/tk_material/form" + type + ".html");
+    }
+
+    public void goEdit() throws UnsupportedEncodingException {
+        String seqid = getPara("seqid");
+        String type = getPara("type");
+        int send_state = 1;
+        TkMaterial data = TkMaterial.dao.findById(seqid);
+        if (data == null) {
+            data = TkMaterial.dao.queryByMediaid(getPara("mediaid"));
+            type = data.getStr("type");
+            send_state = data.getInt("send_state");
+        }
+        setAttr("send_state", send_state);
+        setAttr("data", data);
+        setAttr("contentList", JSONObject.parseArray(new String(data.get("content"), "UTF-8")));
+        render("/template/pages/tk_material/form" + type + ".html");
+    }
+
+    public void doAdd() {
+        String name = getPara("name");
+        String word = getPara("word");
+        int type = getParaToInt("type");
+        String content = getPara("content");
+        TkMaterial data = new TkMaterial();
+        String mediaid = "wx_" + UuidUtil.getUuidByJdk(true).substring(8, 24);
+        data.set("mediaid", mediaid);
+        data.set("name", name);
+        data.set("word", word);
+        data.set("type", type);
+        data.set("content", EmojiUtil.resolveToEmojiFromByte(content));
+        data.set("send_state", getParaToInt("state"));
+        data.set("state", 1);
+        data.set("inputtime", System.currentTimeMillis());
+        data.set("inputby", getUserid());
+        data.set("edittime", data.get("inputtime"));
+        data.set("editby", data.get("inputby"));
+        data.save();
+        logger.info("doAdd,mediaid:{},opid:{},{}", mediaid, getUserid(), getRemoteIp());
+
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doEdit() {
+        String seqid = getPara("seqid");
+        TkMaterial data = TkMaterial.dao.findById(seqid);
+        data.set("name", getPara("name"));
+        data.set("content", getPara("content"));
+        data.set("edittime", System.currentTimeMillis());
+        data.set("editby", getUserid());
+        data.set("send_state", getParaToInt("state"));
+        data.update();
+        logger.info("doEdit,mediaid:{},opid:{},{}", data.getMediaid(), getUserid(), getRemoteIp());
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doGenZong() {
+        String seqid = getPara("seqid");
+        TkMaterial data = TkMaterial.dao.findById(seqid);
+        data.set("click_state", 1);
+        data.update();
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doDel() {
+        String seqid = getPara("seqid");
+//        TkMaterial data = TkMaterial.dao.findById(seqid);
+//        int count = MpInfo.dao.countMaterial(data.getMediaid());
+//        if (count > 0) {
+//            logger.error("err doDel,mediaid:{},opid:{},{}", data.getMediaid(), getUserid(), getRemoteIp());
+//            renderRtn(RtnFactory.newFail("exists related MpInfo"));
+//            return;
+//        }
+
+        TkMaterial.dao.doDels(getUserid(), seqid);
+        logger.info("doDels,seqids:{},opid:{},{}", seqid, getUserid(), getRemoteIp());
+
+        renderRtn(RtnFactory.succ);
+    }
+    
+    
+    public void doFaBu() {
+        String appid = getPara("appid");
+        try {
+            TkMpService.instance.pubMaterial(TkMpinfo.dao.exists(appid));
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+    
+    
+    
+    public void doInput() {
+        String filePath = getPara("filePath");
+        if (StringUtil.isEmpty(filePath)) {
+            logger.error("doInput,empty filePath:{},opid:{},{}", filePath, getUserid(), getRemoteIp());
+            renderRtn(RtnFactory.newFail("empty filePath"));
+            return;
+        }
+
+        File file = new File(getBasePath() + filePath);
+        if (!file.exists()) {
+            logger.error("doInput,not exist filePath:{},opid:{},{}", filePath, getUserid(), getRemoteIp());
+            renderRtn(RtnFactory.newFail("not exist filePath"));
+            return;
+        }
+
+        ExcelKit excel = null;
+        try {
+            excel = new ExcelKit(new FileInputStream(file));
+            List<List<String>> list = excel.read();
+            int counter = 0;
+            for (List<String> subList : list.subList(1, list.size())) {
+                String meadia_id = subList.get(0) == null ? "" : subList.get(0).trim();
+                if (StringUtil.isEmpty(meadia_id))
+                    continue;
+                String str2 = subList.get(1);
+                TkMaterial material =  TkMaterial.dao.queryByAuth(meadia_id);
+                String contents = new String(material.get("content"),"UTF-8");
+                JSONArray array = JSONArray.parseArray(contents);
+                String content = array.getString(0);
+                JSONObject jsonObject = JSONObject.parseObject(content);
+                String url= jsonObject.getString("url");
+                String str = content.replaceAll(url, str2);
+                StringBuffer sb = new StringBuffer();
+                material.set("content", sb.append("[").append(str).append("]").toString());
+                material.update();
+                ++counter;
+            }
+
+            renderRtn(RtnFactory.newSucc("成功导入数据：" + counter + "条"));
+        } catch (Exception e) {
+            throw new RtException(e);
+        } finally {
+            excel.close();
+        }
+    }
+    
+    
+    
+    
+    
+
+}

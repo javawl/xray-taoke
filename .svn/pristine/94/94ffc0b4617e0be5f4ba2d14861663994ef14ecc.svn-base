@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>淘宝找券 | ${_TITLE_!}</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+    <link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+    <link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+    <link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+    <link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+    <#include "/template/inc/inc.html">
+  </head>
+
+  <body class="hold-transition skin-blue sidebar-mini">
+    <div class="wrapper">
+      <#include "/template/inc/header.html">
+        <div class="content-wrapper">
+          <!--content header-->
+          <section class="content-header">
+            <ol class="breadcrumb" style="left: 10px;">
+              <li>淘宝找券</li>
+              <li class="active">淘宝找券</li>
+            </ol>
+            <h1><small></small></h1>
+          </section>
+          <!--/content header-->
+          <section class="content">
+            <div class="row">
+              <div class="col-xs-12">
+                <div class="box box-primary">
+                  <div class="box-header">
+                    <form action="${cxt!}/tklink/goList">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <select id="appid" name="appid" class="form-control">
+                            <option value="">选择公众号</option>
+                            <#list mpList as item>
+                              <option value="${item.appid!}" <#if appid=item.appid>selected</#if>>${item.name!}</option>
+                            </#list>
+                          </select>
+                        </div>
+                        <div class="col-md-1">
+                          <input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+                          <button id="search" class="btn btn-default">查询</button>
+                        </div>
+                        <div class="col-md-8">
+                          <div class="pull-right">
+                            <a onclick="showChaquan()" class="btn btn-warning">查券</a>
+                            <a class="btn btn-primary" onclick="doZhaoquan()">好单库</a>
+                            <a onclick="doHaodankuApp()" class="btn btn-danger">更新</a>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                  <!-- box-header -->
+                  <div class="box-body">
+                    <div class="dataTables_wrapper form-inline dt-bootstrap">
+                      <div class="row">
+                        <div class="col-sm-12">
+                          <table class="table table-bordered table-hover">
+                            <tbody>
+                              <tr>
+                                <th width="20px"><input type="checkbox" class="all minimal" /></th>
+                                <th>时间</th>
+                                <th>链接</th>
+                                <th>数量</th>
+                                <th>客服</th>
+                                <th>备注</th>
+                                <th width="70px">操作</th>
+                              </tr>
+                              <#list dataList as item>
+                                <tr style="white-space:nowrap;">
+                                  <td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+                                  <td>
+                                    <#if (item.inputtime> 0)>${item.inputtime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</#if>
+                                  </td>
+                                  <td class="link_txt">亲，找了几款优惠券，请点击查看<br /><a href="${item.url!}" target="_blank">${item.url!}</a></td>
+                                  <td>${item.size!}</td>
+                                  <td>${item.inputby!}</td>
+                                  <td>
+                                    <a href="javascript:;" onclick="doUpdateRemark('${item.seqid!}','${item.remark!}')" class="text-green"><i class="fa fa-pencil"></i> ${item.remark!}</a>
+                                  </td>
+                                  <td>
+                                    <a href="javascript:;" target="_blank" class="doCopyByText text-primary"><i class="fa fa-copy"></i>复制</a>
+                                  </td>
+                                </tr>
+                              </#list>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <#if dataList.size()==0>
+                        <div style="text-align:center;">
+                          <p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到数据！</p>
+                        </div>
+                        <hr />
+                      </#if>
+                    </div>
+                    <#if (page.pcount>0)>
+                      <div>
+                        <div class="tcdPageCode pull-right" style="padding: 0;"></div>
+                        <span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+                      </div>
+                    </#if>
+                    <!--<div class="tcdPageCode pull-right"></div>-->
+                  </div>
+                  <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+              </div>
+            </div>
+          </section>
+        </div>
+        <#include "/template/inc/footer.html">
+    </div>
+    <script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+    <script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+    <script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+    <script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+    <script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+    <script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>pt>
+    <script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+      <script src="${cxt!}/addon/clipboard/clipboard.min.js"></script>
+    <script>
+      var uploader;
+      var checkList = [];
+      $(document).ready(function() {
+       	
+       	
+       	
+       	
+        var datepicker = $("#datepicker").datepicker({
+          language: "zh-CN",
+          autoclose: true,
+          format: "yyyy-mm-dd"
+        })
+        datepicker.datepicker("setDate", '${refDateStr!}');
+        
+        if($("table").width() < 1000) {
+          $(".box-body").css("overflow", "auto");
+        }
+
+        $(".adds").click(function() {
+
+          var html = '';
+          html += '<div class="box-body">';
+          html += '    <div class="col-sm-12">';
+          html += '  <div class="form-group">'
+          html += ' <textarea  rows="20" cols="20"  type="text" class="form-control title"  id="goods"    placeholder="好单库选品复制后粘贴到这里"   ></textarea>'
+          html += '    </div>';
+          html += '    </div>';
+          html += '    </div>';
+          layer.open({
+            closeBtn: 0,
+            title: '商品信息',
+            area: ['500px', ],
+            content: html,
+            btn: ['确定', '取消'],
+            yes: function() {
+
+              var goods = $("#goods").val();
+              var appid = $("#appid").val();
+              ajaxPost("${cxt!}/tklink/doAdd", {
+                goods: goods,
+                appid:appid
+              }, function(rtn) {
+                if(rtn.code != 1) {
+                  layer.msg(rtn.msg, {
+                    icon: 2
+                  });
+                  return;
+                }
+                layer.msg('操作成功！即将自动刷新...', {
+                  time: 500,
+                  icon: 1
+                }, function() {
+                  location.reload();
+                });
+
+              })
+            }
+          });
+
+        })
+        
+        
+        $(".doCopyByText").click(function(){
+        		var z = $(this).parent().siblings().eq(2);
+        		var s =z.text();
+				    var clipboard = new Clipboard(".doCopyByText", {
+				        text: function() {
+				            return s;
+				        }
+				    });
+				    clipboard.on('success',
+				    function(e) {
+				    	
+				    	 layer.msg('复制成功！', {time: 500, icon: 1}, function() {
+              });
+				    	
+				    	
+				    });
+				    clipboard.on('error',
+				    function(e) {
+				        console.log(e);
+				    });
+        	
+        	
+        	
+        })
+        
+        //查询绑定回车事件
+        $("#word").keydown(function(e) {
+          var ev = document.all ? window.event : e;
+          if(ev.keyCode == 13) {
+            $('#search').click();
+          }
+        })
+        //分页
+        $(".tcdPageCode").createPage({
+          pageCount: ${
+            page.pcount!
+          },
+          current: ${
+            page.pno!
+          },
+          backFn: function(n) {
+            $('#pno').val(n);
+            $('#search').click();
+          }
+        });
+        //全选
+        var $checkboxAll = $('input[type="checkbox"].all'),
+          $checkbox = $('input[type="checkbox"].item'),
+          i = 0;
+        //启动icheck  
+        $(('input[type="checkbox"].minimal')).iCheck({
+          checkboxClass: 'icheckbox_minimal-blue'
+        });
+        //全选checkbox  
+        $checkboxAll.on('ifChecked', function(event) {
+          $checkbox.iCheck('check');
+          checkList = [];
+          $checkbox.each(function() {
+            if(true == $(this).is(':checked')) {
+              checkList.push($(this).val());
+            }
+          });
+        });
+        $checkboxAll.on('ifUnchecked', function(event) {
+          $checkbox.iCheck('uncheck');
+          checkList = [];
+        });
+        //单项checkbox  
+        $checkbox.on('ifChecked', function(event) {
+          checkList.push(event.target.value);
+        });
+        $checkbox.on('ifUnchecked', function(event) {
+          checkList.forEach(function(e, i) {
+            if(e == event.target.value) {
+              checkList.splice(i, 1);
+              return;
+            }
+          })
+        })
+      })
+      
+      function showChaquan() {
+        var html = '';
+        html += '<div class="box-body" id="chaquan">';
+        html += '  <div class="col-sm-12">';
+        html += '    <div class="form-group">'
+        html += '      <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="src_url"    placeholder="输入需要转链的链接"   ></textarea>'
+        html += '    </div>';
+        html += '    <div class="form-group">'
+        html += '      <button onclick="doChaquan()" class="btn btn-primary">转链</button>'
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="col-sm-12">';
+        html += '    <div class="form-group">'
+        html += '      <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="end_url"    placeholder=""   ></textarea>'
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+        layer.open({
+        	title: '查券',
+        	area: ['500px', ],
+        	content: html,
+        	btn: []
+        });
+      }
+      
+      function doChaquan() {
+        var src_url = $("#src_url").val();
+        if(src_url == '') return;
+        ajaxPost("${cxt!}/tklink/doChaquan", {
+          appid: $("#appid").val(),
+        	 src_url: src_url
+        }, function(rtn) {
+        	if(rtn.code != 1) {
+        		layer.msg(rtn.msg, {icon: 2});
+        		return;
+        	}
+        	$("#end_url").text(rtn.data);
+        	
+        	var c = document.getElementById("end_url");
+				    var s = c.innerHTML;
+				    var clipboard = new Clipboard('#end_url', {
+				        text: function() {
+				            return s;
+				        }
+				    });
+				    clipboard.on('success',
+				    function(e) {
+				    	$(".copu_succ").remove();
+				    	var html ="";
+				    	 html += '  <div class="col-sm-12 copu_succ">';
+       				 html += '    <div class="form-group">'
+        			 html += '      <label>复制成功</textarea>'
+        			 html += '    </div>';
+				    	
+				    	$("#chaquan").append(html);
+				    	
+				    });
+				    clipboard.on('error',
+				    function(e) {
+				        console.log(e);
+				    });
+        	
+        	
+        })
+      }
+      
+      
+      function doZhaoQuanByHaodanku(){
+      	var goods = $("#goods").val();
+            ajaxPost("${cxt!}/tklink/doZhaoquan", {
+              appid: $("#appid").val(),
+              goods: goods
+            }, function(rtn) {
+              if(rtn.code != 1) {
+                layer.msg(rtn.msg, {icon: 2});
+                return;
+              }
+              
+              
+              
+             $("#end_link").text(rtn.data);
+        		var c = document.getElementById("end_link");
+				    var s = c.innerHTML;
+				    var clipboard = new Clipboard('#end_link', {
+				        text: function() {
+				            return s;
+				        }
+				    });
+				    clipboard.on('success',
+				    function(e) {
+				    	$(".copu_succ").remove();
+				    	var html ="";
+				    	 html += '  <div class="col-sm-12 copu_succ">';
+       				 html += '    <div class="form-group">'
+        			 html += '      <label>复制成功</textarea>'
+        			 html += '    </div>';
+				    	
+				    	$("#zhaoquan").append(html);
+				    	
+				    });
+				    clipboard.on('error',
+				    function(e) {
+				        console.log(e);
+				    });
+              
+        
+            })
+      }
+      
+      
+      function doZhaoquan() {
+        
+        
+        
+        
+         var html = '';
+        html += '<div class="box-body" id="zhaoquan">';
+        html += '  <div class="col-sm-12">';
+        html += '    <div class="form-group">'
+        html += '      <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="goods"    placeholder="好单库选品复制后粘贴到这里"   ></textarea>'
+        html += '    </div>';
+        html += '    <div class="form-group">'
+        html += '      <button onclick="doZhaoQuanByHaodanku()" class="btn btn-primary">转链</button>'
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="col-sm-12">';
+        html += '    <div class="form-group">'
+        html += '      <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="end_link"    placeholder=""   ></textarea>'
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+        
+        
+        layer.open({
+          closeBtn: 1,
+          title: '商品信息',
+          area: ['500px', ],
+         	content: html,
+        });
+      }
+      
+      function doHaodankuApp() {
+        layer.confirm('确定更新吗？', function(i) {
+        	ajaxGetByHaodanku("${cxt!}/app/doHaodankuApp", {}, function(rtn) {
+        		if(rtn.code != 1) {
+        			layer.msg(JSON.stringify(rtn), {icon: 2});
+        			return;
+        		}
+        		layer.msg("操作成功！", {icon: 1, time: 600}, function() {
+        			// window.location.reload();
+        		});
+        	})
+        })
+      }
+      
+      function doUpdateRemark(seqid, remark) {
+        var html = '';
+        html += '<div class="col-sm-12">';
+        html += '  <div class="form-group">'
+        html += '    <input type="text" class="form-control title" id= "remark"  data-id=""   value="'+remark+'" placeholder="请输入备注" >'
+        html += '  </div>';
+        html += '</div>';
+      
+        layer.open({
+          closeBtn: 0,
+          title: '修改备注',
+          area: ['500px', ],
+          content: html,
+          btn: ['确定', '取消'],
+          yes: function() {
+            var remark = $("#remark").val();
+            ajaxGet("${cxt!}/tklink/doUpdateRemark", {
+              seqid: seqid,
+              remark: remark,
+            }, function(rtn) {
+              if(rtn.code != 1) {
+                layer.msg(rtn.msg, {icon: 2});
+                return;
+              }
+              layer.msg('操作成功！即将自动刷新...', {time: 500, icon: 1}, function() {
+                location.reload();
+              });
+            })
+          }
+        });
+      }
+      
+    </script>
+  </body>
+
+</html>

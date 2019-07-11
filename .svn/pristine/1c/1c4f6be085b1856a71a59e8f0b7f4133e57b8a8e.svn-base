@@ -1,0 +1,251 @@
+package com.xray.taoke.admin.web.controller;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.jfinal.aop.Clear;
+import com.jfinal.aop.Enhancer;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.util.DateUtil;
+import com.xray.act.web.vo.RtnFactory;
+import com.xray.admin.web.controller.AbstractController;
+import com.xray.taoke.admin.app.CashAutoApp;
+import com.xray.taoke.admin.app.CashRemindApp;
+import com.xray.taoke.admin.app.HaodankuApp;
+import com.xray.taoke.admin.app.OrderJieApp;
+import com.xray.taoke.admin.app.OrderNewApp;
+import com.xray.taoke.admin.app.OrderNewStateApp;
+import com.xray.taoke.admin.app.OrderPidexApp;
+import com.xray.taoke.admin.app.OrderProxyApp;
+import com.xray.taoke.admin.app.OrderStateApp;
+import com.xray.taoke.admin.app.SendJxApp;
+import com.xray.taoke.admin.app.SendMjApp;
+import com.xray.taoke.admin.app.TkStatDetailApp;
+import com.xray.taoke.admin.app.UserInfoApp;
+import com.xray.taoke.admin.common.DateUtilMyself;
+import com.xray.taoke.admin.model.MpInfo;
+import com.xray.taoke.admin.service.ItemService;
+import com.xray.taoke.admin.service.WeixinApi;
+
+@Clear
+@ControllerBind(controllerKey = "/app")
+public class AppController extends AbstractController {
+
+    /**
+     * 好单库榜单更新 10min
+     */
+    public void doHaodankuApp() {
+        new HaodankuApp().start();
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 用户信息更新 2min
+     */
+    public void doUserInfoApp() {
+        List<String> list = MpInfo.dao.queryUserInfo();
+        for (String appid : list) {
+            UserInfoApp app = new UserInfoApp(appid);
+            app.doRun(appid);
+            app.doUoUserInfo(appid);
+        }
+        UserInfoApp.doCashUserInfo();
+        UserInfoApp.doOrderUserInfo();
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 新订单同步 3sec
+     */
+    public void doOrderNewApp() {
+        List<MpInfo> list = filterByTbname(MpInfo.dao.queryTbnameInuse());
+        for (MpInfo data : list) {
+            new OrderNewApp(data.getStr("appid")).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 订单状态更新 1step=6hour，0=最近20min
+     */
+    public void doOrderStateApp() {
+        long begintime = 0;
+        long endtime = 0;
+
+        Calendar cal = Calendar.getInstance();
+
+        int step = getParaToInt("step");
+
+        if (step == 0) {
+            begintime = cal.getTimeInMillis() - 1200000 + 1;
+            endtime = cal.getTimeInMillis();
+        } else {
+            cal.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY) - 6);
+            begintime = cal.getTimeInMillis();
+            endtime = cal.getTimeInMillis() + 1200000;
+        }
+
+        List<MpInfo> list = filterByTbname(MpInfo.dao.queryTbnameInuse());
+        for (MpInfo data : list) {
+            new OrderStateApp(data.getStr("appid"), begintime, endtime).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 
+     */
+    public void doOrderNewStateApp() {
+        List<MpInfo> list = filterByTbname(MpInfo.dao.queryTbnameInuse());
+        for (MpInfo data : list) {
+            new OrderNewStateApp(data.getStr("appid")).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doOrderStateByDay() {
+        String day = getPara("day", DateUtil.getToday());
+        long begintime = 0;
+        long endtime = 0;
+        begintime = DateUtilMyself.getTimesmorning(day);
+        endtime = DateUtilMyself.getTimesnight(day);
+        List<MpInfo> list = filterByTbname(MpInfo.dao.queryTbnameInuse());
+        for (MpInfo data : list) {
+            new OrderStateApp(data.getStr("appid"), begintime, endtime).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doOrderStateByTime() {
+        long tradtime = getParaToLong("tradtime");
+        long begintime = tradtime;
+        long endtime = tradtime + 1200000;
+        List<MpInfo> list = filterByTbname(MpInfo.dao.queryTbnameInuse());
+        for (MpInfo data : list) {
+            new OrderStateApp(data.getStr("appid"), begintime, endtime).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 订单结算 5sec
+     */
+    public void doOrderJieApp() {
+        new OrderJieApp().start();
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 自动绑定订单脚本
+     */
+    public void doOrderPidexApp() {
+        new OrderPidexApp().start();
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 代理订单绑定
+     */
+    public void doOrderProxyApp() {
+        new OrderProxyApp().start();
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 自动提现脚本
+     */
+    public void doCashAutoApp() {
+        List<String> list = MpInfo.dao.queryAppidInuse();
+        for (String appid : list) {
+            new CashAutoApp(appid).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 提现提示脚本
+     */
+    public void doCashRemindApp() {
+        List<String> list = MpInfo.dao.queryAppidInuse();
+        for (String appid : list) {
+            new CashRemindApp(appid).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 发送秘笈
+     */
+    public void doSendMjApp() {
+        List<String> list = MpInfo.dao.queryAppidInuse();
+        for (String appid : list) {
+            new SendMjApp(appid, getParaToInt("delay", 1800000)).start();
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 发送精选
+     */
+    public void doSendJxApp() {
+        List<String> list = MpInfo.dao.queryAppidInuse();
+        String timekey = getPara("timekey", "");
+        for (String appid : list) {
+            new SendJxApp(appid, timekey).start();
+        }
+
+        renderRtn(RtnFactory.succ);
+    }
+
+    /**
+     * 日数据汇总
+     */
+    public void doTkStatDetailEx() {
+        String day = getPara("day", DateUtil.getToday());
+        List<String> list = MpInfo.dao.queryAppidInuse();
+        for (String appid : list) {
+            TkStatDetailApp.runStatByDay(appid, day);
+        }
+        renderRtn(RtnFactory.succ);
+    }
+
+    public void doCreateQ() {
+        // 场景值
+        String sceneId = "string";
+        String appid = "wx3088f1bd705dfd20";
+        // 生成临时二维码
+        WeixinApi wxApi = Enhancer.enhance(WeixinApi.class);
+        String str = wxApi.CreateQrcode(appid, sceneId);
+        System.out.println(str);
+        renderRtn(RtnFactory.newSucc(str));
+    }
+    
+    
+    public void doReportItem() {
+    	String arr = getPara("arr");
+    	String userid = "wenwenwen";
+    	ItemService.instance.setJsonStr(userid, arr);
+    	//List<TbItemVo> array = JSONArray.parseArray(arr, TbItemVo.class);
+    	renderRtn(RtnFactory.succ);
+    	
+    }
+    
+    
+    
+
+    private List<MpInfo> filterByTbname(List<MpInfo> list) {
+        Set<String> set = new HashSet<String>();
+        List<MpInfo> result = new ArrayList<MpInfo>();
+        for (MpInfo data : list) {
+            if (set.contains(data.getStr("tbname")))
+                continue;
+            result.add(data);
+            set.add(data.getStr("tbname"));
+        }
+        return result;
+    }
+
+}

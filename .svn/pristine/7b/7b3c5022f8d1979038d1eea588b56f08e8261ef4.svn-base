@@ -1,0 +1,101 @@
+package com.xray.taoke.act.vo;
+
+import com.alibaba.fastjson.JSONObject;
+import com.xray.taoke.act.common.Constant;
+
+public class TbGoodsVo {
+    private String itemid;
+    private String itemtitle;
+    private double itemendprice;
+    private String itempic;
+    private int cpmoney;
+    private int cpstate;
+    private String tkpwd;
+    private double tkrate;
+    private double rate;
+
+    public String getChaquanTitle() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("约返:").append(Constant.formatPrice(itemendprice * tkrate * rate)).append(" ");
+        sb.append(" 优惠券:").append(cpmoney);
+        sb.append(" 付费价:").append(Constant.formatPrice(itemendprice));
+        return sb.toString();
+    }
+
+    public String getItemid() {
+        return itemid;
+    }
+
+    public void setItemid(String itemid) {
+        this.itemid = itemid;
+    }
+
+    public String getItemtitle() {
+        return itemtitle;
+    }
+
+    public void setItemtitle(String itemtitle) {
+        this.itemtitle = itemtitle;
+    }
+
+    public double getItemendprice() {
+        return itemendprice;
+    }
+
+    public void setItemendprice(double itemendprice) {
+        this.itemendprice = itemendprice;
+    }
+
+    public String getItempic() {
+        return itempic;
+    }
+
+    public void setItempic(String itempic) {
+        this.itempic = itempic;
+    }
+
+    public int getCpmoney() {
+        return cpmoney;
+    }
+
+    public void setCpmoney(int cpmoney) {
+        this.cpmoney = cpmoney;
+    }
+
+    public int getCpstate() {
+        return cpstate;
+    }
+
+    public void setCpstate(int cpstate) {
+        this.cpstate = cpstate;
+    }
+
+    public String getTkpwd() {
+        return tkpwd;
+    }
+
+    public void setTkpwd(String tkpwd) {
+        this.tkpwd = tkpwd;
+    }
+
+    public double getTkrate() {
+        return tkrate;
+    }
+
+    public void setTkrate(double tkrate) {
+        this.tkrate = tkrate;
+    }
+
+    public double getRate() {
+        return rate;
+    }
+
+    public void setRate(double rate) {
+        this.rate = rate;
+    }
+
+    public String toJSONString() {
+        return JSONObject.toJSONString(this);
+    }
+
+}

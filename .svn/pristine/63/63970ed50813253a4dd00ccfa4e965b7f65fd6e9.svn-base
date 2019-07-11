@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="format-detection" content="telephone=on">
+		<link href="http://szqz.honeynice.com/m2c/2/style/m-reset.css" rel="stylesheet">
+		<link href="http://szqz.honeynice.com/m2c/style/global1803.css" rel="stylesheet">
+		<link href="http://szqz.honeynice.com/m2c/2/style/topic-style.css" rel="stylesheet">
+		<title>活动资讯</title>
+	</head>
+	<body class="bg w">
+
+		<div class="top-height">
+			<div class="top-fixed">
+				<!--头部导航-->
+				<header class="top">
+					<div class="main bg-purple">
+						<p class="ti icon-ti"><i class="iconfont icon-ti-hdzx"></i></p>
+					</div>
+				</header>
+				<!--头部导航EDN-->
+			</div>
+		</div>
+
+		<div class="infomation-page no-classify">
+			<div class="main-wrap">
+				<div class="ip-classify bg-purple" style="border-bottom-left-radius: 5rem;">
+					<div class="classify-tab-fixed">
+						<div class="bg-purple main">
+							<ul class="classify-tab">
+								<li class="tab-item sel" tree=""><a>全部资讯</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="list-box">
+					<ul class="list-box-cont" id="news-list">
+						
+						<#list list as item>
+						<li class="list-item" style="height: auto;">
+								<#if item.url=="www.jingchengvip.com">
+																			<a href="http://${item.url!}/m2c/snapup/${item.infoid!}.html?order_cust_id=2259781&user_id=lgbb27" target="_blank">
+																			<#elseif item.url=="www.qilvyoo.com">
+																				<a href="http://${item.url!}/m2c/snapup/${item.infoid!}.html?order_cust_id=1705370&user_id=qly0825" target="_blank">
+																				<#elseif item.url=="szqz.honeynice.com">
+																					<a href="http://${item.url!}/m2c/snapup/${item.infoid!}.html?order_cust_id=2022374&user_id=lgfx13" target="_blank">
+							
+							
+							</#if>
+							
+							
+								<div class="title" style="margin-left: auto;">
+									<div class="area">${item.title!}
+									</div>
+								</div>
+								<div class="date">${item.inputtime?number_to_date?string("yyyy-MM-dd HH:mm:ss")}</div>
+							</a>
+						</li>
+						
+						
+						
+						</#list>
+            
+
+					</ul>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>

@@ -1,0 +1,102 @@
+package com.xray.taoke.act.web.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Before;
+import com.jfinal.ext.interceptor.GET;
+import com.jfinal.ext.route.ControllerBind;
+import com.xray.act.exception.RtException;
+import com.xray.act.jfinal.JfController;
+import com.xray.act.util.StringUtil;
+import com.xray.act.util.codec.Base64Codec;
+import com.xray.taoke.act.common.Constant;
+import com.xray.taoke.act.common.TbErrInterceptor;
+import com.xray.taoke.act.service.LinkInfoService;
+import com.xray.taoke.act.service.MpInfoService;
+import com.xray.taoke.tkapi.HaodankuService;
+import com.xray.taoke.tkapi.TbItemService;
+import com.xray.taoke.tkapi.vo.TbItemEx;
+import com.xray.taoke.tkapi.vo.TbItemGy;
+import com.xray.taoke.tkapi.vo.TbItemVo;
+
+@Before({ GET.class, TbErrInterceptor.class })
+@ControllerBind(controllerKey = "/")
+public class IndexController extends JfController {
+    protected static Logger logger = LoggerFactory.getLogger(IndexController.class);
+
+    public void index() {
+        String url = LinkInfoService.instance.decodeUrl(getPara());
+        if (StringUtil.isEmpty(url))
+            throw new RtException(Constant.para_err);
+        redirect(url);
+    }
+
+    public void tobj() {
+        setAttr("obj", JSONObject.parseObject(new String(Base64Codec.decode(getPara("e")))));
+        render("/html/tobj.html");
+    }
+
+    public void titem() {
+        String sid = getPara("sid");
+        String tid = getPara("tid");
+        String pkey = getPara("pkey");
+        MpInfoService.instance.incrTitem(sid);
+
+        String appid = MpInfoService.instance.getAppid(sid);
+        TbItemVo vdata = TbItemService.instance.getItemVo(appid, tid);
+        TbItemGy gdata = null;
+        if (StringUtil.isNotEmpty(pkey))
+            gdata = TbItemService.instance.getItemGyByPid(appid, tid, MpInfoService.instance.getPkeyPid(pkey));
+        if (gdata == null)
+            gdata = TbItemService.instance.getItemGy(appid, tid, null);
+
+        setAttr("obj", new TbItemEx().setVdata(vdata).setGdata(gdata).getObj());
+        render("/html/tobj.html");
+    }
+
+    public void tshop() {
+        MpInfoService.instance.incrTshop(this.sid());
+        setAttr("lid", getPara("lid", "301"));
+        render("/html/tshop.html");
+    }
+
+    public void tlink() {
+        MpInfoService.instance.incrTlink(this.sid());
+        setAttr("lid", getPara("lid"));
+        setAttr("pkey", getPara("pkey"));
+        render("/html/tshop.html");
+    }
+
+    public void tsou() {
+        MpInfoService.instance.incrTsou(this.sid());
+        String keyword = getPara("keyword");
+        setAttr("keyword", getPara("keyword"));
+        setAttr("lid", HaodankuService.instance.doSupersearch(keyword, 1, 1));
+        render("/html/tshop.html");
+    }
+
+    public void tlist() {
+        int page = getParaToInt("page");
+        if (page > 10) {
+            renderNull();
+            return;
+        }
+        setAttr("dataList", TbItemService.instance.getItemListVo(getPara("lid"), page));
+        render("/html/tlist.html");
+    }
+
+    public void bindsucc() {
+        render("/html/bindsucc.html");
+    }
+
+    private String sid() {
+        String sid = getPara("sid");
+        if (StringUtil.isEmpty(sid))
+            throw new RtException(Constant.para_err);
+        setAttr("sid", sid);
+        return sid;
+    }
+
+}

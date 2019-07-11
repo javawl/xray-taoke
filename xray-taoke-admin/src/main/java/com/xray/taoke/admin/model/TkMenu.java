@@ -1,0 +1,65 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_mpmenu", pkName = "seqid")
+public class TkMenu extends JfModel<TkMenu> {
+    private static final long serialVersionUID = 1L;
+    public static final TkMenu dao = new TkMenu();
+
+    public String getContentEmoji() {
+        try {
+            return new String(get("content"), "UTF-8");
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public List<TkMenu> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_mpmenu` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        if (cond != null) {
+            sb.append(" and `state`>0 ");
+
+            if (StringUtil.isNotEmpty(cond.get("menuid"))) {
+                sb.append(" and `menuid`='").append(cond.get("menuid")).append("' ");
+            }
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_mpmenu` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<TkMenu>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+
+        return dao.find(sql + sb.toString());
+    }
+
+    public TkMenu queryByMenuid(String appid) {
+        String sql = "select * from `tk_mpmenu` where `appid`=?";
+        return dao.findFirst(sql, appid);
+    }
+
+    public void doDels(String userid, String seqids) {
+        String sql = "update `tk_mpmenu` set `state`=?,`edittime`=?,`editby`=? where seqid in(?)";
+        Db.use(Constant.db_dataSource).update(sql, -1, System.currentTimeMillis(), userid, seqids);
+    }
+
+    public String getMenuid() {
+        return getStr("menuid");
+    }
+
+}

@@ -1,0 +1,203 @@
+package com.xray.taoke.admin.vo;
+
+public class TkAllGoodsVo {
+    private long seqid;
+    private String itempic;
+    private String itemdesc;
+    private String itemtitle;
+    private String good_url;
+    private String couponurl;
+    private long inputtime;
+    private String itemid;
+    private String itemshorttitle;
+    private double itemprice;
+    private double itemendprice;
+    private String shopname;
+    private String activityid;
+    private long orderno;
+    private long start_time;
+    private long end_time;
+    private int sale_type;
+    private int down_type;
+    private int source;
+    private double tkrates;
+    private double tkmoney;
+    private double couponprice;
+
+    public long getSeqid() {
+        return seqid;
+    }
+
+    public void setSeqid(long seqid) {
+        this.seqid = seqid;
+    }
+
+    public String getItempic() {
+        return itempic;
+    }
+
+    public void setItempic(String itempic) {
+        this.itempic = itempic;
+    }
+
+    public String getItemdesc() {
+        return itemdesc;
+    }
+
+    public void setItemdesc(String itemdesc) {
+        this.itemdesc = itemdesc;
+    }
+
+    public String getItemtitle() {
+        return itemtitle;
+    }
+
+    public void setItemtitle(String itemtitle) {
+        this.itemtitle = itemtitle;
+    }
+
+    public String getGood_url() {
+        return good_url;
+    }
+
+    public void setGood_url(String good_url) {
+        this.good_url = good_url;
+    }
+
+    public String getCouponurl() {
+        return couponurl;
+    }
+
+    public void setCouponurl(String couponurl) {
+        this.couponurl = couponurl;
+    }
+
+    public long getInputtime() {
+        return inputtime;
+    }
+
+    public void setInputtime(long inputtime) {
+        this.inputtime = inputtime;
+    }
+
+    public String getItemid() {
+        return itemid;
+    }
+
+    public void setItemid(String itemid) {
+        this.itemid = itemid;
+    }
+
+    public String getItemshorttitle() {
+        return itemshorttitle;
+    }
+
+    public void setItemshorttitle(String itemshorttitle) {
+        this.itemshorttitle = itemshorttitle;
+    }
+
+    public double getItemprice() {
+        return itemprice;
+    }
+
+    public void setItemprice(double itemprice) {
+        this.itemprice = itemprice;
+    }
+
+    public double getItemendprice() {
+        return itemendprice;
+    }
+
+    public void setItemendprice(double itemendprice) {
+        this.itemendprice = itemendprice;
+    }
+
+    public String getShopname() {
+        return shopname;
+    }
+
+    public void setShopname(String shopname) {
+        this.shopname = shopname;
+    }
+
+    public String getActivityid() {
+        return activityid;
+    }
+
+    public void setActivityid(String activityid) {
+        this.activityid = activityid;
+    }
+
+    public long getOrderno() {
+        return orderno;
+    }
+
+    public void setOrderno(long orderno) {
+        this.orderno = orderno;
+    }
+
+    public long getStart_time() {
+        return start_time;
+    }
+
+    public void setStart_time(long start_time) {
+        this.start_time = start_time;
+    }
+
+    public long getEnd_time() {
+        return end_time;
+    }
+
+    public void setEnd_time(long end_time) {
+        this.end_time = end_time;
+    }
+
+    public int getSale_type() {
+        return sale_type;
+    }
+
+    public void setSale_type(int sale_type) {
+        this.sale_type = sale_type;
+    }
+
+    public int getDown_type() {
+        return down_type;
+    }
+
+    public void setDown_type(int down_type) {
+        this.down_type = down_type;
+    }
+
+    public int getSource() {
+        return source;
+    }
+
+    public void setSource(int source) {
+        this.source = source;
+    }
+
+    public double getTkrates() {
+        return tkrates;
+    }
+
+    public void setTkrates(double tkrates) {
+        this.tkrates = tkrates;
+    }
+
+    public double getTkmoney() {
+        return tkmoney;
+    }
+
+    public void setTkmoney(double tkmoney) {
+        this.tkmoney = tkmoney;
+    }
+
+    public double getCouponprice() {
+        return couponprice;
+    }
+
+    public void setCouponprice(double couponprice) {
+        this.couponprice = couponprice;
+    }
+
+}

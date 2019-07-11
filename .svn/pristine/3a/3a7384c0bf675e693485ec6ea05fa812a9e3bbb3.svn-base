@@ -1,0 +1,55 @@
+package com.xray.taoke.tkapi;
+
+import java.util.Map;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.exception.RtException;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.tkapi.vo.ConstTk;
+
+public class MpInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".mpinfo.";
+
+    public static MpInfoService instance = new MpInfoService();
+    
+    public static void main(String[] args) {
+        String appid = "wx3088f1bd705dfd20";
+        System.out.println(MpInfoService.instance.getMpInfo(appid));
+    }
+
+    public Map<String, String> getMpInfo(String appid) {
+        String key = prefix + appid;
+        Map<String, String> map = cache.hgetAll(key);
+        if (map.isEmpty())
+            throw new RtException(ConstTk.para_err, "empty mpinfo,appid:" + appid);
+        return map;
+    }
+
+    public String getSid(String appid) {
+        String key = prefix + appid;
+        String val = cache.hget(key, "sid");
+        if (StringUtil.isEmpty(val))
+            throw new RtException(ConstTk.data_err);
+        return val;
+    }
+
+    public String getAppid(String sid) {
+        String key = prefix + sid;
+        String val = cache.hget(key, "appid");
+        if (StringUtil.isEmpty(val))
+            throw new RtException(ConstTk.data_err);
+        return val;
+    }
+
+    public String getUrl(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "url");
+    }
+
+}

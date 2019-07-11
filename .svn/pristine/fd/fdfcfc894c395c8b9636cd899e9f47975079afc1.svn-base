@@ -1,0 +1,99 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+import com.xray.taoke.admin.utils.EmojiUtil;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_mpmaterial", pkName = "seqid")
+public class TkMaterial extends JfModel<TkMaterial> {
+    private static final long serialVersionUID = 1L;
+    public static final TkMaterial dao = new TkMaterial();
+
+    public List<TkMaterial> queryList(Map<String, Object> cond, PageVo page) {
+        String sql = "select * from `tk_mpmaterial` where 1=1 ";
+        StringBuilder sb = new StringBuilder();
+        if (cond != null) {
+            sb.append(" and `state`>0 ");
+            if (StringUtil.isNotEmpty(cond.get("word"))) {
+                String word = cond.get("word").toString();
+                sb.append(" and ");
+                sb.append(" (`name` like '%").append(word).append("%'");
+                sb.append(" or `mediaid` = '").append(word).append("'");
+                sb.append(")");
+            }
+
+            if (StringUtil.isNotEmpty(cond.get("appid"))) {
+                sb.append(" and  `appid` = '").append(cond.get("appid")).append("'");
+            }
+
+            // if (StringUtil.isNotEmpty(cond.get("mediaid"))) {
+            // sb.append(" and `mediaid`='").append(cond.get("mediaid")).append("' ");
+            // }
+        }
+        if (page != null) {
+            String countSql = "select count(1) from `tk_mpmaterial` where 1=1 " + sb.toString();
+            int count = Db.queryLong(countSql).intValue();
+            page.setCount(count);
+            if (count <= 0) {
+                return new ArrayList<TkMaterial>();
+            }
+            sb.append(page.orderbySql());
+            sb.append(page.limitSql());
+        }
+
+        return dao.find(sql + sb.toString());
+    }
+
+    public List<TkMaterial> queryByAppid(String appid) {
+        String sql = "select * from `tk_mpmaterial` where `appid`=? and `state` = 1";
+        return dao.find(sql, appid);
+    }
+
+    public TkMaterial queryByAppidAndMiji(String appid) {
+        String sql = "select * from `tk_mpmaterial` where `appid`=? and `state` = 1 and `mediaid` = 'wx_974905e85ff70a81'";
+        return dao.findFirst(sql, appid);
+    }
+    
+    public TkMaterial queryByAppidAndJingXuan(String appid) {
+        String sql = "select * from `tk_mpmaterial` where `appid`=? and `state` = 1 and `mediaid` = 'wx_1e61011294bafd3c'";
+        return dao.findFirst(sql, appid);
+    }
+    
+
+    public TkMaterial queryByMediaid(String mediaid) {
+        String sql = "select * from `tk_mpmaterial` where `mediaid`=?";
+        return dao.findFirst(sql, mediaid);
+    }
+
+    public TkMaterial queryByAppidAndWord(String word, String appid) {
+        String sql = "select * from `tk_mpmaterial` where `word`=? and `appid` = ?";
+        return dao.findFirst(sql, word, appid);
+    }
+
+    public TkMaterial queryByAuth(String mediaid) {
+        String sql = "select * from `tk_mpmaterial` where `mediaid`=?";
+        return dao.findFirst(sql, mediaid);
+    }
+
+    public void doDels(String userid, String seqids) {
+        String sql = "update `tk_mpmaterial` set `state`=?,`edittime`=?,`editby`=? where seqid in(?)";
+        Db.use(Constant.db_dataSource).update(sql, -1, System.currentTimeMillis(), userid, seqids);
+    }
+
+    public String getMediaid() {
+        return getStr("mediaid");
+    }
+
+    public String getContent() {
+        return EmojiUtil.resolveToByteFromEmoji(getStr("content"));
+    }
+
+}

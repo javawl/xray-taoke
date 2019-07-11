@@ -1,0 +1,29 @@
+<html lang="zh">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+		<title>省钱好券</title>
+		<link rel="shortcut icon" href="http://alicdn.ldpro.cn/img0/favicon.ico" />
+		<link rel="stylesheet" href="http://alicdn.ldpro.cn/css0/weui.min.css">
+	</head>
+	<body ontouchstart="">
+		<div class="container" id="container">
+			<div class="page msg_success js_show">
+				<div class="page msg_success js_show">
+					<div class="weui-msg">
+						<div class="weui-msg__icon-area"><i class="weui-icon-warn weui-icon_msg"></i></div>
+						<div class="weui-msg__text-area">
+							<h2 class="weui-msg__title">网络错误</h2>
+							<p class="weui-msg__desc">亲亲，麻烦联系下我们客服人员</p>
+						</div>
+						<!-- <div class="weui-msg__opr-area">
+							<p class="weui-btn-area">
+								<a class="weui-btn weui-btn_primary">联系客服</a>
+							</p>
+						</div> -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

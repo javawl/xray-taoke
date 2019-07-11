@@ -1,0 +1,163 @@
+package com.xray.taoke.admin.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.plugin.activerecord.Db;
+import com.xray.act.jfinal.JfModel;
+import com.xray.act.util.StringUtil;
+import com.xray.act.web.vo.PageVo;
+import com.xray.taoke.admin.common.Constant;
+
+@TableBind(configName = Constant.db_dataSource, tableName = "tk_uouser", pkName = "seqid")
+public class UoUser extends JfModel<UoUser> {
+	private static final long serialVersionUID = 1L;
+	public static final UoUser dao = new UoUser();
+
+	private String mpname;
+
+	public List<UoUser> queryList(Map<String, Object> cond, PageVo page) {
+		String sql = "select * from `tk_uouser` where 1=1 ";
+		StringBuilder sb = new StringBuilder();
+		if (cond != null) {
+			if (!StringUtil.isEmpty(cond.get("openid"))) {
+				sb.append(" and  `openid` =  '").append(cond.get("openid")).append("'");
+			}
+			if (!StringUtil.isEmpty(cond.get("userid"))) {
+				sb.append(" and  `userid` =  '").append(cond.get("userid")).append("'");
+			}
+
+			if (!StringUtil.isEmpty(cond.get("wxname"))) {
+				sb.append(" and  `wxname` like '%").append(cond.get("wxname")).append("%'");
+			}
+
+			if (!StringUtil.isEmpty(cond.get("proxystate"))) {
+				sb.append(" and `proxystate` >0");
+			}
+
+		}
+		if (page != null) {
+			String countSql = "select count(1) from `tk_uouser` where 1=1 " + sb.toString();
+			int count = Db.queryLong(countSql).intValue();
+			page.setCount(count);
+			if (count <= 0) {
+				return new ArrayList<UoUser>();
+			}
+			sb.append(page.orderbySql());
+			sb.append(page.limitSql());
+		}
+		return dao.find(sql + sb.toString());
+	}
+
+	public UoUser queryByUserId(String userid) {
+		String sql = "select * from `tk_uouser` where 1=1 and userid =? ";
+		return dao.findFirst(sql, userid);
+	}
+
+	public UoUser queryByProxycode(String proxycode) {
+		String sql = "select * from `tk_uouser` where 1=1 and proxycode =? ";
+		return dao.findFirst(sql, proxycode);
+	}
+
+	public UoUser queryByUserIdAndUserId(String userid, String bindappid) {
+		String sql = "select * from `tk_uouser` where 1=1 and userid =? and bindappid = ? ";
+		return dao.findFirst(sql, userid, bindappid);
+	}
+
+	public List<UoUser> queryByAppid(String bindappid) {
+		String sql = "select * from `tk_uouser` where 1=1  and bindappid = ? ";
+		return dao.find(sql, bindappid);
+	}
+
+	public List<UoUser> queryCashRemindByAppid(String bindappid) {
+		String sql = "select * from `tk_uouser` where 1=1  and `bindappid` = ? and `cashno` <=0 and `qbcash` >0";
+		return dao.find(sql, bindappid);
+	}
+
+	public List<UoUser> queryList() {
+		String sql = "select * from `tk_uouser` where 1=1 and bindappid !='' and name = '' ";
+		return dao.find(sql);
+	}
+
+	public int updateWxInfo(String appid) {
+		String sql = "UPDATE `tk_uouser` a, `tk_mpuser_" + appid
+				+ "` b SET a.`wxname`=b.`wxname`, a.`wxavatar`=b.`wxavatar` WHERE a.`userid`=b.`userid` AND (ISNULL(a.`wxname`) OR a.`wxavatar`='')";
+		return Db.use(Constant.db_dataSource).update(sql);
+	}
+
+	public int updateJie(String userid, double money, int verno) {
+		String sql = "update `tk_uouser` set `qbcash`=`qbcash`+" + money + ",`qbconfirm`=`qbconfirm`-" + money
+				+ ",`verno`=`verno`+1 where `userid`=? and `verno`=?";
+		return Db.update(sql, userid, verno);
+	}
+
+	public int updateInvalid(String userid, double money, int verno) {
+		String sql = "update `tk_uouser` set `qbtotal`=`qbtotal`-" + money
+				+ ",`ordersucc`=`ordersucc`-1,`qbconfirm`=`qbconfirm`-" + money
+				+ ",`verno`=`verno`+1 where `userid`=? and `verno`=?";
+		return Db.update(sql, userid, verno);
+	}
+
+	public int updateRate(long seqid, double rate, String ratereason, String rateopby) {
+		String sql = "update `tk_uouser` set `rate`=?,`ratereason`=?,`rateopby`=? where `seqid`=?";
+		return Db.update(sql, rate, ratereason, rateopby, seqid);
+	}
+
+	public int updateSucc(String userid, double money, int verno) {
+		String sql = "update `tk_uouser` set `qbtotal`=`qbtotal`+" + money
+				+ ",`ordersucc`=`ordersucc`+1,`qbconfirm`=`qbconfirm`+" + money
+				+ ",`verno`=`verno`+1 where `userid`=? and `verno`=?";
+		return Db.update(sql, userid, verno);
+	}
+
+	public int updateQbcashing(String userid, int verno) {
+		String sql = "update `tk_uouser` set `qbcashing`=0,`qbproxycash`=0,`cashstate`=0,`verno`=`verno`+1 where `userid`=? and `verno`=?";
+		return Db.update(sql, userid, verno);
+	}
+
+	public int updateCashFail(String userid) {
+		String sql = "update `tk_uouser` set `cashstate`=1 where `userid`=?";
+		return Db.update(sql, userid);
+	}
+
+	public int updateCashNo(String userid) {
+		String sql = "update `tk_uouser` set `cashno`=`cashno`+1 where `userid`=?";
+		return Db.update(sql, userid);
+	}
+
+	public int updateProxyConfirm(String userid, double money) {
+		String sql = "update `tk_uouser` set `qbproxyconfirm`=`qbproxyconfirm`+" + money + " where `userid`=? ";
+		return Db.update(sql, userid);
+	}
+
+	public int updateProxyJie(String userid, double cash, double confirm) {
+		String sql = "update `tk_uouser` set `qbproxycash`=`qbproxycash`+" + cash
+				+ ",`qbproxyconfirm`=`qbproxyconfirm`-" + confirm + " where `userid`=? ";
+		return Db.update(sql, userid);
+	}
+
+	public int updateProxyUseless(String userid, double qbproxyconfirm) {
+		String sql = "update `tk_uouser` set `qbproxyconfirm`=`qbproxyconfirm`-" + qbproxyconfirm
+				+ " where `userid`=? ";
+		return Db.update(sql, userid);
+	}
+
+	public String getMpname() {
+		return mpname;
+	}
+
+	public void setMpname(String mpname) {
+		this.mpname = mpname;
+	}
+
+	public String getWxnameUTF8() {
+		try {
+			return new String(get("wxname"), "UTF-8");
+		} catch (Exception e) {
+		}
+		return null;
+	}
+
+}

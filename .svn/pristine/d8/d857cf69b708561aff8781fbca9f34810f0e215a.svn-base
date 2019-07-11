@@ -1,0 +1,21 @@
+(function() {
+
+	var url = window.location.href;
+	if(url.indexOf('ionode/goMpLogin') > 0) {
+		if(document.getElementById('mplogin').value == '') return;
+		var data = JSON.parse(document.getElementById('mplogin').value);
+		chrome.runtime.sendMessage({
+			action: "goMpLogin",
+			data: data
+		}, function(response) {});
+	}
+
+	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+		if(request.action == 'doMpLoginSucc') {
+			document.getElementById('succ').click();
+		}
+	});
+
+
+
+})();

@@ -1,0 +1,201 @@
+package com.xray.taoke.act.web.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.aop.Before;
+import com.jfinal.ext.route.ControllerBind;
+import com.jfinal.weixin.sdk.api.ApiConfig;
+import com.jfinal.weixin.sdk.api.ApiConfigKit;
+import com.jfinal.weixin.sdk.api.ApiResult;
+import com.jfinal.weixin.sdk.api.CustomServiceApi;
+import com.jfinal.weixin.sdk.api.CustomServiceApi.Articles;
+import com.jfinal.weixin.sdk.jfinal.MsgControllerAdapter;
+import com.jfinal.weixin.sdk.msg.in.InMsg;
+import com.jfinal.weixin.sdk.msg.in.InTextMsg;
+import com.jfinal.weixin.sdk.msg.in.event.InFollowEvent;
+import com.jfinal.weixin.sdk.msg.in.event.InMenuEvent;
+import com.jfinal.weixin.sdk.msg.out.OutImageMsg;
+import com.xray.act.exception.RtException;
+import com.xray.act.jfinal.weixin.MsgInterceptor;
+import com.xray.act.jfinal.weixin.MsgProvider;
+import com.xray.act.util.StringUtil;
+import com.xray.taoke.act.common.Constant;
+import com.xray.taoke.act.model.MpUser;
+import com.xray.taoke.act.service.AiService;
+import com.xray.taoke.act.service.MpInfoService;
+import com.xray.taoke.act.service.TbGoodsService;
+import com.xray.taoke.act.vo.TbGoodsVo;
+
+@ControllerBind(controllerKey = "/wxmsg")
+public class WxMsgController extends MsgControllerAdapter implements MsgProvider {
+    protected static Logger logger = LoggerFactory.getLogger(WxMsgController.class);
+
+    @Before(MsgInterceptor.class)
+    public void index() {
+        super.index();
+    }
+
+    @Override
+    public ApiConfig getApiConfig() {
+        String appid = getPara();
+        Map<String, String> cond = MpInfoService.instance.getMpInfo(appid);
+        ApiConfig ac = new ApiConfig();
+        ac.setAppId(appid);
+        ac.setAppSecret(cond.get("appsecret"));
+        ac.setToken(cond.get("token"));
+        ac.setEncodingAesKey(cond.get("encodingaeskey"));
+        ApiConfigKit.putApiConfig(ac);
+        ApiConfigKit.setThreadLocalAppId(appid);
+        return ac;
+    }
+
+    @Override
+    protected void processInFollowEvent(InFollowEvent inFollowEvent) {
+        String appid = getPara();
+        String openid = inFollowEvent.getFromUserName();
+        // 取关
+        if (inFollowEvent.getEvent().equals(InFollowEvent.EVENT_INFOLLOW_UNSUBSCRIBE)) {
+            logger.info("unsubscribe,appid:{},openid:{}", appid, openid);
+            MpInfoService.instance.negative(appid, openid);
+            renderDefault();
+            return;
+        }
+
+        MpInfoService.instance.active(appid, openid);
+        // 关注
+        MpUser.dao.addByOpenid(appid, openid);
+        String content = MpInfoService.instance.getFollowContent(appid);
+        if (StringUtil.isNotEmpty(content)) {
+            doRenderMsg(inFollowEvent, JSONObject.parseObject(content));
+        }
+        // 客服
+        this.doKefu(appid, openid);
+        logger.info("inFollowEvent,appid:{},openid:{}", appid, openid);
+    }
+
+    @Override
+    protected void processInMenuEvent(InMenuEvent inMenuEvent) {
+        String appid = getPara();
+        String openid = inMenuEvent.getFromUserName();
+        // 链接不处理
+        if (!"CLICK".equals(inMenuEvent.getEvent())) {
+            renderDefault();
+            return;
+        }
+
+        MpInfoService.instance.active(appid, openid);
+        this.doKefu(appid, openid);
+        logger.info("inMenuEvent,appid:{},openid:{}", appid, openid);
+    }
+
+    @Override
+    protected void processInTextMsg(InTextMsg inTextMsg) {
+        String appid = getPara();
+        String openid = inTextMsg.getFromUserName();
+        MpInfoService.instance.active(appid, openid);
+
+        String text = inTextMsg.getContent();
+        // 查券
+        String url = Constant.parseUrl(text);
+        if (StringUtil.isNotEmpty(url)) {
+            doChaQuan(inTextMsg, url);
+            logger.info("inTextMsg,doChaQuan,appid:{},openid:{}", getPara(), inTextMsg.getFromUserName());
+            return;
+        }
+
+        renderOutTextMsg(text);
+    }
+
+    private void doChaQuan(InMsg inMsg, String url) {
+        try {
+            String openid = inMsg.getFromUserName();
+
+            double rate = MpInfoService.instance.getRate(getPara());
+            TbGoodsVo vo = TbGoodsService.instance.chaquanByUrl(url);
+            vo.setRate(rate);
+            
+            Articles data = new Articles();
+            data.setTitle(vo.getChaquanTitle());
+            data.setPicurl(vo.getItempic());
+            data.setDescription(vo.getItemtitle());
+            data.setUrl(AiService.instance.authTitem(getPara(), openid, vo.getItemid()));
+
+            List<Articles> list = new ArrayList<Articles>();
+            list.add(data);
+            ApiResult res = CustomServiceApi.sendNews(openid, list);
+            if (!res.isSucceed()) {
+                logger.error("err sendNews,doChaQuan,inMsg:{}, errMsg:{},{}", inMsg.toString(), res.getErrorCode(), res.getErrorMsg());
+            }
+            renderDefault();
+        } catch (RtException e) {
+            switch (e.getCode()) {
+            case Constant.data_err:
+                renderOutTextMsg(MpInfoService.instance.getDataErrContent(getPara()));
+                break;
+            case Constant.notaoke_err:
+                renderOutTextMsg(MpInfoService.instance.getNoTaokeContent(getPara()));
+                break;
+            default:
+                renderOutTextMsg(MpInfoService.instance.getNetErrContent(getPara()));
+                break;
+            }
+            logger.error("err doChaQuan,url:" + url, e);
+        } catch (Exception e) {
+            renderOutTextMsg(MpInfoService.instance.getNetErrContent(getPara()));
+            logger.error("err doChaQuan,url:" + url, e);
+        }
+    }
+
+    private void doKefu(String appid, String openid) {
+        String kefuid = MpUser.dao.queryKefuidByOpenid(appid, openid);
+        if (StringUtil.isNotEmpty(kefuid)) {
+            CustomServiceApi.sendImage(openid, kefuid);
+        } else {
+            String content = MpInfoService.instance.getKefuContent(appid);
+            if (StringUtil.isNotEmpty(content)) {
+                JSONArray arr = JSONObject.parseObject(content).getJSONArray("data");
+                JSONObject obj = arr.getJSONObject((int) (Math.random() * arr.size()));
+                kefuid = obj.getString("content");
+                MpUser.dao.updateKefuidByOpenid(appid, openid, kefuid);
+                CustomServiceApi.sendImage(openid, kefuid);
+            }
+        }
+        logger.info("doKefu,appid:{},openid:{}", appid, openid);
+    }
+
+    protected boolean doRenderMsg(InMsg inMsg, JSONObject obj) {
+        if ("text".equals(obj.getString("type"))) {
+            renderOutTextMsg(obj.getString("content"));
+            return true;
+        }
+        if ("image".equals(obj.getString("type"))) {
+            OutImageMsg outMsg = new OutImageMsg(inMsg);
+            outMsg.setMediaId(obj.getString("content"));
+            render(outMsg);
+            return true;
+        }
+        renderDefault();
+        return false;
+    }
+
+    protected boolean doCustomMsg(InMsg inMsg, JSONObject obj) {
+        if ("text".equals(obj.getString("type"))) {
+            CustomServiceApi.sendText(inMsg.getFromUserName(), obj.getString("content"));
+            return true;
+        }
+        if ("image".equals(obj.getString("type"))) {
+            CustomServiceApi.sendImage(inMsg.getFromUserName(), obj.getString("content"));
+            return true;
+        }
+        renderDefault();
+        return false;
+    }
+
+}

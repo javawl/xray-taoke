@@ -1,0 +1,71 @@
+package com.xray.taoke.admin.app;
+
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xray.taoke.admin.model.OrderInfo;
+import com.xray.taoke.tkapi.Tk21dsService;
+
+public class InvalidOrderApp extends AbstractApp {
+    private List<OrderInfo> list;
+
+    public InvalidOrderApp(List<OrderInfo> list) {
+        this.list = list;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun(list);
+        } catch (Exception e) {
+            logger.error("errapp InvalidOrderApp,list:" + list.size(), e);
+        }
+    }
+
+    public void doRun(List<OrderInfo> list) throws Exception {
+        String appid = null;
+        String start_time = null;
+        long time = 0l;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        for (OrderInfo orderInfo : list) {
+            time = orderInfo.getLong("tradetime");
+            appid = orderInfo.getStr("appid");
+            start_time = dateFormat.format(new Date(time));
+            logger.info("runapp InvalidOrderApp,start,appid:{},time:{}", appid, start_time);
+            JSONObject obj = null;
+            try {
+                obj = Tk21dsService.instance.gettkorder(appid, start_time);
+            } catch (Exception e) {
+                // TODO: handle exception
+                System.out.println(appid);
+                continue;
+            }
+            if (obj.getInteger("code") != 200) {
+                logger.info("runapp InvalidOrderApp,empty,appid:{},time:{}", appid, start_time);
+                continue;
+            }
+            String content = obj.getJSONObject("data").getString("n_tbk_order");
+            if (content.startsWith("{")) {
+                updateByObj(obj.getJSONObject("data").getJSONObject("n_tbk_order"), appid);
+            } else {
+                JSONArray arr = obj.getJSONObject("data").getJSONArray("n_tbk_order");
+                for (int i = 0; i < arr.size(); i++) {
+                    updateByObj(arr.getJSONObject(i), appid);
+                }
+            }
+
+        }
+    }
+
+    private void updateByObj(JSONObject obj, String appid) {
+        String tradeid = obj.getString("trade_id");
+        int tkstatus = obj.getInteger("tk_status");
+        if (tkstatus == 3)
+            return;
+        if (OrderInfo.dao.updateInvalidorder(tradeid, tkstatus) > 0)
+            logger.info("runapp InvalidOrderApp,tradeid:{},invaildorder:{}", tradeid, tkstatus);
+    }
+}

@@ -1,0 +1,19 @@
+<#list dataList as item><div onclick="goItem('${item.itemid!}')" class="single-cms-goods-v2">
+	<div class="goods-image">
+		<img src="${item.itempic!}">
+		<div class="goods-list-mall-label"></div>
+	</div>
+	<div class="goods-detail">
+		<p class="goods-name">${item.itemtitle!}</p>
+		<div class="privilege">
+			<div class="badge">券</div>
+			<div class="coupon">${item.cpmoney!}元</div>
+			<div class="badge2">返</div>
+			<div class="coin">${item.jiemoney?string('0.0#')}元</div>
+		</div>
+		<div class="price-detail">
+			<span class="after-coupon">券后</span>
+			<span class="price">¥<span>${item.tkprice?string('0.0#')}</span></span>
+		</div>
+	</div>
+</div></#list>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>淘宝找券 | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<link rel="stylesheet" href="${cxt!}/addon/select2/select2.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/jQueryPage/jquery.page.css">
+		<link rel="stylesheet" href="${cxt!}/addon/webUploader/webuploader.css">
+		<link rel="stylesheet" href="${cxt!}/addon/timepicker/bootstrap-timepicker.min.css">
+		<link rel="stylesheet" href="${cxt!}/addon/iCheck/all.css">
+		<#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<!--content header-->
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>客服管理</li>
+							<li class="active">淘宝找券</li>
+						</ol>
+						<h1><small></small></h1>
+					</section>
+					<!--/content header-->
+					<section class="content">
+						<div class="row">
+							<div class="col-xs-12">
+								<div class="box box-primary">
+									<div class="box-header">
+										<form action="${cxt!}/tklink/goList">
+											<div class="row">
+												
+												  <div class="col-md-3">
+                        									<input id="opby" name="opby" type="text" class="form-control" value="${opby!}" placeholder="负责人" />
+                       								 </div>
+												
+												
+                         						<div class="col-md-3">
+                         							<div class="input-group date">
+													<div class="input-group-addon">
+														<i class="fa fa-calendar"></i>
+													</div>
+													<input type="text" id="datepicker" name="refDateStr" class="form-control">
+												</div>
+                         	
+                        							</div>
+												
+												 <div class="col-md-1">
+							                          <input id="pno" name="pno" type="hidden" value="${page.pno!}" />
+							                          <button id="search" class="btn btn-default">查询</button>
+							                        </div>
+												<div class="col-md-5">
+													<div class="pull-right">
+														<a class="changeUrl btn btn-danger">转链</a>
+														<a class="adds btn btn-primary">好单库</a>
+														<a class="copy btn btn-success">同步</a>
+													</div>
+												</div>
+											</div>
+										</form>
+									</div>
+									<!-- box-header -->
+									<div class="box-body">
+										<div class="dataTables_wrapper form-inline dt-bootstrap">
+											<div class="row">
+												<div class="col-sm-12">
+													<table class="table table-bordered table-hover">
+														<tbody>
+															<tr>
+																<th width="20px"><input type="checkbox" class="all minimal" /></th>
+																<th>时间</th>
+																<th>链接池ID</th>
+																<th>链接</th>
+																<th>备注</th>
+																<th>负责人</th>
+																<th>长度</th>
+																<th width="70px">操作</th>
+															</tr>
+															<#list dataList as item>
+																<tr style="white-space:nowrap;">
+																	<td><input type="checkbox" class="item minimal" value="${item.seqid!}" /></td>
+																	<td>
+																		<#if (item.inputtime> 0)>${item.inputtime?number_to_date?string("MM-dd HH:mm")}</#if>
+																	</td>
+																	<td>${item.link_id!}</td>
+																	<td>${item.link!}</td>
+
+																	<td>
+																		<a href="javascript:;" onclick="doFollow('${item.seqid!}','${item.remark!}')" class="text-green"><i class="fa fa-pencil"></i> ${item.remark!}</a>
+																	</td>
+																	<td>${item.opby!}</td>
+																	<td>${item.size!}</td>
+																	<td data-id="${item.seqid!}">
+																		<a href="${cxt!}/tkgood/goList?linkid=${item.link_id!}" target="_blank" class="text-primary"><i class="fa fa-play"></i>详情</a>
+																	</td>
+																</tr>
+															</#list>
+														</tbody>
+													</table>
+												</div>
+											</div>
+											<#if dataList.size()==0>
+												<div style="text-align:center;">
+													<p class="text-yellow"><i class="icon fa fa-warning"></i>&nbsp;没有查询到数据！</p>
+												</div>
+												<hr />
+											</#if>
+										</div>
+										<#if (page.pcount>0)>
+											<div>
+												<div class="tcdPageCode pull-right" style="padding: 0;"></div>
+												<span class="pull-right">共查询到&nbsp;<span style="color: red;">${page.count}</span>&nbsp;条相关数据&nbsp;</span>
+											</div>
+										</#if>
+										<!--<div class="tcdPageCode pull-right"></div>-->
+									</div>
+									<!-- /.box-body -->
+								</div>
+								<!-- /.box -->
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script src="${cxt!}/addon/jQueryPage/jquery.page.js"></script>
+		<script src="${cxt!}/addon/select2/select2.full.min.js"></script>
+		<script src="${cxt!}/addon/webUploader/webuploader.js"></script>
+		<script src="${cxt!}/addon/timepicker/bootstrap-timepicker.min.js"></script>
+		<script src="${cxt!}/addon/datepicker/bootstrap-datepicker.js"></script>
+		<script src="${cxt!}/addon/datepicker/locales/bootstrap-datepicker.zh-CN.js"></script>pt>
+		<script src="${cxt!}/addon/iCheck/icheck.min.js"></script>
+		<script>
+			function doFollow(seqid,remark) {
+				var html = '';
+				var name = "修改备注";
+
+				html += '    <div class="col-sm-12">';
+				html += '  <div class="form-group">'
+				html += ' <input type="text" class="form-control title" id= "remark"  data-id=""   value="'+remark+'" placeholder="请输入备注" >'
+				html += '    </div>';
+				html += '    </div>';
+
+				layer.open({
+					closeBtn: 0,
+					title: name,
+					area: ['500px', ],
+					content: html,
+					btn: ['确定', '取消'],
+					yes: function() {
+						var remark = $("#remark").val();
+						ajaxGet("${cxt!}/tklink/doUpdateRemark", {
+							seqid: seqid,
+							remark: remark,
+						}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(rtn.msg, {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg('操作成功！即将自动刷新...', {
+								time: 500,
+								icon: 1
+							}, function() {
+								location.reload();
+							});
+
+						})
+					}
+				});
+
+			}
+
+			var uploader;
+			var checkList = [];
+			$(document).ready(function() {
+				
+				var datepicker = $("#datepicker").datepicker({
+					language: "zh-CN",
+					autoclose: true,
+					format: "yyyy-mm-dd"
+				})
+				datepicker.datepicker("setDate", '${refDateStr!}');
+				
+				if($("table").width() < 1000) {
+					$(".box-body").css("overflow", "auto");
+				}
+
+				$(".adds").click(function() {
+
+					var html = '';
+					html += '<div class="box-body">';
+					html += '    <div class="col-sm-12">';
+					html += '  <div class="form-group">'
+					html += ' <textarea  rows="20" cols="20"  type="text" class="form-control title"  id="goods"    placeholder="好单库选品复制后粘贴到这里"   ></textarea>'
+					html += '    </div>';
+					html += '    </div>';
+					html += '    </div>';
+					layer.open({
+						closeBtn: 0,
+						title: '商品信息',
+						area: ['500px', ],
+						content: html,
+						btn: ['确定', '取消'],
+						yes: function() {
+
+							var goods = $("#goods").val();
+							ajaxPost("${cxt!}/tklink/doAdd", {
+								goods: goods
+							}, function(rtn) {
+								if(rtn.code != 1) {
+									layer.msg(rtn.msg, {
+										icon: 2
+									});
+									return;
+								}
+								layer.msg('操作成功！即将自动刷新...', {
+									time: 500,
+									icon: 1
+								}, function() {
+									location.reload();
+								});
+
+							})
+						}
+					});
+
+				})
+				
+				
+				
+				
+				
+				
+				
+				
+					$(".changeUrl").click(function() {
+
+					var html = '';
+					html += '<div class="box-body">';
+					html += '    <div class="col-sm-12">';
+					html += '  <div class="form-group">'
+					html += ' <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="change_url"    placeholder="输入需要转链的链接"   ></textarea>'
+					html += '    </div>';
+					html += '  <div class="form-group">'
+					html += '<button class="zhuanlian btn btn-primary">转链</button>'
+					html += '    </div>';
+					html += '    </div>';
+					html += '    <div class="col-sm-12">';
+					html += '  <div class="form-group">'
+					html += ' <textarea  rows="20" cols="5" style ="height:200px"  type="text" class="form-control title"  id="complete_url"    placeholder=""   ></textarea>'
+					html += '    </div>';
+					html += '    </div>';
+					
+					html += '    </div>';
+					layer.open({
+						closeBtn: 0,
+						title: '商品信息',
+						area: ['500px', ],
+						content: html,
+						btn: ['确定', '取消'],						
+						success:function(){
+							$(".zhuanlian").click(function(){
+								var change_url = $("#change_url").val();
+								ajaxPost("${cxt!}/tklink/doGetItemIdByText", {
+								change_url: change_url
+							}, function(rtn) {
+								if(rtn.code != 1) {
+									layer.msg(rtn.msg, {
+										icon: 2
+									});
+									return;
+								}
+								
+								
+								
+								
+								
+								$("#complete_url").text(rtn.data);
+								
+								
+
+							})
+								
+								
+							});
+							
+							
+						},
+						yes: function() {
+
+							var change_url = $("#change_url").val();
+							ajaxPost("${cxt!}/tklink/doAdd", {
+								goods: goods
+							}, function(rtn) {
+								if(rtn.code != 1) {
+									layer.msg(rtn.msg, {
+										icon: 2
+									});
+									return;
+								}
+								layer.msg('操作成功！即将自动刷新...', {
+									time: 500,
+									icon: 1
+								}, function() {
+									location.reload();
+								});
+
+							})
+						}
+					});
+
+				})
+				
+				
+				
+				
+				
+
+				$(".copy").click(function() {
+
+					var seqid = $(this).parent().attr("data-id");
+					layer.confirm('确定同步吗？', function(i) {
+						ajaxGet("${cxt!}/tkgood/doCopy", {}, function(rtn) {
+							if(rtn.code != 1) {
+								layer.msg(JSON.stringify(rtn), {
+									icon: 2
+								});
+								return;
+							}
+							layer.msg("操作成功！", {
+								icon: 1,
+								time: 600
+							}, function() {
+								window.location.reload();
+							});
+						})
+					})
+
+				})
+
+				//查询绑定回车事件
+				$("#word").keydown(function(e) {
+					var ev = document.all ? window.event : e;
+					if(ev.keyCode == 13) {
+						$('#search').click();
+					}
+				})
+				//分页
+				$(".tcdPageCode").createPage({
+					pageCount: ${
+						page.pcount!
+					},
+					current: ${
+						page.pno!
+					},
+					backFn: function(n) {
+						$('#pno').val(n);
+						$('#search').click();
+					}
+				});
+				//全选
+				var $checkboxAll = $('input[type="checkbox"].all'),
+					$checkbox = $('input[type="checkbox"].item'),
+					i = 0;
+				//启动icheck  
+				$(('input[type="checkbox"].minimal')).iCheck({
+					checkboxClass: 'icheckbox_minimal-blue'
+				});
+				//全选checkbox  
+				$checkboxAll.on('ifChecked', function(event) {
+					$checkbox.iCheck('check');
+					checkList = [];
+					$checkbox.each(function() {
+						if(true == $(this).is(':checked')) {
+							checkList.push($(this).val());
+						}
+					});
+				});
+				$checkboxAll.on('ifUnchecked', function(event) {
+					$checkbox.iCheck('uncheck');
+					checkList = [];
+				});
+				//单项checkbox  
+				$checkbox.on('ifChecked', function(event) {
+					checkList.push(event.target.value);
+				});
+				$checkbox.on('ifUnchecked', function(event) {
+					checkList.forEach(function(e, i) {
+						if(e == event.target.value) {
+							checkList.splice(i, 1);
+							return;
+						}
+					})
+				})
+			})
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title> {{moduleName}} | ${_TITLE_!}</title>
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <#include "/template/inc/inc.html">
+	</head>
+
+	<body class="hold-transition skin-blue sidebar-mini">
+		<div class="wrapper">
+			<#include "/template/inc/header.html">
+				<div class="content-wrapper">
+					<section class="content-header">
+						<ol class="breadcrumb" style="left: 10px;">
+							<li>
+								<a href="javascript:;" onclick="base.backWin();"><i class="fa fa-chevron-left"></i>返回</a>
+							</li>
+						</ol>
+						<h1>
+							<small></small>
+						</h1>
+					</section>
+					<section class="content">
+						<div class="box box-primary">
+							<div class="box-header">
+								<div class="sequence_list am-text-sm">
+									<div class="box-tools"></div>
+								</div>
+							</div>
+							<div class="box-body">
+								<div class="row">
+									<input id="id" value="<#if data??>${data.seqid!}</#if>" style="display: none;">
+									{{fields_col}}
+									<div class="col-md-6">
+										<div class="form-group">
+											<label>状态</label>
+											<select id="state" class="form-control">
+												<option value="0"></option>
+												<option value="1" <#if data??&&data.state==1>selected="selected"</#if> >生效</option>
+												<option value="-1" <#if data??&&data.state==-1>selected="selected"</#if> >失效</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="box-footer">
+								<div class="btn-group">
+									<button type="button" id="submit" class="btn btn-primary">提交</button>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+				<#include "/template/inc/footer.html">
+		</div>
+		<script>
+			$(document).ready(function() {
+				//提交	
+				$("#submit").click(function() {
+					var id = $("#id").val();
+					{{fields_check}}
+					var state = $("#state").val();
+					if(state == 0) {
+						base.showWarMsg("请选择状态！");
+						return;
+					}
+					var ajaxUrl = "${cxt!}/{{actionKey}}/doAdd"
+					if(id) {
+						ajaxUrl = "${cxt!}/{{actionKey}}/doEdit";
+					}
+					ajaxGet(ajaxUrl, {
+						id: id,
+						{{fields_formdata}}
+						state: state
+					}, function(rtn) {
+						if(rtn.code != 1) {
+							base.showErrMsg(rtn.msg);
+							return;
+						}
+						if(id) {
+							base.showSuccMsg("提交成功！");
+						}else {
+                            base.showSuccMsg("提交成功！即将返回列表...", function() {
+                                base.backWin();
+                            });
+						}
+					})
+				})
+
+			})
+		</script>
+	</body>
+
+</html>

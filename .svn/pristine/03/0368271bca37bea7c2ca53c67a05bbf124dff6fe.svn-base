@@ -1,0 +1,46 @@
+package com.xray.taoke.admin.service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.jfinal.kit.Prop;
+import com.jfinal.kit.PropKit;
+import com.xray.act.service.RedisService;
+import com.xray.act.service.RedisServiceFactory;
+import com.xray.taoke.admin.model.TkMpinfo;
+
+public class MpInfoService {
+    private static RedisService cache = RedisServiceFactory.getDefaulInstance();
+
+    private static final Prop config = PropKit.use("config.properties");
+    private static final String prefix = config.get("redis.prefix") + ".mpinfo.";
+    public static MpInfoService instance = new MpInfoService();
+
+
+    public static String getAppSecret(String appid) {
+        String key = prefix + appid;
+        return cache.hget(key, "appsecret");
+    }
+
+    public static void setMpInfo(String appid, TkMpinfo mpinfo,String seqid) {
+        String key = prefix + appid;
+        String key2 = prefix + seqid;
+        Map<String, String> cond = new HashMap<>();
+        cond.put("appsecret", mpinfo.getStr("appsecret"));
+        cond.put("token", mpinfo.getStr("token"));
+        cond.put("encodingaeskey", mpinfo.getStr("encodingaeskey"));
+        cond.put("appid", mpinfo.getStr("appid"));
+        cond.put("session", mpinfo.getStr("session"));
+        cond.put("pid", mpinfo.getStr("pid"));
+        cond.put("tbname", mpinfo.getStr("tbname"));
+        cond.put("rate", mpinfo.getDouble("rate").toString());
+        cache.hmset(key, cond);
+        cache.hmset(key2, cond);
+    }
+
+    public static Map<String, String> getMpInfo(String appid) {
+        String key = prefix + appid;
+        return cache.hgetAll(key);
+    }
+
+}

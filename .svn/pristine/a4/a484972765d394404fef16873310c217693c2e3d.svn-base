@@ -1,0 +1,31 @@
+package com.xray.taoke.admin.app;
+
+import java.util.List;
+
+import com.xray.taoke.admin.model.Cashinfo;
+import com.xray.taoke.admin.service.WxPayService;
+
+public class AutoTransFerApp extends AbstractApp implements Runnable {
+    private String appid;
+
+    public AutoTransFerApp(String appid) {
+        this.appid = appid;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Exception e) {
+            logger.error("errapp neworder,appid:" + appid, e);
+        }
+    }
+
+    public void doRun() throws Exception {
+        List<Cashinfo> list = Cashinfo.dao.queryAutoByAppid(appid);
+        for (Cashinfo data : list) {
+            WxPayService.instance.doAutoTrans(data);
+        }
+    }
+
+}
